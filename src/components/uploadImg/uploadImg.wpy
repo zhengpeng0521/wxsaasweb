@@ -1,0 +1,276 @@
+<style type = 'less' src = 'uploadImg.less'>
+</style>
+
+<script>
+import wepy from 'wepy'
+export default class UploadImg extends wepy.component {
+  props = {
+    maxLength: { // 最多上传 图片数
+      type: String,
+      default: 9,
+      twoWay: true
+    },
+    imgList: {
+      type: Array,
+      default: [],
+      twoWay: true
+    },
+    wodrdh: {
+      type: Boolean,
+      default: false,
+      twoWay: true
+    }
+  }
+  data = {
+    controls: false,
+    minL: '1'
+    // videsh: false
+  }
+  // watch = {
+  //   imgList (curVal, oldVal) {
+	//   console.log(curVal)
+	//  // this.videsh = true
+	//  if (curVal.length == 1) {
+	//   if (curVal[0].video) {
+	// 	  this.videsh = true
+	//   }
+	//   } else {
+	// 	  this.videsh = false
+	//   }
+	//   this.$apply()
+  //   }
+  // }
+  uploadImage(imgList) {
+    wx.showLoading({
+      title: '上传中'
+    })
+    let self = this
+    const fn = (arr, idx) => {
+      if (idx < arr.length) {
+        wx.uploadFile({
+          url: `https://imgsrc.ishanshan.com/gimg/user/upload`,
+          filePath: arr[idx],
+          name: 'file',
+          success: function (res) {
+            if (JSON.parse(res.data).url.indexOf('mp4') != -1) {
+              self.imgList.push({ video: JSON.parse(res.data).url })
+              // self.videsh = true
+              // self.$emit('videsh')
+            } else {
+              self.imgList.push({ img: JSON.parse(res.data).url })
+            }
+            fn(arr, idx + 1)
+            if (res.statusCode === 200) {
+              wx.showToast({
+                title: '上传成功',
+                duration: 1000
+              })
+            }
+            self.$apply()
+          },
+          fail: function (res) {
+            wx.showToast({
+              icon: 'none',
+              title: '上传失败',
+              duration: 1000
+            })
+          }
+        })
+      }
+    }
+    fn(imgList, 0)
+  }
+	// 添加图片
+  addImage() {
+    let self = this
+    wx.hideToast()
+    wx.chooseImage({
+      count: 9 - self.imgList.length, // 默认9
+      sizeType: ['compressed'], // 可以指定是原图还是压缩图，默认二者都有
+      sourceType: ['album', 'camera'], // 可以指定来源是相册还是相机，默认二者都有
+      success: function (res) {
+        for (var i = 0; i < res.tempFiles.length; i++) {
+          if (res.tempFiles[i].size / 1024 / 1024 > 10) {
+            wx.showToast({
+              icon: 'none',
+              title: '上传的图片大小不能超过10MB哦!',
+              duration: 1000
+            })
+            return false
+          }
+          if (!res.tempFiles[i].path.includes('jpg') && !res.tempFiles[i].path.includes('png') && !res.tempFiles[i].path.includes('jpeg') && !res.tempFiles[i].path.includes('gif')) {
+            wx.showToast({
+              icon: 'none',
+              title: '上传的图片只能是 png、jpg、jpeg、gif格式的图片!',
+              duration: 1000
+            })
+            return false
+          }
+        }
+        wx.hideToast()
+        let tempFilePaths = res.tempFilePaths
+        self.uploadImage(tempFilePaths)
+      }
+    })
+  }
+	// 添加视频
+  addVideo() {
+    let self = this
+	// 限制
+	// if(self.imgList.length >= 1) {
+	// 	 // console.log('123')
+	// 	if (self.imgList[0].img) {
+	// 	wx.showToast({
+	// 		icon: 'none',
+	// 		title: '仅可上传图片或视频一种类型文件',
+	// 		duration: 1000
+	// 	})
+	// 	 return false
+	// 	}
+	// 	}
+    wx.hideToast()
+    wx.chooseVideo({
+      sourceType: ['album', 'camera'],
+      maxDuration: 30,
+      camera: 'back',
+      compressed: false,
+      success(res) {
+        const isLt80M = res.size / 1024 / 1024 < 50
+        if (!isLt80M) {
+          wx.showToast({
+            icon: 'none',
+            title: '上传视频大小不能超过50MB哦!',
+            duration: 1000
+          })
+          return false
+        }
+        if (!res.tempFilePath.includes('mp4')) {
+          wx.showToast({
+            icon: 'none',
+            title: '上传视频只能是mp4格式!',
+            duration: 1000
+          })
+          return false
+        }
+        wx.hideToast()
+        let tempFilePaths = res.tempFilePath.split(',')
+        self.uploadImage(tempFilePaths)
+      }
+    })
+		// this.imgList = []
+  }
+  methods = {
+    clickVideo(url) {
+      this.$emit('videDetail', url)
+    },
+    showModal() {
+			// 显示遮罩层
+      let that = this
+      wx.showActionSheet({
+        itemList: ['视频', '图片'],
+        success(res) {
+          if (res.tapIndex == 0) {
+            that.addVideo()
+          } else {
+            that.addImage()
+          }
+        },
+        fail(res) {
+        }
+      })
+    },
+		// 预览图片
+    previewImage(index) {
+      let newArr = []
+      for (var i = 0; i < this.imgList.length; i++) {
+        if (this.imgList[i].img) {
+          newArr.push(this.imgList[i].img)
+        }
+      }
+      wx.previewImage({
+        urls: newArr,
+        current: index
+      })
+    },
+	// 删除图片
+    deleteImage(index, video) {
+      this.imgList.splice(index, 1)
+      if (this.imgList.length == 0) {
+        this.imgList = []
+        // this.videsh = false
+	    }
+    }
+  }
+  events = {}
+  onLoad() {
+  }
+}
+</script>
+
+<template>
+	<view>
+		<view class='upload_list'>
+			<repeat
+			 for='{{ imgList }}'
+			 item='item'
+			 index="index"
+			>
+				<view class='upload_list_item'>
+					<view
+					 wx:if="{{item.img}}"
+					 class="hiddenVideo"
+					 style="background-image:url({{ item.img }});border-radius:10rpx;background-size:cover;background-position:center center"
+					 @tap='previewImage({{ item.img }})'
+					>
+					</view>
+					<view
+					 class="hiddenVideo"
+					 wx:if="{{item.video}}"
+					>
+						<video
+						 controls="{{controls}}"
+						 show-fullscreen-btn='{{controls}}'
+						 show-play-btn="{{controls}}"
+						 show-center-play-btn="{{controls}}"
+						 show-progress="{{controls}}"
+						 enable-progress-gesture="{{controls}}"
+						 custom-cache="{{controls}}"
+						 object-fit='cover'
+						 style='width :100%; height : 100%;border-radius:10rpx'
+						 class='upload_list_item_img'
+						 data-index='{{ index }}'
+						 data-src='{{ item.video }}'
+						 src='{{ item.video}}'
+						></video>
+						<view class="viewPs">
+							<image
+							 class="imgA"
+							 src="http://img.ishanshan.com/gimg/n/20190802/3d507eb0663a4904849084bc1b8529db"
+							 @tap='clickVideo({{ item.video }})'
+							/>
+						</view>
+					</view>
+
+					<view
+					 class='delete_img'
+					 @tap='deleteImage({{ index }},{{ item.video }})'
+					>
+						<image
+						 class="CHAimg"
+						 src="http://img.ishanshan.com/gimg/n/20190802/a7e148e3cbb13a2ec87f9fc28702df30"
+						 alt=""
+						>
+					</view>
+
+				</view>
+			</repeat>
+			<view
+			 hidden='{{ imgList.length >= maxLength }}'
+			 class='upload_add'
+			 style="margin-left:{{imgList.length == minL ? 2+'%' : 0}}"
+			 @tap='showModal'
+			>
+			</view>
+		</view>
+	</view>
+</template>

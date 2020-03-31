@@ -1,0 +1,100 @@
+<style lang = "less" src = 'audition.less' scoped></style>
+<script>
+  import wepy from 'wepy'
+  import { serviceRequest } from '../../../../utils/request'
+  import auditionOfTrainees from './components/auditionOfTrainees/auditionOfTrainees'
+  import auditionOfClasses from './components/auditionOfClasses/auditionOfClasses'
+  export default class audition extends wepy.page {
+    config = {
+      navigationBarTitleText: '预约试听'
+    }
+    components={
+      auditionOfTrainees,
+      auditionOfClasses
+    }
+    onShareAppMessage(res) {
+      return {
+        title: '闪闪云校, 一站式早教管理云平台',
+        path: '/pages/initPage/initPage',
+        imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+        success: function (res) {
+          wx.showToast({ title: '转发成功', icon: 'success', duration: 1000 })
+        },
+        fail: function (res) {
+        }
+      }
+    }
+    onLoad(option){
+      this.cpmId=option.cpmId;
+      this.cpdId=option.cpdId;
+      this.startTime=option.startTime;
+      this.endTime=option.endTime;
+      this.studyDate=option.studyDate;
+      this.courseName=option.courseName;
+
+      wx.showLoading({title: '加载中'});
+      {
+        let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/crm/stuInfo/clue/appointmentStuQuery`;
+        let params={
+          pageSize: 99999,
+          type: "2"
+        }
+        serviceRequest( url, params ).then((ret) => {
+          wx.hideLoading();
+          if( ret && (ret.errorCode == 0) ){
+            ret.results.map(data=>{
+              return data.checked=false;
+            })
+            this.trainees=ret.results;
+            this.$apply();
+          }else{
+            wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+          }
+        })
+      }
+    }
+    data={
+      cpmId:'',
+      cpdId:'',
+      startTime:'',
+      endTime:'',
+      studyDate:'',
+      courseName:'',
+      type:0,
+      trainees:[],
+      classes:[]
+    }
+    methods={
+      changeType(index){
+        if(index == 1 && this.classes.length == 0){
+          wx.showLoading({title: '加载中'});
+          let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/crm/stuInfo/clue/ClueStuSummaryQuery`;
+          serviceRequest( url, {} ).then((ret) => {
+            wx.hideLoading();
+            if( ret && (ret.errorCode == 0) ){
+              this.classes=ret.list;
+              this.$apply();
+            }else{
+              wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+            }
+          })
+        }
+        this.$invoke('auditionOfTrainees','init')
+        this.$invoke('auditionOfClasses','init')
+        this.type = index ;
+      }
+    }
+  }
+</script>
+<template>
+  <view style="height:100%;">
+    <view class="tapItemWrapper">
+      <view class="tapItem{{type == 0 ? ' active' : ''}}" @tap="changeType(0)">预约学员<view class="posLine"></view></view>
+      <view class="tapItem{{type == 1 ? ' active' : ''}}" @tap="changeType(1)">预约名单<view class="posLine"></view></view>
+    </view>
+    <view style="height:calc(100% - 178rpx);">
+      <auditionOfTrainees wx:if="{{type == 0}}" :list.sync="trainees" :cpmId.sync="cpmId" :cpdId.sync="cpdId" :startTime.sync="startTime" :endTime.sync="endTime" :studyDate.sync="studyDate" :courseName.sync="courseName"></auditionOfTrainees>
+      <auditionOfClasses wx:if="{{type == 1}}" :list.sync="classes" :cpmId.sync="cpmId" :cpdId.sync="cpdId" :startTime.sync="startTime" :endTime.sync="endTime" :studyDate.sync="studyDate" :courseName.sync="courseName"></auditionOfClasses>
+    </view>
+  </view>
+</template>

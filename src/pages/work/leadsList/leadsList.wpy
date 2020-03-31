@@ -1,0 +1,874 @@
+<template>
+  <view style='position:relative'>
+    <view style='overflow : hidden; width : 100%; height : 100%'>
+      <!-- 搜索头部 -->
+      <commonSearch :placeholder.sync='placeholder' />
+      <!-- 搜索头部 -->
+      <scroll-view scroll-y lower-threshold='50' bindscrolltolower='scrollToLower' class="list_wrap">
+        <checkbox-group bindchange='checkboxChange'>
+          <repeat for='{{ list }}' item='item'>
+            <view class='list_item' hover-class='list_item_hover' hidden='{{ item.isHidden }}'>
+              <view class='list_item_item'>
+                <label class='list_item_checkbox'>
+                    <view class = "{{ item.checked ? 'list_item_checked' : 'list_item_not_checked' }}" ></view>
+                    <checkbox style = 'display : none' color = '#5D9CEC' checked = '{{ item.checked }}' value = '{{ item.id }}' />
+                  </label>
+                <view class='list_item_content' @tap='clickToLeadsDetail({{ item }})'>
+                  <view class='list_item_content_top'>
+                    <view class='list_item_content_name'>{{ item.name }}</view>
+                    <view hidden='{{ !item.studentFollowStateName }}' class='list_item_content_status'>{{ item.studentFollowStateName }}</view>
+                  </view>
+                  <view class='list_item_content_bottom'>
+                    <text style='padding-right : 20rpx;'>最后跟进 : {{ item.time || '暂无' }}</text>
+                    <text hidden="{{ routeType == 'sea' }}" style='padding-left : 20rpx;' class='list_item_content_sale'>{{ (!!item.sellerName && item.sellerName + '负责') || '暂无负责人' }}</text>
+                  </view>
+                  <view class='list_item_content_bottom' hidden="{{ routeType=='sea' }}">
+                    <text style='padding-right : 20rpx;'>重要程度 : {{ item.importance || '暂无' }}</text>
+                  </view>
+                </view>
+                <view hidden='{{ !!item.parentList && item.parentList.length==0}}' class='list_item_mobile' @tap='clickToPhone({{ item }})'>
+                </view>
+              </view>
+            </view>
+          </repeat>
+        </checkbox-group>
+        <view hidden="{{ list.length !== 0 }}" class='blank_data_page'>
+          <blankDataPage title='无搜索结果' />
+        </view>
+        <view class='loading' style="background: #fff;" hidden='{{ !searchLoading }}'>拼命加载中...</view>
+        <view class='loading' style="background: #fff;" hidden='{{ !searchLoadingComplete }}'>--我是有底线的--</view>
+      </scroll-view>
+      <!-- 操作底部 -->
+      <view wx:if="{{ selectedList.length > 0 ? true : false }}" class="operation_block">
+        <view class='select_num'>{{ '已选' + selectedList.length + '个' }}</view>
+        <view hidden="{{shiftDelete !='402000009'}}">
+          <button class='leads_delete' @tap.stop='deleteLeads' hover-class='btn_reset_hover' hidden="{{ routeType == 'my' && !wetherDelete }}">删除</button>
+        </view>
+        <view hidden="{{alloCation !='402000006'}}">
+          <button hidden="{{ routeType === 'sea' }}" class='leads_distribute' hover-class='btn_save_hover' @tap.stop='leadsDispatch' hidden="{{ routeType == 'my' && !wetherDelete }}">分配</button>
+        </view>
+        <view hidden="{{fishFor !='402000012'}}">
+          <button hidden="{{ routeType !== 'sea' }}" class='leads_distribute' hover-class='btn_save_hover' @tap.stop='getLeadsFromSea'>捞取</button>
+        </view>
+      </view>
+      <view wx:if="{{ selectedList.length > 0 ? false : true }}" class="operation_block_add">
+        <button class="btn_app_silp" hidden="{{ addLaentHidden != '402000001' }}" @tap.stop='lurking_appsilp'>添加名单</button>
+      </view>
+      <!-- 操作底部 -->
+    </view>
+    <!--
+              <view class='hidden_modal_con' hidden = '{{ !hiddenModalVisible }}'>
+                  <view class='hidden_modal'>
+                      <view class='hidden_modal_list'>
+                          <repeat for = '{{ parentList }}' item = 'item'>
+                              <view class = 'hidden_modal_list_item' @tap = 'callToPhone({{item.parentMobile}})'>
+                                  <view class = 'hidden_modal_list_item_label'>{{ item.parentName }}</view>
+                                  <view class = 'hidden_modal_list_item_value'>{{ item.parentMobile }}</view>
+                              </view>
+                          </repeat>
+                      </view>
+                      <view class='hidden_modal_cancel' @tap = 'closeToPhone()'>取消</view>
+                  </view>
+              </view>
+          -->
+    <view>
+      <view hidden='{{ !superSearchVisible }}' class='super_search_wrap' @tap='closeSuperSearch'></view>
+      <view class="{{ superSearchVisible ? 'super_search_block open_superSearch' : 'super_search_block' }}">
+        <form bindsubmit='confirmSuperSearch' bindreset='resetSuperSearch'>
+          <view class='super_search_item_div'>
+            <view class='super_search_item' hidden="{{ routeType === 'sea' }}">
+              <view class='super_search_item_label'>名单类型</view>
+              <view class='super_search_item_content'>
+                <radio-group name='panelType' bindchange='panelTypeChange'>
+                  <repeat for='{{ panelTypeList }}'>
+                    <label class='super_search_label'>
+                                              <radio color = '#5d9cec' class = 'super_search_item_radio' value = '{{ item.key }}' />
+                                              <view class = "{{ item.key == panelTypeChecked ? 'super_search_value super_search_select' : 'super_search_value' }}" >{{ item.value }}</view>
+                                          </label>
+                  </repeat>
+                </radio-group>
+              </view>
+            </view>
+            <view class='super_search_item'>
+              <view class='super_search_item_label'>跟进状态</view>
+              <view class='super_search_item_content'>
+                <radio-group name='studentFollowState' bindchange='statusChange'>
+                  <repeat for='{{ followStatusList }}'>
+                    <label class='super_search_label'>
+                                              <radio color = '#5d9cec' class = 'super_search_item_radio' value = '{{ item.key }}' />
+                                              <view class = "{{ item.key == statusChecked ? 'super_search_value super_search_select' : 'super_search_value' }}" >{{ item.value }}</view>
+                                          </label>
+                  </repeat>
+                </radio-group>
+              </view>
+            </view>
+            <view class='super_search_item'>
+              <view class='super_search_item_label'>一级来源</view>
+              <view class='super_search_item_content'>
+                <radio-group name='firstChannel' bindchange='sourceChange'>
+                  <repeat for='{{ firstChannelList }}'>
+                    <label class='super_search_label'>
+                                              <radio color = '#5d9cec' class = 'super_search_item_radio' value = '{{ item.key }}' />
+                                              <view class = "{{ item.key == sourceChecked ? 'super_search_value super_search_select' : 'super_search_value' }}" >{{ item.value }}</view>
+                                          </label>
+                  </repeat>
+                </radio-group>
+              </view>
+            </view>
+            <view class='super_search_item' hidden="{{ routeType=='sea' }}">
+              <view class='super_search_item_label'>重要程度</view>
+              <view class='super_search_item_content'>
+                <radio-group name='importance' bindchange='importChange'>
+                  <repeat for='{{ importStatusList }}'>
+                    <label class='super_search_label'>
+                                              <radio color = '#5d9cec' class = 'super_search_item_radio' value = '{{ item.key }}' />
+                                              <view class = "{{ item.key == importChecked ? 'super_search_value super_search_select' : 'super_search_value' }}" >{{ item.value }}</view>
+                                          </label>
+                  </repeat>
+                </radio-group>
+              </view>
+            </view>
+            <view class='super_search_item' hidden="{{ routeType=='sea' }}">
+              <view class='super_search_item_label'>到访时间</view>
+              <view class='super_search_item_content'>
+                <radio-group name='visitTime' bindchange='visitTimeChange'>
+                  <repeat for='{{ visitTimeList }}'>
+                    <label class='super_search_label'>
+                                              <radio color = '#5d9cec' class = 'super_search_item_radio' value = '{{ item.key }}' />
+                                              <view class = "{{ item.key == visitTimeChecked ? 'super_search_value super_search_select' : 'super_search_value' }}" >{{ item.value }}</view>
+                                          </label>
+                  </repeat>
+                </radio-group>
+              </view>
+              <view class="super_search_item_time" hidden="{{ visitTimeChecked!='defined' }}">
+
+                 <view class="super_select_time">
+                  <view class="super_select_time_left">
+                    <picker mode="date" value="{{beginTime}}" bindchange="beginTimeChange" class='picker' style='height : 42rpx;'>
+                      <view wx:if="{{ beginTime != null ? true : false }}" class='super_select_time_left_date' style="color: #666">
+                        {{ beginTime}}
+                      </view>
+                      <view wx:if="{{ beginTime != null ? false : true }}" class='super_select_time_left_date'>
+                      选择开始时间
+                      </view>
+                    </picker>
+                  </view>
+                  <view class="super_select_time_mid">~</view>
+                  <view class="super_select_time_right">
+                    <picker mode="date" value="{{endTime}}" bindchange="endTimeChange" class='picker' style='height : 42rpx;'>
+                      <view wx:if="{{ endTime != null ? true : false }}" class='super_select_time_right_date' style="color: #666">
+                        {{ endTime}}
+                      </view>
+                      <view  wx:if="{{ endTime != null ? false : true }}" class='super_select_time_right_date'>
+                        选择结束时间
+                      </view>
+                    </picker>
+                  </view>
+                </view>
+
+              </view>
+            </view>
+          </view>
+          <view class='super_search_btn_group'>
+            <button class='super_reset_btn' hover-class='btn_reset_hover' form-type='reset'>重置</button>
+            <button class='super_confirm_btn' hover-class='btn_save_hover' form-type='submit'>搜索</button>
+          </view>
+        </form>
+      </view>
+    </view>
+  </view>
+</template>
+<style lang = "less" src = 'leadsList.less'>
+
+</style>
+
+<script>
+  import wepy from 'wepy';
+  import moment from 'moment';
+  import {
+    serviceRequest
+  } from '../../../utils/request';
+  import CommonSearch from '../../../components/commonSearch/commonSearch'; //常用搜索
+  import BlankDataPage from '../../../components/blankDataPage/blankDataPage'; //空数据页面
+  export default class LeadsList extends wepy.page {
+    config = {
+      navigationBarTitleText: '公海池'
+    }
+    data = {
+      shiftDelete: '', //彻底删除按钮
+      alloCation: '', //分配按钮
+      fishFor: '', //捞取按钮
+      addLaentHidden: '', //添加名单按钮
+      comeAdd: '', //从哪里过来添加名单
+      condition                       : undefined,                 //判断全部名单以及我的名单
+      routeType: undefined, //判断是 从我的名单全部名单或 公海池进入
+      nameOrMobile: undefined, //手机号或姓名搜索
+      studentFollowState: undefined, //跟进状态搜索
+      firstChannel: undefined, //一级来源搜索
+      importance: undefined, //重要程度搜索
+      selectedList: [], //选中的列表数据
+      beforeSelectedList: [], // 选中的列表之前的数据
+      checkSelect: [], // 点击选择的数组数据
+      list: [], //列表数据
+      resultCount: 28, //列表数据总数
+      pageIndex: 0, //数据页面
+      pageSize: 10, //每页数据数量
+      searchLoading: false, //下拉记载更多
+      searchLoadingComplete: false, //加载完毕
+      //搜索属性
+      placeholder: '请输入姓名/手机号搜索',
+      //高级搜索
+      superSearchVisible: false,
+      //跟进状态
+      statusChecked: undefined,
+      followStatusList: [],
+      //一级来源
+      sourceChecked: undefined,
+      firstChannelList: [],
+      //重要程度
+      importChecked: undefined,
+      importStatusList: [],
+      //到访时间
+      visitTimeList: [{
+          key: '-1',
+          value: '不限'
+        },
+        {
+          key: 'today',
+          value: '今日'
+        },
+        {
+          key: 'tomorrow',
+          value: '明日'
+        },
+        {
+          key: 'defined',
+          value: '自定义'
+        }
+      ],
+      visitTimeChecked: undefined,
+      beginTime: undefined,
+      beginTimeVisible: undefined,
+      endTime: undefined,
+      endTimeVisible: undefined,
+      //查询我的名单是否显示操作按钮
+      wetherDelete: true,
+      wetherTranOther: true,
+      hiddenModalVisible: false,
+      parentList: [],
+      // 名单类型
+      panelTypeList: [{
+          key: 'all',
+          value: '全部名单'
+        },
+        {
+          key: 'my',
+          value: '我的名单'
+        }
+      ],
+      panelTypeChecked: 'all', // 名单类型选择
+    }
+    onShareAppMessage(res) {
+      return {
+        title: '闪闪云校, 一站式早教管理云平台',
+        path: '/pages/initPage/initPage',
+        imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+        success: function(res) {
+          wx.showToast({
+            title: '转发成功',
+            icon: 'success',
+            duration: 1000
+          })
+        },
+        fail: function(res) {}
+      }
+    }
+    //自定义方法
+    //获取名单列表 数据
+    getLeadsList(params) {
+      wx.showLoading({
+        title: '加载中',
+        mask: true
+      })
+      this.searchLoadingComplete = false; //去掉 已加载全部
+      //公海池 列表 与全部名单列表 调用不同接口
+      let url = this.routeType == 'sea' ? `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/queryFromPool` : `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/queryClueList`;
+      //进入名单列表 得到列表数据
+      serviceRequest(url, params).then((ret) => {
+        if (!!ret && ret.errorCode === 0) {
+          wx.hideLoading()
+          this.list = this.followTimeArrs(ret.results);
+          this.resultCount = ret.data.resultCount;
+          this.nameOrMobile = params.nameOrMobile;
+          this.studentFollowState = params.studentFollowState;
+          this.firstChannel = params.firstChannel;
+          this.importance = params.importance;
+          this.pageIndex = params.pageIndex;
+          this.selectedList = []; //清空 所选名单
+          this.$apply();
+        } else {
+          wx.hideLoading()
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          return;
+        }
+      })
+    };
+    // 按钮隐藏
+    buttonHidden() {
+      const btnList = wx.getStorageSync('session').btnPermis.split(',');
+      btnList.filter(item => {
+        if (item === '402000001') {
+          this.addLaentHidden = '402000001'
+        }
+        if (item === '402000009') {
+          this.shiftDelete = '402000009'
+        }
+        if (item === '402000006') {
+          this.alloCation = '402000006'
+        }
+        if (item === '402000012') {
+          this.fishFor = '402000012'
+        }
+      })
+    };
+    //初始化进入页面
+    onLoad(query) {
+      this.buttonHidden();
+      if (query.key == 'crm_leads') { //潜在名单 进入
+        wx.setNavigationBarTitle({
+          title: '潜在学员'
+        })
+        // this.condition = 'my';
+        this.routeType = 'my';
+      } else if (query.key == 'crm_leads_sea') {
+        wx.setNavigationBarTitle({
+          title: '公海池'
+        });
+        this.routeType = 'sea';
+      }
+      
+      let followStatusList = this.$parent._init_data.followStatusList;     //跟进状态 下拉列表
+      let firstChannelList = this.$parent._init_data.firstChannelList;     //一级来源 下拉列表
+      let importStatusList = this.$parent._init_data.importStatusList;     //重要程度 下拉列表
+      this.followStatusList = [ { key : '-1', value : '不限' }, ...followStatusList ];
+      this.firstChannelList = [ { key : '-1', value : '不限' }, ...firstChannelList ];
+      this.importStatusList = [ { key : '-1', value : '不限' }, ...importStatusList ];
+      this.statusChecked = '-1';
+      this.sourceChecked = '-1';
+      this.importChecked = '-1';
+      this.visitTimeChecked = '-1';
+      this.panelTypeChecked = 'all';
+
+      let params = {
+        status: this.routeType == 'sea' ? undefined : 1,
+        condition : this.condition,
+        pageIndex: 0,
+        pageSize: 12,
+      }
+      this.getLeadsList(params);
+      //查询我的名单是否显示操作按钮
+      let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/my/button/showList`;
+      serviceRequest(url).then((ret) => {
+        if (!!ret && ret.errorCode === 0) {
+          let lists = ret.dataInfo;
+          for (let i in lists) {
+            if (lists[i].key == 'delete') {
+              this.wetherDelete = lists[i].show;
+            } else if (lists[i].key == 'tranOther') {
+              this.wetherTranOther = lists[i].show;
+            }
+          }
+          this.$apply();
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          return;
+        }
+      })
+    }
+    //页面 出现时调用
+    onShow() {
+      // // 页面刷新
+      // let getListParams = {
+      //   status: this.routeType == 'sea' ? undefined : 1,
+      //   pageIndex: 0,
+      //   pageSize: 12,
+      // }
+      // this.getLeadsList(getListParams);
+      wx.hideLoading()
+      let currentItem = wx.getStorageSync('currentItem'); //若更改 名单详情 则存下
+      if (!!currentItem) {
+        for (let i = 0; i < this.list.length; i++) {
+          let item = this.list[i];
+          if (item.id === currentItem.id) {
+            if (currentItem.addType === '2' && this.routeType === 'sea') { //若在公海池列表进入 将其更改为有销售 则直接将当前数据隐藏
+              this.list[i].isHidden = true;
+            } else if (currentItem.addType === '1' && this.routeType === 'my') {
+              //若在我的名单列表进入详情 更改为放入公海 则直接将当前数据隐藏
+              this.list[i].isHidden = true;
+            } else if (currentItem.addType == '2' && this.routeType === 'my' && item.sellerId != currentItem.sellerId) {
+              this.list[i].isHidden = true;
+            } else { //将详情里更改的数据 替换
+              this.list[i].name = currentItem.name;
+              this.list[i].sex = currentItem.sex;
+              this.list[i].sellerName = currentItem.sellerName;
+              this.list[i].mobile = currentItem.parentMobile;
+              this.list[i].parentName = currentItem.parentName;
+              this.list[i].importance = currentItem.importanceName;
+              // 一级来源 与 跟进状态 未重新赋值
+            }
+          }
+        }
+        this.$apply();
+        wx.removeStorageSync('currentItem');
+      }
+      let backToPublic = wx.getStorageSync('backToPublic'); //若从全部名单 退回公海则数据不隐藏
+      let currentLeadId = wx.getStorageSync('currentLeadId'); //若在详情里面做了 删除 退回公海 捞取操作 则存下leadId 将当前数据前端隐藏
+      if (!!currentLeadId) {
+        for (let i = 0; i < this.list.length; i++) {
+          let item = this.list[i];
+          if (item.id === currentLeadId) {
+            if (!!backToPublic && !this.routeType) { //全部名单 退回公海
+              this.list[i].sellerName = '';
+            } else {
+              this.list[i].isHidden = true;
+            }
+          }
+        }
+        this.$apply();
+        wx.removeStorageSync('currentLeadId');
+        wx.removeStorageSync('backToPublic');
+      }
+      //分配操作
+      let sellerNameDispatch = wx.getStorageSync('sellerNameDispatch');
+      if (!!sellerNameDispatch) {
+        if (this.routeType === 'sea') { //若从公海池进入分配，则将分配出去的名单隐藏
+          for (let j = 0; j < this.selectedList.length; j++) {
+            for (let i = 0; i < this.list.length; i++) {
+              let item = this.list[i];
+              if (this.selectedList[j] === item.id) {
+                this.list[i].isHidden = true;
+                this.list[i].checked = false;
+              }
+            }
+          }
+          this.selectedList = [];
+          this.$apply();
+        } else { //若从潜在名单进入 分配, 则将分配的负责人更换
+          for (let j = 0; j < this.selectedList.length; j++) {
+            for (let i = 0; i < this.list.length; i++) {
+              let item = this.list[i];
+              if (this.selectedList[j] === item.id) {
+                this.list[i].sellerName = sellerNameDispatch;
+                this.list[i].checked = false;
+              }
+            }
+          }
+          this.selectedList = [];
+          this.$apply();
+        }
+        wx.removeStorageSync('sellerNameDispatch');
+      }
+      //是否新增了跟进记录 改变最后跟进时间
+      let isChangeFollowTime = wx.getStorageSync('isChangeFollowTime');
+      let isChangeFollowTimeId = wx.getStorageSync('isChangeFollowTimeId');
+      if (!!isChangeFollowTime && !!isChangeFollowTimeId) {
+        for (let i = 0; i < this.list.length; i++) {
+          let item = this.list[i];
+          if (item.id === isChangeFollowTimeId) {
+            let minutes = moment().diff(moment(isChangeFollowTime), 'minutes');
+            if (minutes < 60) {
+              item.time = minutes + '分钟前';
+            } else if (60 <= minutes && minutes < 1440) {
+              item.time = Math.floor(minutes / 60) + '小时前';
+            } else if (1440 <= minutes && minutes < 525600) {
+              item.time = Math.floor(minutes / 1440) + '天前'
+            } else {
+              item.time = Math.floor(minutes / (60 * 24 * 365)) + '年前'
+            }
+            this.list[i] = item;
+          }
+        }
+        wx.removeStorageSync('isChangeFollowTime');
+        wx.removeStorageSync('isChangeFollowTimeId');
+      }
+    }
+    //最后跟进时间 处理
+    followTimeArrs(arrs) {
+      let currentTime = moment().format('YYYY-MM-DD HH:mm:ss');
+      !!arrs && arrs.length > 0 && arrs.map(function(item, index) {
+        if (!!item.followRecordTime) {
+          let minutes = moment().diff(moment(item.followRecordTime), 'minutes');
+          if (minutes < 60) {
+            item.time = minutes + '分钟前';
+          } else if (60 <= minutes && minutes < 1440) {
+            item.time = Math.floor(minutes / 60) + '小时前';
+          } else if (1440 <= minutes && minutes < 525600) {
+            item.time = Math.floor(minutes / 1440) + '天前'
+          } else {
+            item.time = Math.floor(minutes / (60 * 24 * 365)) + '年前'
+          }
+        }
+      })
+      return arrs;
+    }
+    methods = {
+      // 潜在名单进入
+      lurking_appsilp() {
+        wx.navigateTo({
+          url: `../addLeads/addLeads?routeType=${ this.routeType }`
+        })
+      },
+      //上拉加载更多
+      scrollToLower(e) {
+        if (!this.searchLoading) {
+          this.searchLoading = true; //设置为加载状态
+          let {
+            list,
+            resultCount,
+            condition,
+            pageIndex
+          } = this; //列表数据 总数据 全部或我的 分页
+          let url = this.routeType == 'sea' ? `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/queryFromPool` : `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/queryClueList`;
+          let params = {
+            nameOrMobile: this.nameOrMobile, //手机号或姓名搜索
+            studentFollowState: this.studentFollowState, //跟进状态搜索
+            firstChannel: this.firstChannel, //一级来源搜索
+            importance: this.importance, //重要程度搜索
+            pageIndex: ++pageIndex,
+            status: this.routeType == 'sea' ? undefined : 1,
+            pageSize: 12,
+            condition,
+          }
+          if (list.length >= resultCount) {
+            this.searchLoadingComplete = true;
+            this.searchLoading = false; //设置为加载状态
+          } else {
+            serviceRequest(url, params).then((ret) => {
+              if (ret && ret.errorCode == 0) {
+                let newList = [...list, ...ret.results];
+                this.list = this.followTimeArrs(newList);
+                this.searchLoading = false;
+                this.pageIndex = pageIndex;
+                this.$apply();
+              } else {
+                wx.showModal({
+                  content: ret.errorMessage || '网络异常',
+                  showCancel: false,
+                  confirmColor: '#5d9cec'
+                });
+              }
+            });
+          }
+        }
+      },
+      //高级搜索 选择
+      statusChange(e) {
+        this.statusChecked = e.detail.value;
+      },
+      // 名单类型选择
+      panelTypeChange(e) {
+        this.panelTypeChecked = e.detail.value;
+      },
+      sourceChange(e) {
+        this.sourceChecked = e.detail.value;
+      },
+      importChange(e) {
+        this.importChecked = e.detail.value;
+      },
+      visitTimeChange(e) {
+        if (e.detail.value == 'today') {
+          this.beginTime = moment().format('YYYY-MM-DD');
+          this.endTime = moment().format('YYYY-MM-DD');
+        } else if (e.detail.value == 'tomorrow') {
+          this.beginTime = moment().add(1, 'days').format('YYYY-MM-DD');
+          this.endTime = moment().add(1, 'days').format('YYYY-MM-DD');
+        } else if (e.detail.value == 'defined') {
+          this.beginTime = null;
+          this.endTime = null;
+        }
+        this.visitTimeChecked = e.detail.value;
+      },
+      //到访开始时间事件
+      beginTimeChange(e) {
+        this.beginTime = e.detail.value;
+      },
+      endTimeChange(e) {
+        this.endTime = e.detail.value;
+      },
+      //关闭高级搜索
+      closeSuperSearch(e) {
+        this.superSearchVisible = false;
+      },
+      //高级搜索 搜索
+      confirmSuperSearch(e) {
+        let values = e.detail.value;
+        let params = {
+          // condition          : this.condition,
+          status: this.routeType == 'sea' ? undefined : 1,
+          pageIndex: 0,
+          pageSize: 12,
+          nameOrMobile: this.nameOrMobile, //手机号或姓名搜索
+          studentFollowState: values.studentFollowState === '-1' ? undefined : values.studentFollowState, //跟进状态搜索
+          firstChannel: values.firstChannel === '-1' ? undefined : values.firstChannel, //一级来源搜索
+          importance: values.importance === '-1' ? undefined : values.importance, //重要程度
+          beginTime: values.visitTime == '-1' ? undefined : this.beginTime, //到访开始时间
+          endTime: values.visitTime == '-1' ? undefined : this.endTime, //到访结束时间
+          condition: values.panelType, // 是否是全部或者我的名单
+        }
+        this.condition = values.panelType
+        if (values.visitTime == 'defined') {
+          if (this.beginTime == null) {
+            wx.showModal({
+              content: '请选择开始时间',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          } else if (this.endTime == null) {
+            wx.showModal({
+              content: '请选择结束时间',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          }
+        }
+        if (!!this.beginTime && !!this.endTime && (moment(this.beginTime) > moment(this.endTime))) {
+          wx.showModal({
+            content: '开始时间不能大于结束时间',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          return;
+        }
+        this.getLeadsList(params);
+        this.superSearchVisible = false;
+      },
+      //高级搜索 重置
+      resetSuperSearch() {
+        this.statusChecked = '-1';
+        this.sourceChecked = '-1';
+        this.importChecked = '-1';
+        this.visitTimeChecked = '-1';
+        this.panelTypeChecked = 'all';
+        let params = {
+          condition          : null,
+          status: this.routeType == 'sea' ? undefined : 1,
+          pageIndex: 0,
+          pageSize: 12,
+          nameOrMobile: this.nameOrMobile, //手机号或姓名搜索
+        }
+        this.getLeadsList(params);
+        this.superSearchVisible = false;
+      },
+      //拨打电话
+      clickToPhone(item, e) {
+        //this.hiddenModalVisible = true;
+        this.parentList = item.parentList;
+        let parentNameList = [];
+        !!item.parentList && item.parentList.map((item1, index1) => {
+          parentNameList.push(item1.parentName + ':' + item1.parentMobile);
+        })
+        wx.showActionSheet({
+          itemList: parentNameList,
+          success: function(ret1) {
+            let tapIndex = ret1.tapIndex;
+            !!item.parentList && item.parentList.map((item2, index2) => {
+              if (tapIndex == index2) {
+                wx.makePhoneCall({
+                  phoneNumber: item2.parentMobile
+                })
+              }
+            })
+          }
+        })
+      },
+      //            //关闭电话弹窗
+      //            closeToPhone(){
+      //                this.hiddenModalVisible = false;
+      //            },
+      //            //拨打电话
+      //            callToPhone(mobile){
+      //                wx.makePhoneCall({
+      //          phoneNumber : mobile
+      //        })
+      //            },
+    //选择 操作项
+      checkboxChange(e) {
+        if (this.beforeSelectedList.length > 0) { // 删除后还存有之前的选择数据
+          this.checkSelect = e.detail.value;
+          let selectedList = e.detail.value;
+          let beforeSelectedList = this.beforeSelectedList;
+          selectedList.forEach((item, index) => {
+            for(let i=0; i < beforeSelectedList.length; i++  ) {
+              this.checkSelect.splice(index, 1)
+            }
+          })
+        } else {
+          this.checkSelect = e.detail.value;
+        }
+        let list = this.list;
+        for (let i = 0; i < list.length; i++) {
+          let item = list[i];
+          if (this.checkSelect.indexOf(item.id) != -1) {
+            list[i].checked = true
+          } else {
+            list[i].checked = false
+          }
+        }
+        this.list = list;
+        this.selectedList = this.checkSelect;
+      },
+      //将名单删除放入回收站
+      deleteLeads() {
+        let self = this;
+        let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/recycle`;
+        let clueIds = this.selectedList.join(',');
+        const recycleParams = {
+          stuIds: clueIds,
+          stauts: '3' // 1是还原,3是删除
+        };
+        wx.showModal({
+          content: '确定要将名单放入回收站？',
+          confirmColor: '#5d9cec',
+          success: function(res) {
+            if (res.confirm) {
+              serviceRequest(url, recycleParams).then((ret) => {
+                if (!!ret && ret.errorCode === 0) {
+                  wx.showToast({
+                    title: '放入回收站成功',
+                    icon: 'success',
+                    duration: 1000
+                  });
+                  //删除成功后前端隐藏 列表数据
+                  for (let j = 0; j < self.selectedList.length; j++) {
+                    for (let i = 0; i < self.list.length; i++) {
+                      let item = self.list[i];
+                      if (self.selectedList[j] === item.id) {
+                        self.list[i].isHidden = true;
+                      }
+                    }
+                  }
+                  self.beforeSelectedList = self.selectedList;
+                  self.selectedList = [];
+                  self.$apply();
+                } else {
+                  wx.showModal({
+                    content: ret.errorMessage || '网络异常',
+                    showCancel: false,
+                    confirmColor: '#5d9cec'
+                  });
+                  return;
+                }
+              })
+            }
+          }
+        })
+      },
+      //将名单分配给销售
+      leadsDispatch() {
+        let length = this.selectedList.length;
+        let stuIds = this.selectedList.join(',');
+        let routeType = this.routeType
+        wx.navigateTo({
+          url: `../leadsDispatch/leadsDispatch?num=${ length }&stuIds=${ stuIds }&routeType=${routeType}`
+        })
+      },
+      //从公海池 捞取名单
+      getLeadsFromSea() {
+        let self = this;
+        let stuIds = this.selectedList.join(','); //所选名单
+        let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/UpdateClue`;
+        wx.showModal({
+          content: '确定从公海池捞取？',
+          confirmColor: '#5d9cec',
+          success: function(res) {
+            if (res.confirm) {
+              wx.showLoading({
+                title: '加载中',
+                mask: true
+              });
+              serviceRequest(url, {
+                stuIds
+              }).then((ret) => {
+                if (!!ret && ret.errorCode === 0) {
+                  wx.hideLoading();
+                  wx.showToast({
+                    title: '捞取成功',
+                    icon: 'success',
+                    duration: 1000
+                  });
+                  //捞取成功后前端隐藏 列表数据
+                  for (let j = 0; j < self.selectedList.length; j++) {
+                    for (let i = 0; i < self.list.length; i++) {
+                      let item = self.list[i];
+                      if (self.selectedList[j] === item.id) {
+                        self.list[i].isHidden = true;
+                      }
+                    }
+                  }
+                  self.beforeSelectedList = self.selectedList;
+                  self.selectedList = [];
+                  self.$apply();
+                } else {
+                  wx.hideLoading();
+                  wx.showModal({
+                    content: ret.errorMessage || '网络异常',
+                    showCancel: false,
+                    confirmColor: '#5d9cec'
+                  });
+                  self.$apply();
+                }
+              })
+            }
+          }
+        })
+      },
+      //点击进入名单详情
+      clickToLeadsDetail(item) {
+        let newStr = { ...item
+        }
+        newStr.name = newStr.name.replace(/\?/, '？')
+        newStr.parentList && newStr.parentList.map(parent => {
+          parent.parentName = parent.parentName.replace(/\?/, '？')
+        })
+        let str = JSON.stringify(newStr);
+        wx.navigateTo({
+          url: `../leadsDetail/leadsDetail?str=${ str }&tabKey=follow&routeType=${ this.routeType }`
+        })
+      }
+    }
+    events = {
+      //点击搜索进行 数据搜索
+      onSearch(value) {
+        let params = {
+          condition          : this.condition,
+          status: this.routeType == 'sea' ? undefined : 1,
+          pageIndex: 0,
+          pageSize: 12,
+          nameOrMobile: value, //手机号或姓名搜索
+          studentFollowState: this.studentFollowState, //跟进状态搜索
+          firstChannel: this.firstChannel, //一级来源搜索
+          importance: this.importance, //重要程度搜索
+        }
+        this.getLeadsList(params);
+      },
+      //高级搜索
+      superSearch() {
+        this.superSearchVisible = true
+      }
+    }
+    components = {
+      commonSearch: CommonSearch,
+      blankDataPage: BlankDataPage
+    }
+  }
+</script>

@@ -1,0 +1,64 @@
+<style lang = "less" src = 'initPage.less' ></style>
+
+<script>
+	import wepy from 'wepy'
+
+	export default class InitPage extends wepy.page {
+		config = {
+			navigationBarTitleText : '闪闪云校'
+		}
+
+		data = {
+
+		}
+
+		components = {
+
+		}
+
+		methods = {
+
+		}
+
+		events = {
+
+		}
+
+		onLoad() {
+
+		}
+
+		onShow() {
+			wx.checkSession({
+        success: function() {
+          setTimeout(() => {
+            let token = wx.getStorageSync('token')
+            if (token) { // 本地还存在 token和openId
+              wx.reLaunch({
+                url: '/pages/tabBar/work/work'
+              })
+            } else {
+              wx.reLaunch({
+                url: '/pages/mime/login/login'
+              })
+            }
+          }, 500)
+          // 登录态 有效
+        },
+        fail: function() {
+          setTimeout(() => {
+            wx.reLaunch({
+              url: '/pages/mime/introduce/introduce'
+            })
+          }, 500)
+        }
+      })
+		}
+	}
+</script>
+
+<template>
+	<view class = 'container' >
+		<view class = 'background' ></view>
+	</view>
+</template>

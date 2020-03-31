@@ -1,0 +1,51 @@
+@import '../../../common.less';
+
+/*每块 头部*/
+.item_title{
+	display : flex;
+	align-items : center;
+	height : 76rpx;
+	padding : 0 20rpx;
+	font-size : @base_font_size;
+	color : @value_color;
+}
+.item_title::before{
+	content : '';
+	display : inline-block;
+	margin-right : 12rpx;
+	width : 10rpx;
+	height : @base_font_size;
+	background : @base_color;
+}
+.item_title_tip{
+	margin-left : 12rpx;
+	color : @base_color;
+	font-size : 24rpx;
+}
+/*每块内容*/
+.item_content{
+	display : flex;
+	justify-content : space-between;
+	height : 226rpx;
+	padding : 30rpx 50rpx;
+	background : @base_background;
+	box-sizing : border-box;
+}
+.item_content_block{
+	width : 120rpx;
+//	background : #ddd;
+}
+.item_content_block_img{
+	width : 120rpx;
+	height : 120rpx;
+	border-radius : @border_radius;
+	overflow : hidden;
+}
+.item_content_block_value{
+	height : @base_font_size;
+	line-height : @base_font_size;
+	text-align : center;
+	margin-top : 20rpx;
+	font-size : @base_font_size;
+	color : @label_color;
+}

@@ -1,0 +1,562 @@
+<template>
+  <view class="container">
+    <view class="mask" wx:if="{{ maskHidden }}">
+      <!-- 选择项目 -->
+      <view class="projectList" wx:if="{{ selectListDateBoolean}}">
+        <repeat for="{{nameList}}" key="index" index="index" item="item">
+          <span @tap="clickProjectOne({{ item }})">
+              {{ item.name }}
+            </span>
+        </repeat>
+        <view class="cancelProjectList" @tap="clickCancelProject">取消</view>
+      </view>
+      <!-- 选择日期 -->
+      <view class="selectDate" wx:if="{{ selectListDateBoolean === false ? true : false}}">
+        <view class="selectDataTop">
+          <repeat for="{{selectArray}}" key="index" index="index" item="item">
+            <view class="{{index === selectDataIndex ? 'selectDateOneActive' : 'selectDateOne'}}" @tap="selectTime({{index}}, {{item.key}}, {{item.value}})">{{ item.value }}</view>
+          </repeat>
+        </view>
+        <!--根据设定的时间选择 -->
+        <view class="selectDateBottom" wx:if="{{detailDisabledPicker}}">
+          <view class='form_item'>
+            <view class='form_item_label' style="color: #CFCFCF">开始时间</view>
+            <view class='form_item_value'>
+              <view class='picker' style='height : 42rpx'>
+                <!-- {{ nextFollowTime }} -->
+              </view>
+              <view class='picker_placeholder'>
+                {{ detailStartDateMoment }}
+              </view>
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label' style="color: #CFCFCF">结束时间</view>
+            <view class='form_item_value'>
+              <view class='picker' style='height : 42rpx'>
+                <!-- {{ nextFollowTime }} -->
+              </view>
+              <view class='picker_placeholder'>
+                {{ detailEndDateMoment }}
+              </view>
+            </view>
+          </view>
+        </view>
+        <!-- 根据年月选择日期 -->
+        <view class="selectDateBottom" wx:if="{{detailYearPicker}}">
+          <view class='form_item'>
+            <view class='form_item_label'>年份</view>
+            <view class='form_item_value'>
+              <picker bindchange="selectYearTime" value="{{index}}" range="{{yearArray}}" class='picker' style='height : 42rpx'>
+                <view class='picker_placeholder' style="color: #666">
+                  {{ detailStartYearShow || '请选择' }}
+                </view>
+              </picker>
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label'>月份</view>
+            <view class='form_item_value'>
+              <picker bindchange="selectMonthTime" value="{{index}}" range="{{monthArray}}" class='picker' style='height : 42rpx'>
+                <view class='picker_placeholder' style="color: #666">
+                  {{ detailStartMonthShow || '请选择' }}
+                </view>
+              </picker>
+            </view>
+          </view>
+        </view>
+        <!-- 自定义选择日期 -->
+        <view class="selectDateBottom" wx:if="{{detailDefinedPicker}}">
+          <view class='form_item'>
+            <view class='form_item_label'>开始时间</view>
+            <view class='form_item_value'>
+              <picker mode="date" value="{{date}}" start="2010-10-01" end="{{ endTime }}" bindchange="selecDefineStartTime" class='picker' style='height : 42rpx'>
+                <view class='picker_placeholder' style="color: #666">
+                  {{ detailStartDateMoment || '请选择' }}
+                </view>
+              </picker>
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label'>结束时间</view>
+            <view class='form_item_value'>
+              <picker mode="date" value="{{date}}" start="2010-10-01" end="{{ endTime }}" bindchange="selecDefineEndTime" class='picker' style='height : 42rpx'>
+                <view class='picker_placeholder' style="color: #666">
+                  {{ detailEndDateMoment || '请选择' }}
+                </view>
+              </picker>
+            </view>
+          </view>
+        </view>
+        <view class="bottonStyle">
+          <button class="btn_cancel" @tap.stop='clickToCancel'>取消</button>
+          <button class="btn_confirm" @tap.stop='clickToSearch'>确定</button>
+        </view>
+      </view>
+    </view>
+    <view class="detailTop">
+      <view class="detailTopName" @tap="selectListOne({{ 'selectListOne' }})">
+        <span>{{ clickName }}</span>
+        <span class="triangle"></span>
+      </view>
+      <view class="detailTopText" @tap="selectDateOne({{ 'selectDateOne' }})">
+        <span>{{ clickDate }}</span>
+        <span class="triangle"></span>
+      </view>
+    </view>
+    <view class="detailMain">
+      <view class="detailMainTop">
+        <view class="detailMainTopAll">
+          <view class="detailMainTopOne">{{detailList.totalNum}}</view>
+          <view class="detailMainTopTwo" wx:if="{{timeSelectKey === 'userDefined' ? false : true}}">
+            <span wx:if="{{timeSelectKey === 'today' || timeSelectKey === 'yesterday' ? true : false }}">较昨日</span>
+            <span wx:if="{{timeSelectKey === 'currentWeek' || timeSelectKey === 'lastWeek' ? true : false }}">较上周</span>
+            <span wx:if="{{timeSelectKey === 'currentMonth' || timeSelectKey === 'lastMonth' || timeSelectKey === 'yearAndMonth' ? true : false }}">较上月</span>
+            <span wx:if="{{detailList.plus}}" style="color:rgba(253,113,138,1)">{{'+' + detailList.rate}}</span>
+            <span wx:if="{{detailList.plus === false ? true : false}}" style="color:#6BDFD5">{{detailList.rate}}</span>
+          </view>
+        </view>
+      </view>
+      <view class="detailMainAll">
+        <view class="detailMainTitle">
+          <view class="detailMainTitleOne">{{comeSeller === true && comeTeach === false ? '姓名' : '课程名称'}}</view>
+          <view class="detailMainTitleTwo">{{clickName}}</view>
+        </view>
+        <repeat for="{{detailList.results}}" key="index" index="index" item='item'>
+          <view class="repeatDetail">
+            <view class="repeatName">{{item.name}}</view>
+            <view class="repeatNum">{{item.num}}</view>
+          </view>
+        </repeat>
+      </view>
+    </view>
+  </view>
+</template>
+
+<style lang = 'less' src = 'reportFormDetail.less'>
+
+</style>
+<script>
+  import wepy from 'wepy';
+  import moment from 'moment';
+  import {
+    serviceRequest
+  } from '../../../utils/request.js';
+  export default class ReportFormDetail extends wepy.page {
+    config = {
+      navigationBarTitleText: '报表详情'
+    };
+    data = {
+      formPreviousData: {}, // 报表首页传过来的数据
+      nameList: [], // 名字列表
+      detailSmallKey: null, // 选择的项目小key
+      clickName: null, // 选择的项目名称
+      selectDataIndex: 0, // 选择的时间间隔index
+      selectDataIndexBefore: 0,
+      timeSelectKey: null, // 选择的时间
+      timeSelectKeyBefore: null,
+      clickDate: null, // 选择的日期间隔名称
+      clickDateBefore: null,
+      detailStartYearMoment: '', //选择的年份
+      detailStartMonthMoment: '', // 选择的月份
+      detailStartYearShow: '', // 选择的年份+年
+      detailStartMonthShow: '', // 选择的月份+ 月
+      detailStartDate: '', //选择的开始时间moment
+      detailEndDate: '', //选择的结束时间moment
+      detailStartDateMoment: '', //选择的开始时间yy-mm-dd
+      detailEndDateMoment: '', // 选择的结束时间yy-mm-dd
+      detailDisabledPicker: null, // 不是自定义选择时间的时候
+      detailYearPicker: null, // 是否是年月的搜索
+      detailDefinedPicker: null, // 自定义年月的时间
+      comeSeller: false, // 来自销售数据
+      comeTeach: false, // 来自教务数据
+      detailList: {}, // 获取到的数据
+      maskHidden: false, // 选择时间和项目的遮罩层
+      selectListDateBoolean: null, // true选择的是项目列表，false选择的日期
+      disabled: false, // 是否可选之前的时间
+      pickerVisible: false, // 时间选择器显隐
+      selYear: true, // 选择年
+      selMonths: true, // 选择月份
+      selDays: true, // 选择日子
+      selHoursMinutes: false, // 是否有时和分钟选项
+      selectArray: [{
+          key: 'today',
+          value: '今日'
+        },
+        {
+          key: 'yesterday',
+          value: '昨日'
+        },
+        {
+          key: 'lastSeven',
+          value: '近7日'
+        },
+        {
+          key: 'lastThirty',
+          value: '近30日'
+        },
+        {
+          key: 'currentWeek',
+          value: '本周'
+        },
+        {
+          key: 'lastWeek',
+          value: '上周'
+        },
+        {
+          key: 'currentMonth',
+          value: '本月'
+        },
+        {
+          key: 'lastMonth',
+          value: '上月'
+        },
+        {
+          key: 'yearAndMonth',
+          value: '年月'
+        },
+        {
+          key: 'userDefined',
+          value: '自定义'
+        },
+      ],
+      endTime: moment().format('YYYY-MM-DD'),
+      endYear: moment().format('YYYYY'),
+      monthArray: [
+        '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'
+      ],
+      yearArray: []
+    };
+    components = {};
+    methods = {
+      // 选择项目遮罩
+      selectListOne(value) {
+        this.maskHidden = true;
+        this.selectListDateBoolean = true;
+      },
+      // 选择一个项目
+      clickProjectOne(value) {
+        this.detailSmallKey = value.smallKey;
+        this.clickName = value.name;
+        this.maskHidden = false;
+        this.getDataList();
+      },
+      // 项目关闭遮罩
+      clickCancelProject() {
+        this.maskHidden = false
+      },
+      // 选择日期遮罩
+      selectDateOne(value) {
+        this.maskHidden = true;
+        this.selectListDateBoolean = false;
+      },
+      // 选择年份的开始时间
+      selectYearTime(e) {
+        this.detailStartYearMoment = parseFloat(this.yearArray[e.detail.value]);
+        this.detailStartYearShow = this.yearArray[e.detail.value];
+      },
+      // 选择月份的开始时间
+      selectMonthTime(e) {
+        this.detailStartMonthMoment = parseFloat(this.monthArray[e.detail.value]);
+        this.detailStartMonthShow = this.monthArray[e.detail.value];
+      },
+      //点击选择自定义时间开始时间
+      selecDefineStartTime(e) {
+        this.detailStartDateMoment = e.detail.value;
+        this.detailStartDate = e.detail.value.split('-').join('');
+      },
+      //点击选择自定义时间结束时间
+      selecDefineEndTime(e) {
+        this.detailEndDateMoment = e.detail.value;
+        this.detailEndDate = e.detail.value.split('-').join('');
+      },
+      // 日期关闭遮罩
+      clickToCancel() {
+        this.maskHidden = false;
+        this.selectDataIndex = this.selectDataIndexBefore;
+        this.timeSelectKey = this.timeSelectKeyBefore;
+        this.clickDate = this.clickDateBefore;
+      },
+      // 根据日期筛选
+      clickToSearch() {
+        this.maskHidden = false;
+        this.getDataList();
+        this.selectDataIndexBefore = this.selectDataIndex;
+        this.timeSelectKeyBefore = this.timeSelectKey;
+        this.clickDateBefore = this.clickDate;
+      },
+      // 选择时间间隔
+      selectTime(index, key, value) {
+        this.selectDataIndex = index; // 选择第几个
+        this.timeSelectKey = key; //所选key值
+        this.clickDate = value; //所选value值
+        this.judgeTime();
+      }
+    };
+    judgeTime() {
+      let currentDate = moment();
+      this.detailDisabledPicker = true; // 不是自定义选择时间的时候
+      this.detailYearPicker = false; // 选择年月的时间
+      this.detailDefinedPicker = false;
+      if (this.timeSelectKey === 'today') { //今日
+        this.detailStartDate = currentDate;
+        this.detailEndDate = currentDate;
+        this.detailStartDateMoment = currentDate.format('YYYY-MM-DD');
+        this.detailEndDateMoment = currentDate.format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'yesterday') { //昨日
+        this.detailStartDate = moment().subtract(1, 'd');
+        this.detailEndDate = moment().subtract(1, 'd');
+        this.detailStartDateMoment = moment().subtract(1, 'd').format('YYYY-MM-DD');
+        this.detailEndDateMoment = moment().subtract(1, 'd').format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'lastSeven') { //近7日
+        this.detailStartDate = moment().subtract(7, 'd');
+        this.detailEndDate = currentDate;
+        this.detailStartDateMoment = moment().subtract(7, 'd').format('YYYY-MM-DD');
+        this.detailEndDateMoment = currentDate.format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'lastThirty') { //近30日
+        this.detailStartDate = moment().subtract(30, 'd');
+        this.detailEndDate = currentDate;
+        this.detailStartDateMoment = moment().subtract(30, 'd').format('YYYY-MM-DD');
+        this.detailEndDateMoment = currentDate.format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'currentWeek') { //本周
+        this.detailStartDate = moment().startOf('week').add(1, 'days');
+        this.detailEndDate = moment().endOf('week').add(1, 'days');
+        this.detailStartDateMoment = moment().startOf('week').add(1, 'days').format('YYYY-MM-DD');
+        this.detailEndDateMoment = moment().endOf('week').add(1, 'days').format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'lastWeek') { //上周
+        let lastDay = moment().subtract(7, 'd');
+        this.detailStartDate = moment(lastDay).startOf('week').add(1, 'days');
+        this.detailEndDate = moment(lastDay).endOf('week').add(1, 'days');
+        this.detailStartDateMoment = moment(lastDay).startOf('week').add(1, 'days').format('YYYY-MM-DD');
+        this.detailEndDateMoment = moment(lastDay).endOf('week').add(1, 'days').format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'currentMonth') { //本月
+        this.detailStartDate = moment().startOf('month');
+        this.detailEndDate = moment().endOf('month');
+        this.detailStartDateMoment = moment().startOf('month').format('YYYY-MM-DD');
+        this.detailEndDateMoment = moment().endOf('month').format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'lastMonth') { //上月
+        let lastDay = moment().subtract(1, 'M');
+        this.detailStartDate = moment(lastDay).startOf('month');
+        this.detailEndDate = moment(lastDay).endOf('month');
+        this.detailStartDateMoment = moment(lastDay).startOf('month').format('YYYY-MM-DD');
+        this.detailEndDateMoment = moment(lastDay).endOf('month').format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'yearAndMonth') { // 年月
+        this.detailDisabledPicker = false; // 不是自定义选择时间的时候
+        this.detailYearPicker = true; // 选择年月的时间
+        this.detailDefinedPicker = false;
+        this.detailStartYearMoment = null;
+        this.detailStartMonthMoment = null;
+      } else if (this.timeSelectKey === 'userDefined') { //自定义
+        this.detailDisabledPicker = false; // 不是自定义选择时间的时候
+        this.detailYearPicker = false; // 选择年月的时间
+        this.detailDefinedPicker = true;
+        this.detailStartDate = null;
+        this.detailEndDate = null;
+        this.detailStartDateMoment = null;
+        this.detailEndDateMoment = null;
+      }
+    };
+    events = {};
+    getDataList() {
+      // 搜索年月的入参
+      const yearParams = {
+        smallKey: this.detailSmallKey,
+        year: this.detailStartYearMoment,
+        month: this.detailStartMonthMoment
+      };
+      // 搜索开始结束的入参
+      const params = {
+        smallKey: this.detailSmallKey,
+        startDate: this.detailStartDateMoment.split('-').join(''),
+        endDate: this.detailEndDateMoment.split('-').join('')
+      };
+      // 项目名称数据
+      serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/getSmallKeyByBigKey`, {
+        bigKey: this.formPreviousData.clickItem.bigKey
+      }).then(ret => {
+        if (ret.errorCode === 0) {
+          this.nameList = ret.smallKeyValues;
+          this.$apply();
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          return;
+        }
+      });
+      wx.showLoading({
+        title: '加载中...'
+      });
+      // 跟进记录数据
+      if (this.formPreviousData.clickItem.bigKey === "workReport" && this.detailYearPicker === true) {
+        serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/seller/querySellerJobDetailListYe`, yearParams).then(ret => {
+          if (ret.errorCode === 0) {
+            wx.hideLoading();
+            this.comeSeller = true;
+            this.comeTeach = false;
+            this.detailList = ret;
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          }
+        });
+      } else if (this.formPreviousData.clickItem.bigKey === "workReport" && this.detailYearPicker === false) {
+        serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/seller/querySellerJobDetailListSe`, params).then(ret => {
+          if (ret.errorCode === 0) {
+            wx.hideLoading();
+            this.comeSeller = true;
+            this.comeTeach = false;
+            this.detailList = ret;
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          }
+        });
+      }
+      // 合同数据
+      if (this.formPreviousData.clickItem.bigKey === "performanceReport" && this.detailYearPicker === true) {
+        serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/seller/querySellerPerforDetailListYe`, yearParams).then(ret => {
+          if (ret.errorCode === 0) {
+            wx.hideLoading();
+            this.comeSeller = true;
+            this.comeTeach = false;
+            this.detailList = ret;
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          }
+        });
+      } else if (this.formPreviousData.clickItem.bigKey === "performanceReport" && this.detailYearPicker === false) {
+        serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/seller/querySellerPerforDetailListSe`, params).then(ret => {
+          if (ret.errorCode === 0) {
+            wx.hideLoading();
+            this.comeSeller = true;
+            this.comeTeach = false;
+            this.detailList = ret;
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          }
+        });
+      }
+      // 出勤数据
+      if (this.formPreviousData.clickItem.bigKey === "stuAttendanceReport" && this.detailYearPicker === true) {
+        serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/course/queryStuCheckDetailListYe`, yearParams).then(ret => {
+          if (ret.errorCode === 0) {
+            wx.hideLoading();
+            this.comeSeller = false;
+            this.comeTeach = true;
+            this.detailList = ret;
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          }
+        });
+      } else if (this.formPreviousData.clickItem.bigKey === "stuAttendanceReport" && this.detailYearPicker === false) {
+        serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/course/queryStuCheckDetailListSe`, params).then(ret => {
+          if (ret.errorCode === 0) {
+            wx.hideLoading();
+            this.comeSeller = false;
+            this.comeTeach = true;
+            this.detailList = ret;
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          }
+        });
+      }
+      // 消课数据
+      if (this.formPreviousData.clickItem.bigKey === "stuUseReport" && this.detailYearPicker === true) {
+        serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/course/queryStuCostPeriodDetailListYe`, yearParams).then(ret => {
+          if (ret.errorCode === 0) {
+            wx.hideLoading();
+            this.comeSeller = false;
+            this.comeTeach = true;
+            this.detailList = ret;
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          }
+        });
+      } else if (this.formPreviousData.clickItem.bigKey === "stuUseReport" && this.detailYearPicker === false) {
+        serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/course/queryStuCostPeriodDetailListSe`, params).then(ret => {
+          if (ret.errorCode === 0) {
+            wx.hideLoading();
+            this.comeSeller = false;
+            this.comeTeach = true;
+            this.detailList = ret;
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          }
+        });
+      }
+    };
+    onLoad(query) {
+      for (let i = 2010; i <= this.endYear; i++) {
+        this.yearArray.push(i + '年');
+      };
+      this.formPreviousData = JSON.parse(query.str);
+      this.detailSmallKey = this.formPreviousData.clickItem.smallKey;
+      this.timeSelectKey = this.formPreviousData.timeSelectKey;
+      this.clickDate = this.formPreviousData.timeSelectText;
+      this.selectDataIndex = this.formPreviousData.selectDataIndex;
+      this.timeSelectKeyBefore = this.formPreviousData.timeSelectKey;
+      this.clickDateBefore = this.formPreviousData.timeSelectText;
+      this.selectDataIndexBefore = this.formPreviousData.selectDataIndex;
+      this.clickName = this.formPreviousData.clickItem.name;
+      this.detailStartYearMoment = this.formPreviousData.startYear;
+      this.detailStartMonthMoment = this.formPreviousData.startMonth;
+      this.detailStartDateMoment = this.formPreviousData.startDateMoment;
+      this.detailEndDateMoment = this.formPreviousData.endDateMoment;
+      this.detailYearPicker = this.formPreviousData.yearPicker;
+      this.detailDefinedPicker = this.formPreviousData.definedPicker;
+      this.detailDisabledPicker = this.formPreviousData.disabledPicker;
+    };
+    onShow(query) {
+      this.getDataList()
+    }
+  }
+</script>

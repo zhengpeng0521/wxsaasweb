@@ -1,0 +1,172 @@
+<style lang="less" src="app.less">
+
+</style>
+<style lang="less" src="common.less">
+
+</style>
+<script>
+  import wepy from 'wepy'
+  import 'wepy-async-function'
+  export default class extends wepy.app {
+    config = {
+      pages: [
+        'pages/initPage/initPage', // 缓冲页面
+        'pages/mime/introduce/introduce', // 产品介绍页
+        'pages/tabBar/work/work', // 工作 首页
+        'pages/mime/introduceDetail/introduceDetail', // 产品介绍详情页
+        'pages/mime/login/login', // 登录
+        'pages/mime/register/register', // 申请试用
+        'pages/mime/register/registerResult/registerResult', // 申请试用结果页
+        'pages/mime/tenantSelect/tenantSelect', // 登录 多商户情况下选择商户
+        'pages/mime/orgSelect/orgSelect', // 选择校区
+        'pages/reportForm/reportForm', // 报表首页
+        'pages/reportForm/reportFormDetail/reportFormDetail', // 报表详情页
+        'pages/mime/mime', // 我的
+        'pages/mime/about/about' // 关于
+      ],
+      window: {
+        backgroundTextStyle: 'dark',
+        navigationBarBackgroundColor: '#5D9CEC',
+        navigationBarTitleText: '微信接口功能演示',
+        navigationBarTextStyle: 'white'
+      },
+      tabBar: {
+        selectedColor: '#5D9CEC',
+        borderStyle: 'black',
+        backgroundColor: '#FFFFFF',
+        list: [{
+          pagePath: 'pages/tabBar/work/work',
+          text: '工作',
+          iconPath: './image/gongzuotai1.png',
+          selectedIconPath: './image/gongzuotai2.png'
+        }, {
+          pagePath: 'pages/reportForm/reportForm',
+          text: '报表',
+          iconPath: './image/baobiao1.png',
+          selectedIconPath: './image/baobiao2.png'
+        }, {
+          pagePath: 'pages/mime/mime',
+          text: '我的',
+          iconPath: './image/wode1.png',
+          selectedIconPath: './image/wode2.png'
+        }]
+      },
+      subPackages: [{
+        root: 'pages/component/',
+        pages: [
+          'pages/Replytocomments/replaycomment', // 评论
+          'pages/MessageList/messages' // 消息列表
+        ]
+      },
+      {
+        root: 'pages/Wechatm/',
+        pages: [
+          'pages/classList/classList', // 班级列表
+          'pages/classStudent/classStudent', // 班级圈
+          'pages/student/studentInfo', // 学员信息
+          'pages/student/invitationRegister', // 邀请注册
+          'pages/student/authority', // 权限设置
+          'pages/dynamicDetails/dynamicDetails', // 动态详情
+          'pages/dynamicDetails/contentDetails' // 动态内容详情
+        ]
+      },
+      {
+        'root': 'pages/work/',
+        'pages': [
+          'vacationList/vacationList', // 请假审核
+          'leadsList/leadsList', // 名单跟进列表
+          'addLeads/addLeads', // 添加名单
+          'leadsDispatch/leadsDispatch', // 名单分配 销售列表
+          'leadsDetail/leadsDetail', // 名单详情
+          'leadsDetail/addFollowRecord/addFollowRecord', // 新增 跟进记录
+          'leadsDetail/addVisitRecord/addVisitRecord', // 新增 到访计划
+          'leadsDetail/addOrderRecord/addOrderRecord', // 新增 预约试听
+          'leadsDetail/leadsDetailInfo/leadsDetailInfo', // 名单基本信息
+          'orderList/orderList', // 约课课表
+          'orderList/oneAppoint/oneAppoint', // 单次约课
+          'orderList/batch/batch', // 批量约课
+          'orderList/batch/nextStep/nextStep', // 批量约课-选择排课
+          'orderList/remedial/remedial', // 补课约课
+          'orderList/audition/audition', // 预约试听
+          'orderDetail/orderDetail', // 约课记录
+          'orderList/orderListDetail/orderListDetail', // 课表详情
+          'scheduleList/scheduleList', // 课程表
+          'sourceSchedule/sourceSchedule', // 排课
+          'sourceSchedule/sourceScheduleForm/sourceScheduleForm', // 排课表单
+          'attendanceList/attendanceList', // 考勤
+          'attendanceList/attendanceDetail/attendanceDetail', // 考勤详情
+          'parentNotice/parentNotice', // 家校互评
+          'parentNotice/parentNoticeDetail/parentNoticeDetail', // 家校互评 评价页面
+          'parentNotice/parentNoticeItem/parentNoticeItem', // 家校互评 单个学员评价页面
+          'contractList/contractList', // 合同列表
+          'contractDetails/contractDetails', // 合同详情
+          'contractDetails/contractCheck/contractCheck' // 合同审核
+        ]
+      },
+      {
+        root: 'pages/Homework/',
+        pages: [
+          'homeworkList/homeworkList', // 作业记录
+          'studentWork/studentWork', // 学员作业
+          'details/details', // 作业详情
+          'send/send', // 发送对象
+          'sendpic/sendpic',
+          'videoDetail/videoDetail'
+        ]
+      }
+      ],
+      networkTimeout: {
+        request: 10000,
+        uploadFile: 10000
+      }
+    }
+    // 全局 接口请求数据
+    service = {
+      // 线上正式版地址
+      base_url: 'https://saas.ishanshan.com/api/miniapp',
+      port: 8989
+      // 线上测试
+      // base_url: 'https://wx.ishanshan.com/api/miniapp',
+      // port: 8075
+      // 线下测试
+      // base_url: 'http://192.168.1.61:8075/api/miniapp'
+      // base_url: 'http://192.168.1.61/api/saas'
+      // base_url: 'http://192.168.1.66/api/saas'
+    }
+    // 全局定义 变量
+    _init_data = {
+      userInfo: null, // 用户个人信息
+      orgIdList: [], // 校区列表
+      orgName: undefined, // 当前切换的校区
+      orgId: undefined, // 当前切换的校区Id
+      tenantIdList: [], // 租户列表
+      account: undefined, // 用户登录账号
+      password: undefined, // 用户登录密码
+      code: undefined, // 微信登录态
+      firstChannelList: [], // 一级来源 下拉列表
+      importStatusList: [], // 重要程度 下拉表
+      followStatusList: [], // 跟进状态 下拉列表
+      followTypeList: [], // 跟进方式 下拉列表
+      Authorization: null, // token
+      session: null, // session
+      showList: null
+    }
+    // 埋点变量
+    mId = {
+      org_id: null,
+      tenant_id: null,
+      user_id: null
+    }
+    constructor() {
+      super()
+      this.use('requestfix')
+      this.use('promisify') // 使API promise化
+    }
+    onLaunch(e) {}
+    onShow() {
+      this.mId.org_id = wx.getStorageSync('tea_orgId')
+      this.mId.tenant_id = wx.getStorageSync('tea_tenantId')
+      this.mId.user_id = wx.getStorageSync('tea_uid')
+    }
+  }
+</script>

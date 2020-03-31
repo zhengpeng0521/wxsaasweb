@@ -1,0 +1,68 @@
+@import '../../../../../common.less';
+
+.studentInfo{
+  height: 100%;
+  background-color: #eee;
+  padding-top: 16rpx;
+  box-sizing: border-box;
+
+  .student_container{
+    background-color: #fff;
+    overflow: hidden;
+  }
+
+  .info{
+    border-left: 10rpx solid #5D9CEC;
+    padding-left: 12rpx;
+    font-size: 26rpx;
+    color: #333;
+    margin: 30rpx 0 0 20rpx;
+    line-height: 1;
+  }
+
+  .item{
+    margin-left:20rpx;
+    display: flex;
+    position: relative;
+    border-bottom: 1px solid @base_border_color;
+    padding: 30rpx 0;
+
+    &:last-child{
+      border: none;
+    }
+
+    .name_phone{
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      font-size: 28rpx;
+      color: #333;
+    }
+
+    .img{
+      width: 100rpx;
+      height: 100rpx;
+      border-radius: 50%;
+      overflow: hidden;
+      margin-right: 20rpx;
+
+      image{
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .register{
+      position: absolute;
+      top: 50%;
+      right: 40rpx;
+      transform: translateY(-50%);
+      color: #F56C6C;
+      font-size: 28rpx;
+    }
+
+    .complete{
+      color: #5D9CEC;
+    }
+  }
+}

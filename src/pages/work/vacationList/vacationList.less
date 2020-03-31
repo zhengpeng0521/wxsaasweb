@@ -1,0 +1,437 @@
+@import "../../../common.less";
+
+// 弹框填写内容
+.maskDialog {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  top: 0;
+  background: rgba(0,0,0,0.4);
+  margin:auto ;
+  display: flex; 
+  justify-content: center;
+  .inputDialog {
+    width: 490rpx;
+    height: 430rpx;
+    margin-top: 200rpx;
+    background:rgba(255,255,255,1);
+    border-radius:8px;
+    .inputDialog_title {
+      display: inline-block;
+      font-size:15px;
+      font-weight: 500;
+      color: rgba(7,7,7,1);
+      width: 100%;
+      height: 100rpx;
+      line-height: 100rpx;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .inputDialog_textarea_all {
+      padding-left: 28rpx;
+      position: relative;
+      .inputDialog_textarea {
+        display: block;
+        width: 410rpx;
+        height: 218rpx;
+        border-radius:8px;
+        padding: 10rpx;
+        font-size: 14px;
+        border:1px solid rgba(204,204,204,1);
+      }
+      .inputDialog_textarea_length{
+        position: absolute;
+        right: 50rpx;
+        bottom: 20rpx;
+        font-size:10px;
+        font-weight:400;
+        color:rgba(204,204,204,1);
+      }
+    }
+    .inputDialog_but{
+      width: 100%;
+      height: 92rpx;
+      display: flex;
+      .inputDialog_but_left {
+        width: 50%;
+        height: 92rpx;
+        color:rgba(51,51,51,1);
+        display: flex; 
+        justify-content: center;
+        align-items: center;
+      }
+      .inputDialog_but_right {
+        color:rgba(93,156,236,1);
+        width: 50%;
+        height: 92rpx;
+        display: flex; 
+        justify-content: center;
+        align-items: center;
+      }
+    }
+  }
+}
+
+/*列表样式*/
+.list_wrap {
+  padding-top: 88rpx;
+  height: calc(~"100vh - 88rpx");
+  background: #eee;
+  // height : calc( ~'760rpx - 186rpx' );
+  //	transition : all ease-in-out .3s;
+}
+.list_wrap_open {
+  padding: 88rpx 0 0;
+  height: calc(~"100vh - 88rpx");
+  // height : calc( ~'760rpx - 88rpx' );
+  //	transition : all ease-in-out .3s;
+}
+.list_item {
+  padding-left: 30rpx;
+  width: 100%;
+  box-sizing: border-box;
+  border-bottom: 1rpx solid @border_color;
+  background: #fff;
+  margin-bottom: 20rpx;
+}
+
+.list_itemTop {
+  padding-top: 30rpx;
+  width: 100%;
+  height: 71rpx;
+  display: flex;
+  justify-content:flex-start;
+}
+
+.item_title {
+  margin-left: 10rpx;
+  font-size:16px;
+  font-weight:400;
+  color:rgba(255,173,20,1);
+}
+
+.item_time {
+  margin: 10rpx 30rpx 0 310rpx;
+  font-size:12px;
+  font-weight:400;
+  color:rgba(153,153,153,1);
+  line-height:14px;
+}
+
+.item_detail {
+  border-bottom: 1rpx solid #eee;
+  padding-bottom: 30rpx;
+  margin-left: 66rpx;
+  .item_detail_one {
+    margin-bottom: 15rpx;
+    span:nth-of-type(1) {
+      font-size:14px;
+      font-weight:400;
+      color:rgba(153,153,153,1);
+    }
+    span:nth-of-type(2) {
+      font-size:14px;
+      font-weight:400;
+      color:rgba(51,51,51,1);
+    }
+  }
+}
+
+.item_hidden {
+  width: 100%;
+  height: 74rpx;
+  line-height: 74rpx;
+  display: flex;
+  justify-content: center;
+  margin-left: -15rpx;
+  .item_hidden_but {
+    font-size:12px;
+    font-weight:400;
+    color:rgba(87,94,116,1);
+    position: relative;
+    span:nth-of-type(2) {
+      display: inline-block;
+      width: 10rpx;
+      height: 10rpx;
+      border: #666 solid;
+      border-width: 1rpx 1rpx 0 0;
+      margin-left: 10rpx;
+    }
+    .triangleDown {
+      transform: rotate(135deg);
+      position: absolute;
+      top: 30rpx;
+    }
+    .triangleUp {
+      transform: rotate(-45deg);
+    }
+  }
+}
+
+.list_item_hover {
+  background: #f6f6f8;
+}
+.list_item_checkbox {
+  width: 46rpx;
+  height: 46rpx;
+  font-size: 0;
+}
+.list_item_checked {
+  width: 46rpx;
+  height: 46rpx;
+  background: url("https://img.ishanshan.com/gimg/img/b9b75683152d33b43cb0c8a6195c6078")
+    no-repeat;
+  background-size: cover;
+  border-radius: 50%;
+}
+.list_item_not_checked {
+  width: 46rpx;
+  height: 46rpx;
+  background: @base_background;
+  border-radius: 50%;
+  border: 1px solid @border_color;
+}
+.list_item_content {
+  flex: 1;
+}
+.list_item_content_top {
+  font-size: @lg_font_size;
+  height: @lg_font_size;
+  line-height: @lg_font_size;
+  color: @label_color;
+  width: 100%;
+}
+.list_item_content_name {
+  display: inline-block;
+  max-width: 60%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.list_item_content_status {
+  margin-left: 20rpx;
+  display: inline-block;
+  height: 32rpx;
+  line-height: 32rpx;
+  padding: 0 12rpx;
+  vertical-align: top;
+  background: #d6e8ff;
+  font-size: 22rpx;
+  border-radius: 16rpx;
+  color: @base_color;
+}
+.list_item_content_bottom {
+  width: 556rpx;
+  margin-top: 20rpx;
+  font-size: @base_font_size;
+  height: @base_font_size;
+  line-height: @base_font_size;
+  color: @value_color;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.list_item_content_sale {
+  border-left: 1px solid @border_color;
+}
+.list_item_mobile {
+  position: relative;
+  width: 80rpx;
+  height: 138rpx;
+}
+.list_item_mobile::before {
+  content: "";
+  width: 36rpx;
+  height: 40rpx;
+  position: absolute;
+  margin: auto;
+  top: 0;
+  bottom: 0;
+  left: 14rpx;
+  background-image: url("https://img.ishanshan.com/gimg/img/10e4ff851f4c7e8ff60a8db248d92ee6");
+  background-size: cover;
+}
+
+/*列表样式*/
+
+/*操作区域样式*/
+.operation_block {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  height: 98rpx;
+  width: 100%;
+  background: #efeff4;
+  bottom: 0rpx;
+}
+.operation_block_add {
+  position: fixed;
+  bottom: 0rpx;
+  height: 98rpx;
+  width: 100%;
+  background: #fff;
+}
+
+.btn_app_silp {
+  background: #5d9cec;
+  color: #fff;
+  width: 670rpx;
+  height: 88rpx;
+  margin: auto;
+  font-size: 34rpx;
+}
+
+.operation_block_dispaly {
+  display: none;
+}
+.operation {
+  background: none;
+}
+
+.select_num {
+  flex: 1;
+  padding-left: 30rpx;
+  font-size: @base_font_size;
+  color: @label_color;
+}
+/*按钮样式*/
+.btn_style {
+  width: 180rpx;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: @lg_border_radius;
+  text-align: center;
+  font-size: @lg_font_size;
+  color: #fff;
+}
+.leads_delete {
+  .btn_style;
+  background: @reset_background;
+}
+.leads_distribute {
+  .btn_style;
+  margin: 0 20rpx;
+  background: @search_background;
+}
+/*操作区域样式*/
+.blank_data_page {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+.super_search_item_time {
+  height: 100rpx;
+  width: 95%;
+  margin-top: 30rpx;
+}
+.super_search_item_input {
+  width: 45%;
+  height: 66rpx;
+  line-height: 66rpx;
+  border: 1px solid #ccc;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+}
+.super_search_item_inputs {
+  height: 66rpx;
+  line-height: 66rpx;
+  padding-left: 10rpx;
+}
+.placeholder_input {
+  font-size: 28rpx;
+}
+.hidden_modal_con {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999999;
+}
+.hidden_modal {
+  position: absolute;
+  width: 500rpx;
+  max-height: 400rpx;
+  background: #fff;
+  top: 50%;
+  margin-top: -180rpx;
+  left: 50%;
+  margin-left: -290rpx;
+  border-radius: 10rpx;
+  z-index: 999999;
+  padding: 40rpx;
+}
+.hidden_modal_list {
+  width: 100%;
+  min-height: 60rpx;
+  border-bottom: 1px solid #aaa;
+}
+
+.hidden_modal_list_item {
+  height: auto;
+  overflow: hidden;
+  padding: 20rpx 0;
+  width: 100%;
+  border-bottom: 1px solid #efefef;
+  display: flex;
+  font-size: 30rpx;
+  color: #333;
+}
+.hidden_modal_list_item:last-child {
+  border-bottom: none;
+}
+.hidden_modal_list_item_label {
+  width: 40%;
+  text-align: left;
+}
+.hidden_modal_list_item_value {
+  width: 60%;
+  text-align: right;
+}
+.hidden_modal_cancel {
+  height: auto;
+  overflow: hidden;
+  padding-top: 40rpx;
+  text-align: center;
+  width: 100%;
+  color: #999;
+}
+
+.super_select_time {
+  width:540rpx;
+  height:60rpx;
+  border-radius:6rpx;
+  border:1rpx solid rgba(93,156,236,1);
+  display: flex;
+  .super_select_time_left{
+    width:240rpx;
+    height:60rpx;
+    line-height: 60rpx;
+    .super_select_time_left_date{
+      float: right;
+      font-size:13px;
+      font-weight:400;
+      color:rgba(93,156,236,1);
+    }
+  }
+  .super_select_time_mid{
+    width:30rpx;
+    height:60rpx;
+    line-height: 60rpx;
+    margin: 0 15rpx;
+    color:rgba(93,156,236,1);
+  }
+  .super_select_time_right{
+    width:240rpx;
+    height:60rpx;
+    line-height: 60rpx;
+    .super_select_time_right_date{
+      float: left;
+      font-size:13px;
+      font-weight:400;
+      color:rgba(93,156,236,1);
+    }
+  }
+}

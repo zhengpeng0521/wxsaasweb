@@ -1,0 +1,140 @@
+<template>
+	<view class = 'form_container' >
+		<form bindsubmit = 'confirmAddFollowRecord' >
+			<view class = 'form_box' >
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >到访时间<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_value' @tap = 'selectVisitTime' >
+						<view class = 'picker' style = 'height : 42rpx' >
+							{{ visitTime }}
+						</view>
+						<view hidden = '{{ !visitTimeVisible }}' class = 'picker_placeholder' >
+							请选择
+						</view>
+					</view>
+				</view>
+				<view class = 'form_item_textarea' >
+					<view class = 'form_item_textarea_label' >到访内容<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_textarea_value' >
+						<textarea name = 'content' style = 'width : auto' maxlength = '200' auto-height placeholder = '请输入, 限200字' placeholder-class = 'textarea_placeholder'  />
+					</view>
+				</view>
+			</view>
+			<view class = 'btnArea' >
+				<button disabled = '{{ loading }}' loading = '{{ loading }}' class = 'btn_save' hover-class = 'btn_save_hover' formType = 'submit' >
+					提交
+				</button>
+			</view>
+		</form>
+		<timePicker :disabled.sync = 'disabled' />
+	</view>
+</template>
+
+<style lang = "less" src = 'addVisitRecord.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import moment from 'moment';
+	import TimePicker from '../../../../components/timePicker/timePicker';
+	import { serviceRequest } from '../../../../utils/request';
+
+	export default class AddFollowRecord extends wepy.page {
+		config = {
+			navigationBarTitleText : '新增到访计划'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+		  		title : '闪闪云校, 一站式早教管理云平台',
+		  		path : '/pages/initPage/initPage',
+				imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+		  		success : function( res ) {
+					wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+			  	},
+			  	fail : function( res ){
+			  	}
+			}
+	  	}
+
+		data = {
+			orgId               : undefined,
+			orgName             : undefined,
+			leadsItem           : {},                      //名单详情
+			leadsId             : undefined,               //名单id
+
+			loading             : false,
+			visitTime           : undefined,
+			visitTimeVisible    : true,
+
+			disabled            : true,         //不能选择今天之前的时间
+		}
+
+		components = {
+			timePicker : TimePicker
+		}
+
+		methods = {
+			//点击选择日期时间框 打开弹框
+			selectVisitTime(){
+				this.$invoke( 'timePicker', 'openTimePicker' )
+			},
+
+			//确认新增 跟进记录
+			confirmAddFollowRecord( e ){
+				let values = e.detail.value;
+				if( !!this.visitTimeVisible ){
+					wx.showModal({ content : '请选择到访时间', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !values.content ){
+					wx.showModal({ content : '请输入到访内容', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				let params = {
+					stuId     : this.leadsId,
+					visitTime : this.visitTime + ':00',
+					content   : values.content,
+					source    : '2'
+				}
+				this.loading = true;
+				let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/createVisit`;
+				serviceRequest( url, params ).then(( ret ) => {
+					if( ret && ret.errorCode === 0 ){
+						this.loading = false;
+						this.$apply();
+						wx.showToast({ title : '成功', icon : 'success', duration : 2000 });
+						//埋点, 若新增成功则数据增加
+						wx.reportAnalytics('add_visit_record', {
+							org_name : this.orgName,
+							org_id   : this.orgId,
+						});
+						wx.navigateBack({
+							url : `../leadsDetail`
+						})
+					}else{
+						this.loading = false;
+						this.$apply();
+						wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					}
+				});
+			}
+		}
+
+		events = {
+			//确认选择 日期时间
+			confirmSelectTime( time ){
+				if( !!time ){
+					this.visitTimeVisible = false;
+				}
+				this.visitTime = time;
+			}
+		}
+
+		onLoad( params ) {
+			this.orgName = this.$parent._init_data.orgName;
+			this.orgId = this.$parent._init_data.orgId;
+			this.leadsItem = !!params.str && JSON.parse( params.str );
+			this.leadsId = this.leadsItem.id;
+		}
+	}
+</script>

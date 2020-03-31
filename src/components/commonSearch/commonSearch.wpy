@@ -1,0 +1,54 @@
+<style type = 'less' src = 'commonSearch.less' ></style>
+
+<template>
+	<!-- 搜索头部 -->
+	<view class = "search_block{{!has_super_search?' no_super_search':''}}" >
+		<view class = 'search_input' >
+			<input
+				style = 'width : 100%; height : 56rpx;'
+				placeholder = '{{ placeholder }}'
+				placeholder-class = "common_search_placeholder{{ init.placeholder_text_align == 'left' ? ' text_left' : ( init.placeholder_text_align == 'right' ? ' text_right' : '' ) }}"
+				confirm-type = 'search'
+				bindconfirm = 'onSearch'
+			/>
+		</view>
+		<view wx:if="{{ init.has_super_search }}" class = 'search_icon' @tap = 'superSearch' ></view>
+	</view>
+	<!-- 搜索头部 -->
+</template>
+
+<script>
+	import wepy from 'wepy';
+
+	export default class CommonSearch extends wepy.component {
+		props = {
+			placeholder : {
+				type    : String,
+				default : null
+			},
+			init : {//初始化配置
+				type : Object ,
+				default : {
+					has_super_search:true,//是否有高级搜索按钮（默认为有）
+					placeholder_text_align:'center'
+				}
+			}
+		}
+		data = {
+		}
+		onLoad(){
+			//console.log(this.init)
+		}
+		methods = {
+			//确认 搜索
+			onSearch : function( e ){
+				this.$emit( 'onSearch', e.detail.value )
+			},
+
+			//点击出现高级搜索
+			superSearch : function( e ){
+				this.$emit( 'superSearch' )
+			}
+		}
+  	}
+</script>

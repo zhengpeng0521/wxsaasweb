@@ -1,0 +1,261 @@
+@import '../../../common.less';
+
+.studentWork{
+  // height: 100%;
+  padding-bottom: 158rpx;
+  box-sizing: border-box;
+
+  .class_name{
+
+    .content-top{
+      border-bottom:1px solid @base_border_color;
+      margin-left:30rpx;
+      padding-bottom:30rpx;
+    }
+    .title{
+      font-size: 32rpx;
+      color: #333;
+      // margin-bottom: 10rpx;
+      display: flex;
+      justify-content: space-between;
+
+      text{
+        padding: 40rpx 0 20rpx 0;
+      }
+      .title_img{
+        padding: 40rpx 30rpx 20rpx 30rpx;
+        display: flex;
+        align-items: center;
+      }
+      image{
+        width: 40rpx;
+        height: 8rpx;
+      }
+    }
+    .time{
+      font-size: 24rpx;
+      color: #B2B2B2;
+      margin-bottom: 30rpx;
+    }
+
+    .className{
+      color: #666;
+      font-size: 28rpx;
+      margin-bottom: 30rpx;
+    }
+
+    .classper{
+      padding-right: 30rpx;
+      display: flex;
+      justify-content: space-between;
+      font-size: 24rpx;
+      color: #B2B2B2;
+    }
+    .content_top,.content_bottom{
+      display: flex;
+      justify-content: space-between;
+    }
+    .require{
+      margin: 20rpx 0;
+      position: relative;
+      .textd{
+        font-size: 24rpx;
+        color: #575E74;
+        margin-right: 6rpx;
+      }
+
+      .require_icon{
+        width: 20rpx;
+        height: 10rpx;
+        vertical-align:middle;
+      }
+    }
+    .open,.close{
+      display: flex;
+      // position: absolute;
+      // left: 50%;
+      // transform: translateX(-50%);
+      justify-content: center;
+      align-items: center;
+    }
+    .open{
+      margin-bottom: 20rpx;
+    }
+    .close{
+      margin: 10rpx 0 20rpx 0;
+    }
+    .describe{
+      color: #666;
+      font-size: 30rpx;
+      padding: 0 24rpx;
+      display: flex;
+    }
+
+    .details_img{
+      width: 100%;
+      padding: 0 20rpx;
+      box-sizing: border-box;
+      margin-top: 20rpx;
+
+      image{
+        width: 100%;
+      }
+    }
+
+  }
+
+  .line{
+    height: 20rpx;
+    background-color: #eee;
+  }
+
+  .list_item_item{
+    position: relative;
+    display: flex;
+    width: 720rpx;
+    box-sizing : border-box;
+    padding:40rpx 0 30rpx 0;
+    margin-left: 30rpx;
+    border-bottom: 1px solid @base_border_color;
+
+    .headPortrait{
+      width: 72rpx;
+      height: 72rpx;
+      border-radius: 50%;
+      margin-right: 20rpx;
+
+      image{
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .center{
+      display: flex;
+      flex-direction: column;
+    }
+    .name{
+      color: #333;
+      font-size: 28rpx;
+    }
+    .read{
+      color: #5D9CEC;
+      font-size: 20rpx;
+    }
+    .time{
+      font-size: 24rpx;
+      color: #999;
+    }
+    .no_read{
+      margin-left: 10rpx;
+      color: #5D9CEC;
+      font-size: 20rpx;
+    }
+    .read{
+      color: #999;
+      font-size: 20rpx;
+    }
+    .submit{
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      right: 70rpx;
+      font-size: 28rpx;
+      color: #FF5C5C;
+    }
+
+    .complete{
+      color: #5D9CEC;
+    }
+
+    .bishop{
+      display: inline-block;
+      width: 250rpx;
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .list_wrap_open{
+    // height : calc( ~'100vh - 158rpx' );
+
+    .blank_data_page{
+      height: 100vh;
+    }
+  }
+
+  .pull_to_refresh{
+    text-align: center;
+    color:#888888;
+    font-size:@mid_font_size;
+  }
+  .loadingb{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30rpx;
+    font-size:24rpx;
+    color:rgba(102,102,102,1);
+    image{
+      margin-right: 10rpx;
+    }
+  }
+
+  .readOverBtn{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    padding:0 30rpx;
+    box-sizing:border-box;
+    background-color: #fff;
+
+    button{
+      background-color:#5D9CEC;
+      border-radius:10rpx;
+      height:88rpx;
+      color:#fff;
+      font-size:34rpx;
+    }
+
+    .bottom{
+      width: 100%;
+      height: 60rpx;
+      background-color: #fff;
+    }
+  }
+  .mask{
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(0,0,0,.4);
+    z-index: 99;
+    top: 0;
+    left: 0;
+
+    .model{
+      position: absolute;
+      z-index: 999;
+      bottom: 0;
+      background-color: #fff;
+      width: 100%;
+      border-radius: 28rpx 28rpx 0 0;
+      text-align: center;
+    }
+    .model_top{
+      padding: 0 20rpx;
+    }
+    .edit,.del{
+      height: 110rpx;
+      line-height: 110rpx;
+    }
+    .edit{
+      border-bottom: 1px solid @base_border_color ;
+    }
+    .cancel{
+      border-top: 8rpx solid #eee;
+      height: 134rpx;
+      line-height: 134rpx;
+    }
+  }
+}

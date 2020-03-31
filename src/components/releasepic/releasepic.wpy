@@ -1,0 +1,596 @@
+
+<style lang = "less" src = './releasepic.less' ></style>
+<script>
+import wepy from 'wepy'
+import { serviceRequestJson } from '../../utils/request'
+export default class Releasepic extends wepy.component {
+  props = {
+    type: {
+      type: Object,
+      default: {},
+      twoWay: true
+    },
+    hitclor: {
+      type: Boolean
+    }
+  }
+  data = {
+    hometext: 0,
+    imgindex: 0,
+    imgfl: 0,
+    num: 0,
+    namef: '', // 回复的对象名字
+    height: 0, // 弹出距离
+    imgList: [],
+    userword: '',
+    senback: false,
+    imgWidth: 750,
+    imgHeight: 0,
+    autoFocus: true,
+    showConfirmBar: false,
+    icons: false // 照片添加的'+'
+  }
+  // computed = {
+  //   newtype() {
+  //     return this.type.content
+  //   }
+  // }
+  watch = {
+    // newtype: {
+    //   deep: true,
+    //   handler: function (newV, oldV) {
+    //     console.log(newV)
+    //     if (newV.homeworkId) {
+    //       this.userword = newV.content.content
+    //       this.$apply()
+    //     }
+    //   }
+    // },
+    // newtype(curVal, oldVal) {
+    // console.log(curVal)
+    // if (curVal) {
+    //   this.userword = curVal.content
+    // }
+    // this.$apply()
+    // },
+    hitclor(curVal, oldVal) {
+      // console.log(curVal)
+      if (curVal === true) {
+        this.senback = true
+      } else {
+        this.senback = false
+      }
+      this.$apply()
+    },
+    imgList(curVal, oldVal) {
+      if (curVal.length === 0) {
+        this.icons = false
+        if (this.userword.length > 0) {
+          this.senback = true
+        } else {
+          this.senback = false
+        }
+      }
+      if (curVal.length === 9) {
+        this.icons = false
+      }
+      this.$apply()
+    },
+    userword(curVal, oldVal) {
+      if (curVal.length > 0) {
+        this.senback = true
+        this.num = curVal.length
+      } else {
+        if (this.imgList.length > 0) {
+          this.senback = true
+        } else {
+          this.senback = false
+        }
+      }
+      this.$apply()
+    }
+  }
+  onLoad() {
+    if (this.type.type === 'homerela') {
+      if (this.type.homeworkId) {
+        const id = {
+          homeworkId: this.type.homeworkId,
+          type: '2'
+        }
+        this.getStuHomeworkCache(id)
+      } else {
+        let pasrmsAll = wx.getStorageSync('pasrmsAll')
+        if (pasrmsAll) {
+          this.userword = pasrmsAll.content
+          this.imgList = pasrmsAll.imgs
+          if (pasrmsAll.content.length > 0 || pasrmsAll.imgs.length > 0) {
+            this.senback = true
+          }
+          if (pasrmsAll.imgs.length > 0) {
+            this.icons = true
+          }
+        }
+      }
+      this.$apply()
+    }
+  }
+  async getStuHomeworkCache(parms) {
+    let url = `${this.$parent.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/getHomeworkCache`
+    const res = await serviceRequestJson(url, parms)
+    if (res.errorCode === 0) {
+      const imgs = res.imgs || ''
+      const content = res.content || ''
+      if (imgs === '' && content === '') {
+        const usword = this.type.content.content || ''
+        const imglists = this.type.content.imgs || []
+        this.userword = usword
+        this.imgList = imglists
+        if (usword.length > 0 || imglists.length > 0) {
+          this.senback = true
+        }
+        if (imglists.length > 0) {
+          this.icons = true
+        }
+      } else {
+        let imglist = (!!res.imgs && JSON.parse(res.imgs)) || []
+        let content = res.content || ''
+        this.imgList = imglist
+        this.userword = content
+        if (content.length > 0 || imglist.length > 0) {
+          this.senback = true
+        }
+        if (imglist.length > 0) {
+          this.icons = true
+        }
+      }
+      this.$apply()
+    }
+  }
+  // 上传图片
+  uploadImage(imgList) {
+    let innum = 0
+    let inpix = 0
+    wx.showLoading({
+      title: '上传中'
+    })
+    let self = this
+    self.imgfl = 0
+    self.imgindex = 0
+    const fn = (arr, idx) => {
+      if (idx < arr.length) {
+        wx.getImageInfo({
+          src: arr[idx].path,
+          sizeType: ['compressed'],
+          success: function (res) {
+            if (arr[idx].size / 1024 / 1024 > 10) {
+              innum++
+              wx.showToast({
+                icon: 'none',
+                title: '上传的图片有' + innum + '张超过10MB哦!',
+                duration: 2000
+              })
+              fn(arr, idx + 1)
+              return
+            }
+            if (!arr[idx].path.includes('jpg') && !arr[idx].path.includes('png') && !arr[idx].path.includes('jpeg') && !arr[idx].path.includes('gif')) {
+              inpix++
+              wx.showToast({
+                icon: 'none',
+                title: '上传的图片有' + inpix + '张不是png、jpg、jpeg、gif格式哦!',
+                duration: 2000
+              })
+              fn(arr, idx + 1)
+              return
+            }
+            if (res.width > 750 && arr[idx].size / 1024 / 1024 > 1) {
+              self.imgHeight = Math.round(res.height / (res.width / 750))
+              var ctx = wx.createCanvasContext('canvas')
+              ctx.drawImage(arr[idx].path, 0, 0, self.imgWidth, self.imgHeight)
+              ctx.draw(false, setTimeout(() => {
+                wx.canvasToTempFilePath({
+                  canvasId: 'canvas',
+                  destWidth: self.imgWidth,
+                  destHeight: self.imgHeight,
+                  success: function (res) {
+                    self.uploadImg(res.tempFilePath, fn, arr, idx, imgList)
+                  },
+                  fail: function (res) {
+                    console.log(76, res.errMsg)
+                  }
+                })
+              }, 100))  // 留一定的时间绘制canvas
+              self.$apply()
+              return
+            }
+            // 上传图片
+            self.uploadImg(arr[idx].path, fn, arr, idx, imgList)
+          }
+        })
+      }
+    }
+    fn(imgList, 0)
+    self.$apply()
+  }
+  async uploadImg(filePath, fn, arr, idx, imgList) {
+    let self = this
+    self.imgindex++
+    self.senback = false
+    self.icons = false
+    wx.uploadFile({
+      url: 'https://imgsrc.ishanshan.com/gimg/user/upload',
+      filePath: filePath,
+      name: 'file',
+      success: function (res) {
+        const url = JSON.parse(res.data).url
+        const parms = {
+          imgs: url,
+          systemCode: 'ss'
+        }
+        let promiseArr = self.checkMsg(parms)
+        promiseArr.then((resimg) => {
+          if (res.statusCode === 200) {
+            if (resimg.picResultList.length === 0) {
+              self.imgList.push(url)
+              // fn(arr, idx + 1)
+              if (self.imgindex === imgList.length) {
+                self.senback = true
+                self.icons = true
+                self.imgHeight = 0
+                // console.log('进来了')
+                wx.showToast({
+                  title: '上传成功',
+                  duration: 1000,
+                  complete: () => {
+                    if (self.imgfl > 0) {
+                      setTimeout(() => {
+                        wx.showToast({
+                          icon: 'none',
+                          title: '上传的图片有' + self.imgfl + '张不符合要求',
+                          duration: 2000
+                        })
+                      }, 1200)
+                    }
+                  }
+                })
+              }
+            } else {
+              self.imgfl++
+              if (self.imgfl === imgList.length) {
+                if (self.imgList.length > 0) {
+                  self.senback = true
+                  self.icons = true
+                }
+                setTimeout(() => {
+                  wx.showToast({
+                    icon: 'none',
+                    title: '上传的图片有' + self.imgfl + '张不符合要求',
+                    duration: 2000
+                  })
+                }, 100)
+              }
+            }
+            fn(arr, idx + 1)
+            self.$apply()
+          }
+          self.$apply()
+        })
+      },
+      fail: function (res) {
+        wx.showToast({
+          icon: 'none',
+          title: '上传失败',
+          duration: 1000
+        })
+        fn(arr, idx + 1)
+      }
+    })
+    self.$apply()
+  }
+  // 图片认证
+  async checkMsg(parmen) {
+    const url = `${this.$parent.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/checkPic`
+    const res = await serviceRequestJson(url, parmen)
+    let promise = new Promise((resolve, reject) => {
+      resolve(res)
+    })
+    return promise
+  }
+  // 添加图片
+  addImage() {
+    let self = this
+    // self.senback = false
+    wx.chooseImage({
+      count: 9 - self.imgList.length, // 默认9
+      sizeType: ['compressed'],
+      sourceType: ['album'],
+      success: function (res) {
+        let tempFilePaths = res.tempFiles
+        self.uploadImage(tempFilePaths)
+      }
+    })
+    self.$apply()
+  }
+  addWechat() {
+    let self = this
+    // self.senback = false
+    wx.chooseMessageFile({
+      count: 9 - self.imgList.length,
+      type: 'image',
+      success: function (res) {
+        let tempFilePaths = res.tempFiles
+        self.uploadImage(tempFilePaths)
+      }
+    })
+    self.$apply()
+  }
+  methods = {
+    sendmess: function (numt) {
+      if (numt.type !== 'homerela') {
+        this.senback = false
+      }
+      if (numt.type === 'reply') {
+        // 回复
+        if (numt.typehome) {
+          let parmen = {
+            comment: this.userword,
+            replyId: numt.id,
+            dynamicId: numt.tid,
+            replyCustId: numt.customerId
+          }
+          this.$emit('myevents', parmen)
+        } else {
+          let parmen = {
+            comment: this.userword,
+            replyId: numt.id,
+            stuHomeworkId: numt.stuHomeworkId,
+            replyCustId: numt.customerId
+          }
+          this.$emit('myevents', parmen)
+        }
+      }
+      if (numt.type === 'comment') {
+        // 评论
+        if (numt.typehome) {
+          let parmen = {
+            comment: this.userword,
+            replyId: 0,
+            dynamicId: numt.tid
+          }
+          this.$emit('myevents', parmen)
+        } else {
+          let parmen = {
+            comment: this.userword,
+            replyId: 0,
+            stuHomeworkId: numt.id
+            // index: this.type.index
+          }
+          this.$emit('myevents', parmen)
+        }
+      }
+      if (numt.type === 'release') {
+        // 发布
+        let parmen = {
+          content: this.userword,
+          classId: numt.custId
+        }
+        if (this.imgList.length === 0) {
+          parmen.imgs = ''
+        } else {
+          parmen.imgs = JSON.stringify(this.imgList)
+        }
+        // this.addDynamic(parmen)
+        this.$emit('myevent', parmen)
+      }
+      if (numt.type === 'homerela') {
+        wx.reportAnalytics('arrangement_submit', this.$parent.$parent.mId)
+        // 编辑发布作业
+        if (numt.homeworkId) {
+          let parmen = {
+            content: this.userword,
+            homeworkId: numt.homeworkId
+          }
+          if (this.imgList.length === 0) {
+            parmen.imgs = ''
+          } else {
+            parmen.imgs = JSON.stringify(this.imgList)
+          }
+          this.$emit('myevhome', parmen)
+        } else {
+          // 正常发布作业
+          let parmen = {
+            content: this.userword
+          }
+          if (this.imgList.length === 0) {
+            parmen.imgs = ''
+          } else {
+            parmen.imgs = JSON.stringify(this.imgList)
+          }
+          this.$emit('myevent', parmen)
+        }
+      }
+    },
+    cancalModal: function () {
+      wx.showToast({
+        icon: 'none',
+        title: '最多上传9张照片!',
+        duration: 1000
+      })
+    },
+    watchPassWord: function (event) {
+      this.userword = event.detail.value.replace(/^\s*$/, '')
+      this.num = this.userword.length
+    },
+    bindfocus: function (event) {
+      this.height = event.detail.height
+    },
+    bindblur: function (event) {
+      this.height = 0
+    },
+    showModal() {
+      if (this.type.type === 'homerela') {
+        wx.reportAnalytics('arrangement_addimg', this.$parent.$parent.mId)
+      }
+      // 显示遮罩层
+      let that = this
+      wx.showActionSheet({
+        itemList: ['从手机相册中选择', '导入微信聊天图片'],
+        success(res) {
+          if (res.tapIndex == 0) {
+            that.addImage()
+          } else {
+            that.addWechat()
+          }
+        },
+        fail(res) {
+          // console.log(res.errMsg)
+        }
+      })
+    },
+    // 预览图片
+    previewImage(item) {
+      wx.previewImage({
+        urls: this.imgList,
+        current: item
+      })
+    },
+    // 删除
+    littapImage(index) {
+      this.imgList.splice(index, 1)
+      this.icons = true
+      // if (this.imgList.length === 0) {
+      //   this.icons = false
+      // }
+    }
+  }
+}
+</script>
+
+<template>
+  <view>
+    <canvas
+      canvas-id="canvas"
+      class="canvasd"
+      style="width:{{imgWidth}}px;height:{{imgHeight}}px;"
+    ></canvas>
+    <!--评论  -->
+    <view
+      wx:if="{{type.type === 'comment'}}"
+      class="wraplis"
+    >
+      <textarea
+        class='text_item'
+        placeholder="{{type.typehome ? '有爱评论，说点好听的～' : '说点什么...' }}"
+        value='{{userword}}'
+        auto-focus="{{autoFocus}}"
+        maxlength='200'
+        bindinput='watchPassWord'
+        bindfocus='bindfocus'
+        bindblur='bindblur'
+        show-confirm-bar={{showConfirmBar}}
+        placeholder-style="color:#cccccc;font-size:30rpx"
+      />
+      </view>
+	<!-- 回复 -->
+    <view wx:if="{{type.type === 'reply'}}" class="wraplis">
+		<textarea
+        class='text_item'
+        placeholder='回复@{{type.customerName}}'
+        auto-focus="{{autoFocus}}"
+        value='{{userword}}'
+        maxlength='200'
+        bindinput='watchPassWord'
+				bindfocus='bindfocus'
+				bindblur='bindblur'
+				show-confirm-bar="{{showConfirmBar}}"
+        placeholder-style="color:#cccccc;font-size:30rpx"
+      /></view>
+	     <view wx:if="{{type.type === 'release'}}" class="wraplis">
+		<textarea
+        class='text_item'
+        placeholder='这一刻，说点什么...'
+        auto-focus="{{autoFocus}}"
+        value='{{userword}}'
+        maxlength='1000'
+        bindinput='watchPassWord'
+        bindfocus='bindfocus'
+				bindblur='bindblur'
+				show-confirm-bar="{{showConfirmBar}}"
+        placeholder-style="color:#cccccc;font-size:30rpx"
+      /></view>
+
+    <view wx:if="{{type.type === 'homerela'}}" class="wraplis">
+		<textarea
+        class='text_item'
+        placeholder='请输入作业要求～'
+        auto-focus="{{autoFocus}}"
+        value='{{userword}}'
+        maxlength='1500'
+        bindinput='watchPassWord'
+        bindfocus='bindfocus'
+				bindblur='bindblur'
+				show-confirm-bar="{{showConfirmBar}}"
+        placeholder-style="color:#cccccc;font-size:30rpx"
+      /></view>
+			<!-- 上传的图片 -->
+			<view class='upload_list'>
+			<repeat
+        for='{{ imgList }}'
+        item='item'
+        index="index"
+      >
+			 <view
+			 class="wrapall"
+      	@tap='previewImage({{ item }})'
+			style="background-image:url({{ item }});border-radius:10rpx;background-size:cover;background-position:center center"
+		  >
+			<!-- <view class="littap" catchtap='littapImage({{ index }})'></view> -->
+      <image src="http://img.ishanshan.com/gimg/user/n///276756479988465665.png" class="littap" catchtap='littapImage({{ index }})'></image>
+				</view>
+			 </repeat>
+			 <view
+        wx:if='{{ icons }}'
+         class="wrapall addlist"
+        @tap='showModal'
+      >
+      </view>
+			</view>
+    <view class='text_bottoms' wx:if="{{type.type === 'release'}}" style="position:fixed;bottom:{{height}}px">
+    <view class="leftFlex" wx:if='{{ imgList.length < 9 }}' @tap='showModal'>
+        <image src='http://img.ishanshan.com/gimg/user/n///276755803849883649.png' class="imahit"/>
+        <view  class="showModal" >添加照片</view>
+      </view>
+
+     <view class="leftFlex" @tap='cancalModal' wx:else>
+      <image src='http://img.ishanshan.com/gimg/user/n///276755803849883649.png' class="imahit"/>
+      <view  class="showModal">添加照片</view>
+    </view>
+    <view class="sedB">
+      <view class="text_num">{{num}}/1000</view>
+			 <view class="text_corl" wx:if="{{ senback }}" @tap='sendmess({{type}})'>发布</view>
+        <view class="text_sed" wx:else>发布</view>
+    </view>
+  </view>
+
+      <view class='text_bottoms' wx:elif="{{type.type === 'homerela'}}" style="position:fixed;bottom:{{height}}px">
+    <view class="leftFlex" wx:if='{{ imgList.length < 9 }}' @tap='showModal'>
+        <image src='http://img.ishanshan.com/gimg/user/n///276755803849883649.png' class="imahit"/>
+        <view  class="showModal" >添加照片</view>
+      </view>
+
+     <view class="leftFlex" @tap='cancalModal' wx:else>
+      <image src='http://img.ishanshan.com/gimg/user/n///276755803849883649.png' class="imahit"/>
+      <view  class="showModal">添加照片</view>
+    </view>
+    <view class="sedB">
+      <view class="text_num">还可以输入{{1500-num}}字</view>
+			 <view class="text_corl" wx:if="{{ senback }}" @tap='sendmess({{type}})'>提交</view>
+        <view class="text_sed" wx:else>提交</view>
+    </view>
+  </view>
+  <view class='text_bottom' wx:else style="position:fixed;right:0;bottom:{{height}}px">
+      <view class="text_num">{{num}}/200</view>
+       <view class="text_corl" wx:if="{{ senback }}" @tap='sendmess({{type}})'>发布</view>
+       <view class="text_sed" wx:else>发布</view>
+  </view>
+  </view>
+</template>

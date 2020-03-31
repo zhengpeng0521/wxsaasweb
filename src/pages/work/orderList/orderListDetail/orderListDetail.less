@@ -1,0 +1,118 @@
+@import '../../../../common.less';
+.list_item{
+	position : relative;
+	padding : 30rpx 30rpx 0 30rpx;
+	box-sizing : border-box;
+	border-radius : 6rpx;
+	background : @base_background;
+  font-size : 0;
+  border-bottom:2rpx solid #EFEFF4;
+}
+.list_item_line_center{
+	display: flex;
+	justify-content: space-between;
+	margin-bottom : 40rpx;
+	align-items: center;
+}
+//取消
+.ask{
+	display:inline-block;
+}
+// 课程名称
+.list_item_course_name{
+	height : @lg_font_size;
+	line-height : @lg_font_size;
+	font-size : @lg_font_size;
+	color : @label_color;
+}
+.list_item_course_time{
+	font-size : @mid_font_size;
+	height : @mid_font_size;
+	line-height : @mid_font_size;
+	color : @value_color;
+}
+.list_item_course_time::before{
+	content : '';
+	display : inline-block;
+	margin-right : 7rpx;
+	width : 20rpx;
+	height : 20rpx;
+	background-image : url('https://img.ishanshan.com/gimg/img/952faa0bde604c9ba1c726b2c931a703');
+	background-size : cover;
+	background-repeat : no-repeat;
+}
+.list_item_line_pos{
+	position: relative;
+	margin-bottom : 15rpx;
+}
+.list_item_course_value{
+	display : inline-block;
+	vertical-align : top;
+	width : 50%;
+	padding-right : 20rpx;
+	height : @mid_font_size;
+	line-height: @mid_font_size;
+	font-size : @mid_font_size;
+	color : @value_color;
+	box-sizing : border-box;
+	text-overflow : ellipsis;
+	overflow : hidden;
+  white-space : nowrap;
+  margin-bottom:20rpx;
+}
+.tap_item_wrapper{
+  background: @base_background;
+  display: flex;
+  justify-content: space-around;
+  border-bottom:2rpx solid #EFEFF4;
+}
+.tap_item{
+  font-size: @base_font_size;
+  color:@label_color;
+  line-height: @base_height;
+  position: relative;
+}
+.tap_item.active{
+  color:@base_color !important;
+}
+.tap_item .posLine{
+  position: absolute;
+  bottom: 0rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80rpx;
+  height: 8rpx;
+  background: @base_background;
+  border-radius: 4rpx;
+}
+.tap_item.active .posLine{
+  background: @base_color !important;
+}
+.type_change{
+  width: 100%;
+  height: calc(~'100% - 352rpx');
+}
+.type_change_box{
+  background : @base_background;
+  padding:30rpx;
+  border-bottom:2rpx solid #EFEFF4;
+}
+.type_change_box .list_item_course_value{
+  margin-bottom:40rpx;
+}
+.type_one{
+  height: 100%;
+  position: relative;
+}
+.icon_bg_box{
+	display: flex;
+	align-items: center;
+}
+.icon_bg{
+	display: inline-block;
+	width: 28rpx;
+	height: 28rpx;
+	background-size : cover;
+	background-repeat : no-repeat;
+	margin-right:10rpx;
+}

@@ -1,0 +1,103 @@
+<style lang = "less" src = 'leadsList.less' ></style>
+
+<script>
+	import wepy from 'wepy'
+
+	export default class Introduce extends wepy.page {
+		config = {
+			navigationBarTitleText : '闪闪云校'
+		}
+
+		data = {
+			productList : [
+				{
+					title : '招生拓客',
+					tip   : '( 名单量提升80% )',
+					list : [
+						{ value : '微官网', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+						{ value : '砍价', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+						{ value : '拼团', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+						{ value : '投票', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+					]
+				},{
+					title : '机构管理',
+					tip : '( 管理成本下降50% )',
+					list : [
+						{ value : '名单跟进', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+						{ value : '课程表', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+						{ value : '学员考勤', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+						{ value : '家校通', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+					]
+				},{
+					title : '经营数据',
+					tip   : '( 实时监控机构健康情况 )',
+					list  : [
+						{ value : '经营日报', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+						{ value : '销售业绩', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+						{ value : '消课分析', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+						{ value : '考勤情况', url : 'https://img.ishanshan.com/gimg/img/7ff2b2571d83d8b16c7ce3e85c1f60ab' },
+					]
+				}
+			]
+		}
+
+		components = {
+
+		}
+
+		methods = {
+			//点击进入产品详情
+			clickToProductDetail( url ){
+				wx.navigateTo({
+					url : `../introduceDetail/introduceDetail?url=${url}`
+				})
+			},
+			//申请试用
+			clickToRegister(){
+				wx.navigateTo({
+					url : `../register/register`
+				})
+			},
+			//登录
+			clickToLogin(){
+				wx.navigateTo({
+					url : '../login/login'
+				})
+			}
+		}
+
+		events = {
+
+		}
+
+		onLoad() {
+
+		}
+	}
+</script>
+
+<template>
+	<view class = 'container' >
+		<repeat for = '{{ productList }}' item = 'item' >
+			<view class = 'introduce_item' >
+				<view class = 'item_title' >{{ item.title }}<text class = 'item_title_tip' >{{ item.tip }}</text></view>
+				<view class = 'item_content' >
+					<repeat for = '{{ item.list }}' >
+						<view class = 'item_content_block' @tap = 'clickToProductDetail({{ item.url }})' >
+							<view class = 'item_content_block_img'>
+								<image style = 'width : 120rpx; height : 120rpx' mode = 'aspectFill' src = '{{ item.url }}' />
+							</view>
+							<view class = 'item_content_block_value' >{{ item.value }}</view>
+						</view>
+					</repeat>
+				</view>
+			</view>
+		</repeat>
+		<view class = 'btnArea' >
+			<button class = 'btn_save' hover-class = 'btn_save_hover' @tap = 'clickToRegister' >
+				申请试用
+			</button>
+			<button class = 'btn_reset' style = 'margin-top : 30rpx' hover-class = 'btn_reset_hover' @tap = 'clickToLogin' >登录</button>
+		</view>
+	</view>
+</template>

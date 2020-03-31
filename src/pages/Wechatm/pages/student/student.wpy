@@ -1,0 +1,78 @@
+<style lang = 'less' src = 'less/student.less' ></style>
+
+<script>
+  import wepy from 'wepy'
+  import { serviceRequestJson } from '../../../../utils/request'
+  export default class Student extends wepy.page {
+    props = {
+      classData: {
+        type: String,
+        default: '',
+        twoWay: true
+      }
+    }
+    watch = {
+      classData(newvalue, oldvalue) {
+        this.classStuQueryList({classId: newvalue})
+        this.$apply()
+      }
+    }
+    data = {
+      studentList: [],
+      girlImg: 'http://img.ishanshan.com/gimg/n/20191202/5ec0620a4095d5a8745c4e0c1e01b5f0',
+      boyImg: 'http://img.ishanshan.com/gimg/n/20191202/9373b0fb5e938667910ed38b55d1bd03',
+      unknownImg: 'http://img.ishanshan.com/gimg/n/20191202/1c6c7e2aef71eaa56f364538a76bd99a'
+    }
+    async classStuQueryList(params) {
+      const url = `${this.$parent.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/classStuQueryList`
+      const res = await serviceRequestJson(url, params)
+      const {errorCode, classStuList} = res
+      if (res && errorCode === 0) {
+        this.studentList = classStuList
+        this.$apply()
+      }
+    }
+    methods = {
+      toPage(page, id) {
+        wx.navigateTo({
+          url: `../student/${page}?id=${id}`
+        })
+        wx.reportAnalytics('student_info', {
+          org_id: this.$parent.org_id,
+          tenant_id: this.$parent.tenant_id,
+          user_id: this.$parent.user_id
+        })
+      },
+
+      topage1(page) {
+        wx.navigateTo({
+          url: `../student/${page}`
+        })
+        wx.reportAnalytics('student_invite', {
+          org_id: this.$parent.org_id,
+          tenant_id: this.$parent.tenant_id,
+          user_id: this.$parent.user_id
+        })
+      }
+    }
+  }
+</script>
+
+<template>
+  <view class="student">
+    <view class="student_item" @tap="topage1('invitationRegister')">
+      <image class="invitation" src="http://img.ishanshan.com/gimg/n/20191022/657c596f9e787cb8cde3ce1b11a5f708"/>
+      <view>邀请注册</view>
+    </view>
+    <view class="student_item" wx:for="{{studentList}}" wx:key="{{item.stuId}}">
+      <view class="content" @tap="toPage({{'studentInfo'}}, {{item.stuId}})">
+        <image class="head_portrait" wx:if="{{item.sex === '1'}}" src="{{boyImg}}"/>
+        <image class="head_portrait" wx:if="{{item.sex === '2'}}" src="{{girlImg}}"/>
+        <image class="head_portrait" wx:if="{{item.sex !== '1' && item.sex !== '2'}}" src="{{unknownImg}}"/>
+        <view class="stuNameg">{{item.stuName}}</view>
+        <view wx:if="{{item.regist === '1'}}" class="register_complete">已注册</view>
+        <view wx:if="{{item.regist === '0'}}" class="register">未注册</view>
+      </view>
+    </view>
+  </view>
+</template>

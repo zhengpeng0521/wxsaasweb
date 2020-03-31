@@ -1,0 +1,261 @@
+<style lang = "less" src = 'scheduleList.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import moment from 'moment';
+	import BlankDataPage from '../../../components/blankDataPage/blankDataPage';
+	import { serviceRequest } from '../../../utils/request';
+	export default class ScheduleList extends wepy.page {
+		config = {
+			navigationBarTitleText : '课程表'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+		  		title : '闪闪云校, 一站式早教管理云平台',
+		  		path : '/pages/initPage/initPage',
+				imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+		  		success : function( res ) {
+					wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+			  	},
+			  	fail : function( res ){
+			  	}
+			}
+	  	}
+
+		components = {
+			blankDataPage      : BlankDataPage,
+		}
+
+		data = {
+			calendarType        : 'week',                            //日历类型
+
+			courseList          : [],                                //课程数据
+			pageIndex           : 0,
+			resultCount         : 0,
+			headerDate          : moment().format('YYYY-MM-DD'),
+			currentDate         : moment().format('YYYY-MM-DD'),
+			dayList             : [],                                //有课 日期
+			startDate           : undefined,
+			endDate             : undefined,
+
+			wStartDate          : undefined,
+			wEndDate            : undefined,
+
+			renderList          : [],                                //星期数组
+			monthList           : [],                                //月份数组
+
+			completeLoading     : false,                             //数据加载完全
+			pageLoading         : false,                             //数据加载中
+		}
+
+		onLoad( params ){
+
+		}
+
+		onShow(){
+			let wStartDate = moment().startOf('week').format('YYYY-MM-DD');     //星期开始时间
+			let wEndDate = moment().endOf('week').format('YYYY-MM-DD');         //星期结束时间
+			let currentDate = moment().format('YYYY-MM-DD');                    //当前时间
+			this.getCourseList( currentDate );                                  //得到当前日期的课程数据
+			this.getWeekList( wStartDate, wEndDate );                           //得到 渲染item
+		}
+
+		//得到星期日历 数组
+		getWeekList( startDate, endDate ){
+			let self = this;
+			let renderList = [];
+			for( let i = 0; i < 7; i++ ){
+				renderList.push({
+					date : moment( startDate ).add( i, 'd' ).format('YYYY-MM-DD'),
+					day  : moment( startDate ).add( i, 'd' ).format('D')
+				})
+			}
+			let url = `${ this.$parent.service.base_url }/crm-server-provider/appointCou/courseDayQuery`;
+			serviceRequest( url, { startDate, endDate }).then(( ret ) => {
+				if( !!ret && ret.errorCode == 9000 ){
+					renderList && renderList.map(function( item, index ){
+						if( !!ret.dayList && (ret.dayList.indexOf( item.date ) == -1) ){
+							renderList[index].noCourse = true;
+						}else{
+							renderList[index].noCourse = false;
+						}
+					})
+					this.renderList = renderList;
+					this.wStartDate = startDate;
+					this.wEndDate = endDate;
+					this.$apply();
+				}else{
+					wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+				}
+			})
+		}
+
+		//得到 课程列表
+		getCourseList( date ){
+			this.pageLoading = true;
+			this.completeLoading = false;
+			let url = `${ this.$parent.service.base_url }/crm-server-provider/appointCou/queryCourseList`;
+			let params = {
+				startDate : date, endDate : date, pageIndex : 0, pageSize : 10
+			}
+			serviceRequest( url, params ).then((ret) => {
+				if( ret && ret.errorCode == 9000 ){
+					this.courseList = ret.results;
+					this.resultCount = ret.data.resultCount;
+					this.pageIndex = 0;
+					this.pageLoading = false;
+					this.$apply();
+				}else{
+					this.courseList = [];
+					this.resultCount = 0;
+					this.pageLoading = false;
+					wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+				}
+			})
+		}
+
+		methods = {
+			//上周 下周
+			clickToChangeWeek( key ){
+				let startDate, endDate;
+				if( key === 'lastWeek' ){
+					startDate = moment(this.wStartDate).subtract( 7, 'd' ).format('YYYY-MM-DD');
+					endDate = moment( this.wEndDate ).subtract( 7, 'd' ).format('YYYY-MM-DD');
+					this.getWeekList( startDate, endDate );
+				}else if( key === 'nextWeek' ){
+					startDate = moment( this.wStartDate ).add( 7, 'd' ).format('YYYY-MM-DD');
+					endDate = moment( this.wEndDate ).add( 7, 'd' ).format('YYYY-MM-DD')
+					this.getWeekList( startDate, endDate );
+				}
+				this.headerDate = startDate;
+			},
+
+			//点击选择 日期
+			changeDate( date, noCourse ){
+				this.courseList = [];
+				this.headerDate = date;
+				this.currentDate = date;
+				if( !noCourse ){  //有课则发起 请求
+					this.getCourseList( date )
+				}
+			},
+
+			getMoreScheduleList(){
+				if( !this.pageLoading ){
+					let { currentDate, pageIndex, resultCount, courseList } = this;
+					let url = `${ this.$parent.service.base_url }/crm-server-provider/appointCou/queryCourseList`;
+					let params = {
+						startDate : currentDate, endDate : currentDate, pageIndex : ++pageIndex, pageSize : 10
+					}
+					this.pageLoading = true;
+					if( courseList.length >= resultCount ){
+						this.completeLoading = true;
+						this.pageLoading = false;
+					}else{
+						serviceRequest( url, params ).then((ret) => {
+							if( ret && ret.errorCode == 9000 ){
+								this.courseList = [ ...this.courseList, ...ret.results ];
+								this.pageIndex = pageIndex;
+								this.pageLoading = false;
+								this.$apply();
+							}else{
+								wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+							}
+						})
+					}
+				}
+			}
+
+		}
+	}
+</script>
+
+<template>
+	<view class = 'container' >
+		<view class = 'time_select_block' hidden = "{{ calendarType == 'month' }}" >
+			<view class = 'time_select_header' >
+				<view class = 'item_select_header_label' @tap = "clickToChangeWeek('lastWeek')" >
+					<view class = 'item_select_header_left_ba'></view><view class = 'item_select_header_left_value'>上周</view>
+				</view>
+				<view class = 'item_select_header_center' >{{ headerDate }}</view>
+				<view class = 'item_select_header_label' @tap = "clickToChangeWeek('nextWeek')" >
+					<view class = 'item_select_header_left_value'>下周</view><view class = 'item_select_header_right_ba'></view>
+				</view>
+			</view>
+			<view class = 'week_header' >
+				<view class = 'week_header_item' >日</view>
+				<view class = 'week_header_item' >一</view>
+				<view class = 'week_header_item' >二</view>
+				<view class = 'week_header_item' >三</view>
+				<view class = 'week_header_item' >四</view>
+				<view class = 'week_header_item' >五</view>
+				<view class = 'week_header_item' >六</view>
+			</view>
+			<view class = 'calendar_item' >
+				<repeat for = '{{ renderList }}' item = 'item' >
+					<view @tap = "changeDate({{ item.date }},{{ item.noCourse }})" class = 'calendar_item_value' >
+						<view class = "{{ currentDate == item.date && 'week_header_item_selected' }}" >{{ item.day }}</view>
+						<view hidden = "{{ item.noCourse }}" class = 'has_course'></view>
+					</view>
+				</repeat>
+			</view>
+		</view>
+		<view class = "{{ calendarType == 'week' ? 'schedule_scroll_block' : 'schedule_scroll_block_open' }}" >
+			<view hidden = "{{ courseList.length !== 0 }}" class = "{{ calendarType == 'week' ? 'blank_data_page' : 'blank_data_page blank_data_page_open' }}"  >
+				<blankDataPage title = '暂无课程数据~' />
+			</view>
+			<view hidden = '{{ !pageLoading }}' class = 'loading_box' >
+				<view class = 'loading_content' >
+					<view class = 'loading_cicle loading1'></view>
+					<view class = 'loading_cicle loading2'></view>
+					<view class = 'loading_cicle'></view>
+				</view>
+			</view>
+			<scroll-view scroll-y lower-threshold = '50' bindscrolltolower = 'getMoreScheduleList' class = 'list_block' >
+				<repeat for = '{{ courseList }}' >
+					<view class = 'list_item' >
+						<view class = 'list_item_course_name' >{{ item.courseName }}</view>
+						<view class = 'list_item_course_time' >{{ item.startTime + '-' + item.endTime }}</view>
+						<view class = 'list_item_course_value' style = 'margin-bottom : 20rpx'>主教 : {{ item.mtNames || '--' }}</view>
+						<view class = 'list_item_course_value'>助教 : {{ item.atNames || '--' }}</view>
+						<view class = 'list_item_course_value' style = 'margin-bottom : 20rpx'>进度 : {{ item.process || '--' }}</view>
+						<view class = 'list_item_course_value'>教室 : {{ item.roomName || '--'  }}</view>
+                        <view class = 'list_item_course_value' style = 'margin-bottom : 20rpx'>主题 : {{ item.courseTheme || '--'  }}</view>
+						<view class = 'list_item_course_content' >
+                            <view class = 'list_item_course_item'>
+								<view class = 'list_item_course_item_label'>最大人数: </view>
+								<view class = 'list_item_course_item_value'>{{ item.maxNum }}</view>
+							</view>
+							<view class = 'list_item_course_item'>
+								<view class = 'list_item_course_item_label' hidden = "{{ item.maxAttNum == -1 }}">上课({{ item.num }}/{{ item.maxAttNum }}) : </view>
+                                <view class = 'list_item_course_item_label' hidden = "{{ item.maxAttNum != -1 }}">上课({{ item.num }}) : </view>
+								<view class = 'list_item_course_item_value'>
+									<repeat for = '{{ item.stuArr }}'>{{ item.name + ' ' }}</repeat>
+									<view hidden = "{{ item.stuArr.length !== 0 }}">--</view>
+								</view>
+							</view>
+							<view class = 'list_item_course_item'>
+								<view class = 'list_item_course_item_label' hidden = "{{ item.maxMulNum == -1 }}">补课({{ item.mulNum }}/{{ item.maxMulNum }}) : </view>
+                                <view class = 'list_item_course_item_label' hidden = "{{ item.maxMulNum != -1 }}">补课({{item.mulNum }}) : </view>
+								<view class = 'list_item_course_item_value'>
+									<repeat for = '{{ item.mulStuArr }}'>{{ item.name + ' ' }}</repeat>
+									<view hidden = "{{ item.mulStuArr.length !== 0 }}">--</view>
+								</view>
+							</view>
+							<view class = 'list_item_course_item'>
+								<view class = 'list_item_course_item_label' hidden = "{{ item.maxTryNum == -1 }}">试听({{ item.tryNum }}/{{ item.maxTryNum }}) : </view>
+                                <view class = 'list_item_course_item_label' hidden = "{{ item.maxTryNum != -1 }}">试听({{ item.tryNum }}) : </view>
+								<view class = 'list_item_course_item_value'>
+									<repeat for = '{{ item.tryStuArr }}'>{{ item.name + ' ' }}</repeat>
+									<view hidden = "{{ item.tryStuArr.length !== 0 }}">--</view>
+								</view>
+							</view>
+						</view>
+					</view>
+				</repeat>
+				<view class = 'loading' hidden = '{{ !completeLoading || courseList.length == 0 }}' >已加载全部</view>
+			</scroll-view>
+		</view>
+	</view>
+</template>

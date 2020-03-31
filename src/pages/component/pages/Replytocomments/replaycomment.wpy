@@ -1,0 +1,245 @@
+<style lang = "less" src = './replayco.less' ></style>
+<script>
+import wepy from 'wepy'
+// import moment from 'moment'
+import { serviceRequestJson } from '../../../../utils/request'
+import releasepic from '../../../../components/releasepic/releasepic'
+export default class Replytocomments extends wepy.page {
+  config = {
+    navigationBarTitleText: ''
+  }
+  components = {
+    releasepic: releasepic
+  }
+  data = {
+    type: {},
+    bulsha: false,
+    count: 0,  // 设置 计数器 初始为0
+    countTimer: null // 设置 定时器 初始为null
+  }
+  onLoad(query) {
+    let str = decodeURI(decodeURIComponent(query.str))
+    let types = (!!query.str && JSON.parse(str)) || {}
+    this.type = types
+    const type = types.type
+    switch (type) {
+      case 'comment':
+        wx.setNavigationBarTitle({
+          title: '评论'
+        })
+        break
+      case 'reply':
+        wx.setNavigationBarTitle({
+          title: '回复'
+        })
+        break
+      case 'release':
+        wx.setNavigationBarTitle({
+          title: '发布'
+        })
+        break
+    }
+  }
+  async checkMsg(parmen) {
+    if (parmen.content === '') {
+      let promise = new Promise((resolve, reject) => {
+        resolve({data: true})
+      })
+      return promise
+    } else {
+      const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/checkMsg`
+      const res = await serviceRequestJson(url, parmen)
+      let promise = new Promise((resolve, reject) => {
+        resolve(res)
+      })
+      return promise
+    }
+  }
+  async addDynamic(parmen) {
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/addDynamic`
+    const res = await serviceRequestJson(url, parmen)
+    if (res.errorCode === 0) {
+      this.countInterval()
+    }
+  }
+  async addFeedback(parmen) {
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/addFeedback`
+    const res = await serviceRequestJson(url, parmen)
+    if (res.errorMessage === '成功') {
+      const type = {
+        index: this.type.index,
+        id: parmen.dynamicId
+      }
+      // 获取当前的页面栈
+      let pages = getCurrentPages() //eslint-disable-line
+      // 获取上一级页面，即pageA的page对象
+      let prevPage = pages[pages.length - 2]
+      prevPage.setData({
+        pagetype: type
+      })
+      if (prevPage.route.indexOf('classStudent') !== -1) {
+        wx.reportAnalytics('class_reply_finish', {
+          org_id: wx.getStorageSync('tea_orgId'),
+          tenant_id: wx.getStorageSync('tea_tenantId'),
+          user_id: wx.getStorageSync('tea_uid')
+        })
+      } else if (prevPage.route.indexOf('dynamicDetails') !== -1) {
+        wx.reportAnalytics('dynamic_reply_finish', {
+          org_id: wx.getStorageSync('tea_orgId'),
+          tenant_id: wx.getStorageSync('tea_tenantId'),
+          user_id: wx.getStorageSync('tea_uid')
+        })
+      }
+      wx.showToast({
+        title: '成功',
+        icon: 'success',
+        duration: 2000,
+        success: function () {
+          setTimeout(function () {
+            // 要延时执行的代码
+            wx.navigateBack({
+              delta: 1
+            })
+          }, 1000)
+        }
+      })
+    }
+  }
+  countInterval() {
+    // 设置倒计时 定时器 每25毫秒执行一次，计数器count+1 ,耗时6秒绘一圈
+    var promise = new Promise((resolve, reject) => {
+      this.countTimer = setInterval(() => {
+        if (this.count <= 60) {
+          /* 注意此处 传参 step 取值范围是0到2，所以 计数器 最大值 60 对应 2 做处理，计数器count=60的时候step=2 */
+          this.drawCircle(this.count / (60 / 2))
+          this.count++
+          resolve()
+          this.$apply()
+        }
+      }, 25)
+    })
+    promise.then(() => {
+      setTimeout(() => {
+        let pages = getCurrentPages() //eslint-disable-line
+        // 获取上一级页面，即pageA的page对象
+        let prevPage = pages[pages.length - 2]
+        const type = 'home'
+        prevPage.setData({
+          pagetop: type
+        })
+        clearInterval(this.countTimer)
+        var that = this
+        wx.showToast({
+          title: '成功',
+          icon: 'success',
+          duration: 1000,
+          success: function () {
+            that.bulsha = false
+            // that.imgs = []
+            // that.content = ''
+            setTimeout(function () {
+              // 要延时执行的代码
+              wx.navigateBack({
+                delta: 1
+              })
+            }, 1000)
+            that.$apply()
+          }
+        })
+      }, 1500)
+    })
+  }
+  drawProgressbg() {
+    // 使用 wx.createContext 获取绘图上下文 context
+    var ctx = wx.createCanvasContext('canvasProgressbg')
+    ctx.setLineWidth(2) // 设置圆环的宽度
+    ctx.setStrokeStyle('#fff') // 设置圆环的颜色
+    ctx.setLineCap('round') // 设置圆环端点的形状
+    ctx.beginPath() // 开始一个新的路径
+    ctx.arc(11, 11, 10, 0, 2 * Math.PI, false)
+    ctx.stroke()// 对当前路径进行描边
+    ctx.draw()
+  }
+  drawCircle(step) {
+    var context = wx.createCanvasContext('canvasProgress')
+    context.setLineWidth(2)
+    context.setStrokeStyle('#5D9CEC')
+    context.setLineCap('round')
+    context.beginPath()
+    // 参数step 为绘制的圆环周长，从0到2为一周 。 -Math.PI / 2 将起始角设在12点钟位置 ，结束角 通过改变 step 的值确定
+    context.arc(11, 11, 10, -Math.PI / 2, step * Math.PI - Math.PI / 2, false)
+    context.stroke()
+    context.draw()
+  }
+
+  onReady() {
+    this.drawProgressbg()
+  }
+  events = {
+    myevent(type) {
+      type.visible = '1'
+      const parmsw = {
+        content: type.content,
+        systemCode: 'ss'
+      }
+      let promiseArr = this.checkMsg(parmsw)
+      promiseArr.then((res) => {
+        if (res.data === true) {
+          this.bulsha = true
+          this.addDynamic(type)
+        } else {
+          wx.showToast({
+            icon: 'none',
+            title: '文字有敏感词汇,请重新输入',
+            duration: 2000
+          })
+        }
+      })
+    },
+    myevents(type) {
+      this.index = type.index
+      delete type.index
+      const parmsw = {
+        content: type.comment,
+        systemCode: 'ss'
+      }
+      let promiseArr = this.checkMsg(parmsw)
+      promiseArr.then((res) => {
+        if (res.data === true) {
+          this.addFeedback(type)
+        } else {
+          wx.showToast({
+            icon: 'none',
+            title: '文字有敏感词汇,请重新输入',
+            duration: 2000
+          })
+        }
+      })
+    }
+  }
+  methods = {
+  }
+}
+</script>
+
+<template>
+  <releasepic :type.sync="type" />
+  <!-- 弹出框 -->
+  <view
+    class='progress_box'
+    wx:if="{{bulsha}}"
+  >
+    <view class="middlewrp">
+      <canvas
+        class="progress_bg"
+        canvas-id="canvasProgressbg"
+      />
+      <canvas
+        class="progress_canvas"
+        canvas-id="canvasProgress"
+      />
+      <view class="one">发布过程中</view>
+      <view class="two">请勿关闭小程序</view>
+    </view>
+  </view>
+</template>

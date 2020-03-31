@@ -1,0 +1,50 @@
+<style lang = "less" src = "homeworkList.less" ></style>
+<script src="./homeworkList.js"></script>
+<template>
+  <view class="homeworkList">
+    <refresh :refmove.sync="refmove" class="refresh">
+      <scroll-view
+        bindscroll="scroll"
+        @touchstart="listStart"
+        @touchmove="listMove"
+        @touchend="listEnd"
+        scroll-y
+        bindscrolltolower='scrollToLower'
+        class="list_wrap_open"
+      >
+        <repeat for="{{list}}" item="item" index="index" wx:if="{{ list.length !== 0 }}">
+          <view class="content">
+            <view class="list_item_item" @tap="goPage({{item.id}}, {{index}})">
+              <view class="title">{{item.title}}</view>
+              <view class="time">
+                <!-- <text>2019-08-20 16:00</text> -->
+                <text>{{item.modifyTime}}</text>
+              </view>
+              <view class="className">{{item.courseName}}</view>
+              <view class="classper">
+                <view>已读{{item.readNum}}/{{item.sendNum}}</view>
+                <view>已提交{{item.commitNum}}/{{item.sendNum}}</view>
+                <view>已批阅{{item.passNum}}/{{item.sendNum}}</view>
+              </view>
+            </view>
+          </view>
+        </repeat>
+
+        <view wx:if="{{ listtrue }}" class='blank_data_page'>
+          <blankDataPage title="暂无结果" />
+        </view>
+
+        <view class="loadingb" wx:if="{{ searchLoading }}">
+          <image class="weui-loading" src="http://img.ishanshan.com/gimg/user/n///274031351005446145.png"/>
+          拼命加载中...
+        </view>
+        <view class="loadingb" wx:if="{{ searchLoadingComplete }}">
+          - 我是有底线的 -
+        </view>
+      </scroll-view>
+    </refresh>
+    <view class="arrangement">
+      <button @tap="homework">布置作业</button>
+    </view>
+  </view>
+</template>

@@ -1,0 +1,42 @@
+<style type = 'less' src = 'rate.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import moment from 'moment';
+
+	export default class Rate extends wepy.component {
+		props = {
+			rateLevel : {        //评价级别
+				type : String,
+				default : 0,
+				twoWay  : true
+			},
+		}
+
+		data = {
+		}
+
+		methods = {
+			clickToChangeLevel( level ){
+				this.rateLevel = level;
+			}
+		}
+
+		events = {
+		}
+
+		onLoad( e ){
+
+		}
+  	}
+</script>
+
+<template>
+	<view class = 'rate_level_block' >
+		<view class = "{{ rateLevel >= 1 ? 'rate_level_selected' : 'rate_level' }}" @tap = 'clickToChangeLevel( 1 )'></view>
+		<view class = "{{ rateLevel >= 2 ? 'rate_level_selected' : 'rate_level' }}" @tap = 'clickToChangeLevel( 2 )'></view>
+		<view class = "{{ rateLevel >= 3 ? 'rate_level_selected' : 'rate_level' }}" @tap = 'clickToChangeLevel( 3 )'></view>
+		<view class = "{{ rateLevel >= 4 ? 'rate_level_selected' : 'rate_level' }}" @tap = 'clickToChangeLevel( 4 )' ></view>
+		<view class = "{{ rateLevel >= 5 ? 'rate_level_selected' : 'rate_level' }}" @tap = 'clickToChangeLevel( 5 )'></view>
+	</view>
+</template>

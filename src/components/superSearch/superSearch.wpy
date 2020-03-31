@@ -1,0 +1,35 @@
+<style type = 'less' src = 'superSearch.less' ></style>
+
+<template>
+	<!-- 高级搜索 -->
+	<view class = 'super_search_block' >
+
+	</view>
+	<!-- 高级搜索 -->
+</template>
+
+<script>
+	import wepy from 'wepy';
+
+	export default class SuperSearch extends wepy.component {
+		props = {
+
+		}
+
+		data = {
+
+		}
+
+		methods = {
+			//点击
+			onSearch : function( e ){
+				this.$emit( 'onSearch', e.detail.value )
+			}
+
+		}
+
+		onLoad(){
+
+		}
+  	}
+</script>

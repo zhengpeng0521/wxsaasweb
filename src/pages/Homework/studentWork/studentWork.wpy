@@ -1,0 +1,82 @@
+<style lang = "less" src = 'studentWork.less' ></style>
+<script src="studentWork.js"></script>
+
+<template>
+  <view class="studentWork">
+    <view wx:if="{{ !delFlag }}" class="list_wrap_open">
+      <view class="class_name">
+        <view class="content-top">
+          <view class="title">
+            <text>{{list.courseName}}</text>
+            <view @tap="modeShow" class="title_img">
+              <image src="http://img.ishanshan.com/gimg/n/20191125/94fc766a35c74ca7d86cbdad6b548723"></image>
+            </view>
+          </view>
+          <view class="time">{{list.modifyTime}}</view>
+          <view class="className">{{list.title}}</view>
+          <view class="classper">
+            <view>已读{{list.readNum}}/{{list.sendNum}}</view>
+            <view>已提交{{list.commitNum}}/{{list.sendNum}}</view>
+            <view>已批阅{{list.passNum}}/{{list.sendNum}}</view>
+          </view>
+        </view>
+        <view class="require">
+          <view class="open" wx:if="{{!detailsFlag}}" @tap="getMoreDetails">
+            <text class="textd">展开作业要求</text>
+            <image class="require_icon" src="http://img.ishanshan.com/gimg/n/20191125/c7748275a521324caef4d20f1431d487"></image>
+          </view>
+          <view wx:if="{{detailsFlag}}">
+            <view class="details">
+              <text class="describe">{{list.content}}</text>
+              <view class="details_img">
+                <repeat for="{{list.imgs}}">
+                  <image mode="widthFix" src="{{item}}" @tap="previewImage({{item}})"></image>
+                </repeat>
+              </view>
+            </view>
+            <view class="close" @tap="getMoreDetails">
+              <text class="textd">收起作业要求</text>
+              <image class="require_icon" src="http://img.ishanshan.com/gimg/n/20191125/e6278ed7036425a3cf4933c5f021d5ba"></image>
+            </view>
+          </view>
+          <view class="line"></view>
+        </view>
+      </view>
+      <repeat for="{{list.stuHomeworkList}}" item="item" wx:if="{{ list.stuHomeworkList.length !== 0 }}">
+        <view class="list_item_item" @tap='goPage({{item}})'>
+          <view class="headPortrait">
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}"></image>
+            <image wx:if="{{!item.avatar}}" src="http://img.ishanshan.com/gimg/n/20191109/81ae1a9b145c16f68ed168f1ab945539"></image>
+          </view>
+          <view class="center">
+            <view class="name">{{item.stuName}}</view>
+            <view class="time_read">
+              <text class="time">{{item.workTime ? item.workTime : list.modifyTime}}</text>
+              <text wx:if="{{item.read === '0' && (item.status === 1 || item.status === 5)}}" class="no_read">「未读」</text>
+              <text wx:if="{{item.read === '1' && (item.status === 1 || item.status === 5)}}" class="read">「已读」</text>
+            </view>
+          </view>
+          <view wx:if="{{item.status === 1 || item.status === 5}}" class="submit">未提交</view>
+          <view wx:if="{{item.status === 2 || item.status === 3}}" class="submit complete">已提交</view>
+          <view wx:if="{{item.status === 4}}" class="submit complete">已批阅</view>
+        </view>
+      </repeat>
+      <view class="readOverBtn">
+        <button disabled="{{btnflag}}" @tap="readOver">一键批阅</button>
+        <view class="bottom"></view>
+      </view>
+    </view>
+    <view class="mask" wx:if="{{modelFlag}}">
+      <view class="model">
+        <view class="model_top">
+          <view class="edit" @tap="edit">编辑</view>
+          <view class="del" @tap="del">删除</view>
+        </view>
+        <view class="cancel" @tap="cancel">取消</view>
+      </view>
+    </view>
+    <view wx:if="{{ delFlag }}" class='blank_data_page'>
+      <blankDataPage title="该作业已删除" />
+    </view>
+  </view>
+</template>

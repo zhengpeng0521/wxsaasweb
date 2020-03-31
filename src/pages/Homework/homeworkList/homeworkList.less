@@ -1,0 +1,121 @@
+@import '../../../common.less';
+
+.homeworkList{
+  // padding-top: 40rpx;
+  // box-sizing: border-box;
+
+  .list_item_item{
+    border-top: 10rpx solid #5D9CEC;
+    border-radius: 6rpx;
+    width: 100%;
+    background: #fff;
+    box-sizing : border-box;
+    font-size: @mid_font_size;
+    box-shadow:1px 1px 20rpx 1px rgba(93,156,236,0.13);
+    padding: 30rpx;
+
+    .title{
+      font-size: 32rpx;
+      color: #333;
+      margin-bottom: 10rpx;
+    }
+
+    .time{
+      font-size: 24rpx;
+      color: #B2B2B2;
+      margin-bottom: 30rpx;
+    }
+
+    .className{
+      color: #666;
+      font-size: 28rpx;
+      margin-bottom: 30rpx;
+    }
+
+    .classper{
+      display: flex;
+      justify-content: space-between;
+      font-size: 24rpx;
+      color: #B2B2B2;
+    }
+  }
+
+  .search_block{
+    position : fixed;
+    display : flex;
+    align-items : center;
+    justify-content : center;
+    width : 100%;
+    height : @base_height;
+    padding: 20rpx;
+    box-sizing : border-box;
+    z-index : 1000;
+
+    .search_icon{
+      display: none;
+    }
+
+    .search_input{
+      display : flex;
+      align-items : center;
+      justify-content: center;
+      flex : 1;
+      padding : 0 44rpx;
+      background :#fff;
+      font-size : @base_font_size;
+      border-radius : @lg_border_radius;
+    }
+  }
+
+  .content{
+    padding: 0 30rpx;
+    margin-top: 30rpx;
+
+    &:last-first {
+      margin-top: 0;
+    }
+  }
+
+  .list_wrap_open{
+    height : calc( ~'100vh - 158rpx' );
+    box-sizing: border-box;
+
+    .blank_data_page{
+      height: calc( ~'100vh - 158rpx' );
+    }
+  }
+
+  .pull_to_refresh{
+    text-align: center;
+    color:#888888;
+    font-size:@mid_font_size;
+  }
+  .loadingb{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30rpx;
+    font-size:24rpx;
+    color:rgba(102,102,102,1);
+
+    image{
+      margin-right: 10rpx;
+    }
+  }
+
+  .arrangement{
+    position: fixed;
+    bottom: 60rpx;
+    width: 100%;
+    padding: 0 30rpx;
+    box-sizing: border-box;
+
+    button{
+      background-color: #5D9CEC;
+      border-radius: 10rpx;
+      height: 88rpx;
+      color: #fff;
+      font-size: 34rpx;
+    }
+  }
+}

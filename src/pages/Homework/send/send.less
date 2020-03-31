@@ -1,0 +1,201 @@
+@import '../../../common.less';
+
+.send{
+  // height : calc( ~'100% - 114rpx');
+  // box-sizing: border-box;
+  padding-top: 88rpx;
+
+  .attend_header{
+    display : flex;
+    justify-content : space-between;
+    align-items : center;
+    position : fixed;
+    top : 0;
+    width : calc( ~'100% - 40rpx' );
+    height : 88rpx;
+    padding : 0 20rpx;
+    font-size : @base_font_size;
+    color : @value_color;
+    background : @base_background;
+    z-index : 999;
+
+    .attend_header_center{
+      text-align : center;
+      font-size : @lg_font_size;
+      color : @base_color;
+    }
+    .arrow_down{
+      width : 0; height : 0;
+      display : inline-block;
+      vertical-align : middle;
+      margin-left : 10rpx;
+      border : 10rpx solid transparent;
+      border-top-color : @base_color;
+    }
+    .attend_header_label{
+      height : @mid_font_size;
+      line-height : @mid_font_size;
+      color : #666666;
+    }
+    .attend_header_label_disabled{
+      color : @light_color;
+      height : @mid_font_size;
+      line-height : @mid_font_size;
+    }
+    .attend_header_left_ba, .attend_header_right_ba{
+      display : inline-block;
+      width : 16rpx;
+      height : 26rpx;
+      background-repeat : no-repeat;
+      background-size : cover;
+    }
+    .attend_header_left_ba{
+      margin-right : 16rpx;
+      background-image : url('https://img.ishanshan.com/gimg/img/7b0055301eafdfffb73be31cb9db88b7');
+    }
+    .attend_header_right_ba{
+      margin-left : 16rpx;
+      background-image : url('https://img.ishanshan.com/gimg/img/7df347afadc9a46ca7763f05548e0781');
+    }
+    .attend_header_right_ba_disabled{
+      margin-left : 16rpx;
+      background-image : url('https://img.ishanshan.com/gimg/img/f3a2960f5803429dde0746306b2818ae');
+    }
+    .attend_header_left_value{
+      display : inline-block;
+      vertical-align : top;
+    }
+  }
+
+  .list{
+    padding-bottom: 106rpx;
+    .class_item{
+      position: relative;
+      display: flex;
+      align-items: center;
+      margin-left: 30rpx;
+      border-bottom: 1px solid #f3f3f3;
+    }
+    .className{
+      color: #333;
+      font-size: 32rpx;
+      padding: 38rpx 0;
+    }
+    .jiantou{
+      padding: 38rpx 30rpx;
+      width: 36rpx;
+      height: 18rpx;
+      position: absolute;
+      top: 50%;
+      right: 20rpx;
+      transform: translateY(-50%);
+    }
+    .child_item{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-left: 50rpx;
+      border-bottom: 1px solid #f3f3f3;
+      padding: 20rpx 0;
+    }
+    .student_checked{
+      position: relative;
+      width: 40rpx;
+      height: 40rpx;
+      // border: 4rpx solid #C9C9C9;
+      border-radius: 50%;
+      background-color: #5D9CEC;
+      margin-right: 20rpx;
+    }
+    .student_checked_icon{
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+    }
+    .sutdent{
+      color: #333;
+      font-size: 28rpx;
+    }
+    .sutdent_no{
+      color: #666666;
+      font-size: 28rpx;
+      margin-left: 60rpx;
+      padding: 20rpx 0;
+      border-bottom: 1px solid #f3f3f3;
+    }
+    .class_checkbox .wx-checkbox-input,
+    .sutdent_checkbox .wx-checkbox-input{
+      border-radius:50%;
+      width:44rpx;
+      height:44rpx;
+      border: 1px solid #C9C9C9;
+    }
+    .class_checkbox .wx-checkbox-input.wx-checkbox-input-checked,
+    .sutdent_checkbox .wx-checkbox-input.wx-checkbox-input-checked{
+      border-color:#5D9CEC !important;
+      background:#5D9CEC !important;
+    }
+    .class_checkbox .wx-checkbox-input.wx-checkbox-input-checked::before,
+    .sutdent_checkbox .wx-checkbox-input.wx-checkbox-input-checked::before{
+      border-radius:50%;
+      width:44rpx;
+      height:44rpx;
+      line-height:44rpx;
+      text-align:center;
+      font-size:15px;
+      color:#fff;
+      background:transparent;
+      transform:translate(-50%, -50%) scale(1);
+      -webkit-transform:translate(-50%, -50%) scale(1);
+    }
+    .sutdent_checkbox .wx-checkbox-input{
+      width:38rpx;
+      height:38rpx;
+    }
+    .sutdent_checkbox .wx-checkbox-input.wx-checkbox-input-checked::before{
+      width:38rpx;
+      height:38rpx;
+      line-height:38rpx;
+      font-size:15px;
+    }
+  }
+
+  .btn_wrap{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #EFEFF4;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding:  10rpx 20rpx 20rpx 32rpx;
+    box-sizing: border-box;
+
+    .stuNum{
+      color: #333;
+      font-size: 28rpx;
+    }
+
+    .studentBtn{
+      text-align: center;
+      line-height: 76rpx;
+      width: 180rpx;
+      height: 76rpx;
+      border-radius: 10rpx;
+      color: #fff;
+      font-size: 32rpx;
+      background-color: #5D9CEC;
+      box-sizing: border-box;
+    }
+  }
+  .stu_item{
+    display: flex;
+    justify-content: space-between;
+  }
+  .no_register{
+    color: #FF4343;
+    font-size: 20rpx;
+    margin-right: 40rpx;
+  }
+}

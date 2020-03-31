@@ -1,0 +1,536 @@
+<template>
+  <view style='position:relative'>
+    <view style='overflow : hidden; width : 100%; height : 100%'>
+      <!-- 搜索头部 -->
+      <commonSearch :placeholder.sync='placeholder' />
+      <scroll-view scroll-y="true" lower-threshold='200' bindscrolltolower="scrollToLower" class="list_wrap" style="padding-bottom:{{ checkList.length > 0 ? '98rpx' : 0 }}">
+        <checkbox-group bindchange='checkboxChange'>
+          <repeat for='{{ list }}' item='item' index="index">
+            <view class='list_item' hover-class='list_item_hover'>
+              <!-- 详情头部 -->
+              <view class="list_itemTop">
+                <label
+                  class='list_item_checkbox'
+                  hidden="{{ item.auditStatus === '1' ? false : false }}"
+                >
+                  <view
+                    class = "{{ item.checked === true ? 'list_item_checked' : 'list_item_not_checked' }}"
+                    hidden="{{ item.auditStatus === '1' ? false : true }}"
+                  ></view>
+                  <checkbox style = 'opacity: 0;' color = '#5D9CEC' disabled="{{ item.auditStatus === '1' ? false : true}}" checked = '{{ item.checked }}' value = '{{ item.id }}' />
+                </label>
+                
+                <view 
+                  class="item_title"
+                  style="color: {{ item.auditStatus === '1' ? '#FFAD14' : item.auditStatus === '2' ? '#FF5C5C' : item.auditStatus === '3' ? '#3BB400' : item.auditStatus === '4' ? '#999999' : '' }}"
+                >
+                  {{ item.auditStatus === '1' ? '待审核' : item.auditStatus === '2' ? '已驳回' : item.auditStatus === '3' ? '已通过' : item.auditStatus === '4' ? '已失效' : '' }}
+                </view>
+                <view class="item_time">{{ item.createTime }}</view>
+              </view>
+              <!-- 详情内容 -->
+              <view class="item_detail">
+                <view  class="item_detail_one">
+                  <span>学员姓名：</span>
+                  <span>{{ item.stuName }}</span>
+                </view>
+                <view class="item_detail_one">
+                  <span>申请家长：</span>
+                  <span>{{ item.parentName }}</span>
+                </view>
+                <view class="item_detail_one">
+                  <span>请假课程：</span>
+                  <span>{{ item.courseName }}</span>
+                </view>
+                <view class="item_detail_one">
+                  <span>联系方式：</span>
+                  <span>{{ item.mobile }}</span>
+                </view>
+                <view class="item_detail_one">
+                  <span>上课日期：</span>
+                  <span>{{ item.studyDate }}</span>
+                </view>
+                <view class="item_detail_one">
+                  <span>上课时间：</span>
+                  <span>{{ item.studyTimeZone }}</span>
+                </view>
+                <view wx:if="{{ detailShow === index ? true : false }}" class="item_detail_one">
+                  <span>请假原因：</span>
+                  <span>{{ item.reason || '--' }}</span>
+                </view>
+                <view wx:if="{{ detailShow === index ? true : false }}" class="item_detail_one">
+                  <span>处理结果：</span>
+                  <span>{{ item.remark || '--' }}</span>
+                </view>
+              </view>
+              <!-- 详情展开 -->
+              <view class="item_hidden" @tap="showDataMore({{ index }})">
+                <view class="item_hidden_but">
+                  <span>{{ detailShow === index ? '收起' : '展开' }}</span>
+                  <span class="{{ detailShow === index ? 'triangleUp' : 'triangleDown' }}"></span>
+                </view>
+              </view>
+            </view>
+          </repeat>
+        </checkbox-group>
+
+        <view hidden="{{ list.length !== 0 }}" class='blank_data_page'>
+          <blankDataPage title='无搜索结果' />
+        </view>
+        <view class='loading' style="background: #fff;" wx:if='{{ searchLoading }}'>拼命加载中...</view>
+        <view class='loading' style="background: #fff;" wx:if='{{ searchLoadingComplete }}'>--我是有底线的--</view>
+      </scroll-view>
+
+      <!-- 操作底部 -->
+      <view wx:if="{{ reviewOrCancelBrn === true && checkList.length > 0 ? true : false }}" class="operation_block">
+        <view class='select_num'>{{ '已选' + checkList.length + '个' }}</view>
+        <view>
+          <button class='leads_distribute' hover-class='btn_save_hover' @tap.stop='rejectBack' >驳回</button>
+        </view>
+        <view>
+          <button class='leads_distribute' hover-class='btn_save_hover' @tap.stop='passCheck'>通过</button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 高级搜索页面 -->
+    <view>
+      <view hidden='{{ !superSearchVisible }}' class='super_search_wrap' @tap='closeSuperSearch'></view>
+      <view class="{{ superSearchVisible ? 'super_search_block open_superSearch' : 'super_search_block' }}">
+        <form bindsubmit='confirmSuperSearch' bindreset='resetSuperSearch'>
+
+          <view class='super_search_item_div'>
+            <!-- 审核状态 -->
+            <view class='super_search_item' hidden="{{ routeType=='sea' }}">
+              <view class='super_search_item_label'>审核状态</view>
+              <view class='super_search_item_content'>
+                <radio-group name='checkStatus' bindchange='checkStatus'>
+                  <repeat for='{{ checkStatusList }}'>
+                    <label class='super_search_label'>
+                      <radio color = '#5d9cec' class = 'super_search_item_radio' value = '{{ item.key }}' />
+                      <view class = "{{ item.key == checkStatusKey ? 'super_search_value super_search_select' : 'super_search_value' }}" >{{ item.value }}</view>
+                    </label>
+                  </repeat>
+                </radio-group>
+              </view>
+            </view>
+            <!-- 提交时间 -->
+            <view class='super_search_item' style="border-bottom: 0;">
+              <view class='super_search_item_label' style="margin-bottom: 20rpx;">提交时间</view>
+              <view class="super_select_time">
+                <view class="super_select_time_left">
+                  <picker mode="date" value="{{startDate}}" bindchange="beginTimeChange" class='picker' style='height : 42rpx;'>
+                    <view wx:if="{{ startDate != null ? true : false }}" class='super_select_time_left_date' style="color: #666">
+                      {{ startDate}}
+                    </view>
+                    <view wx:if="{{ startDate != null ? false : true }}" class='super_select_time_left_date'>
+                     选择开始时间
+                    </view>
+                  </picker>
+                </view>
+                <view class="super_select_time_mid">~</view>
+                <view class="super_select_time_right">
+                  <picker mode="date" value="{{endDate}}" bindchange="endTimeChange" class='picker' style='height : 42rpx;'>
+                    <view wx:if="{{ endDate != null ? true : false }}" class='super_select_time_right_date' style="color: #666">
+                      {{ endDate}}
+                    </view>
+                    <view  wx:if="{{ endDate != null ? false : true }}" class='super_select_time_right_date'>
+                      选择结束时间
+                    </view>
+                  </picker>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class='super_search_btn_group'>
+            <button class='super_reset_btn' hover-class='btn_reset_hover' form-type='reset'>重置</button>
+            <button class='super_confirm_btn' hover-class='btn_save_hover' form-type='submit'>搜索</button>
+          </view>
+
+        </form>
+      </view>
+    </view>
+
+    <!-- 弹出的dialog -->
+    <view wx:if="{{maskDialog}}" class="maskDialog">
+      <view
+        class="inputDialog"
+      >
+        <view class="inputDialog_title">请输入处理说明</view>
+        <view class="inputDialog_textarea_all">
+          <textarea
+            adjust-position = "{{ true }}"
+            class="inputDialog_textarea"
+            placeholder="请输入处理说明，限200字"
+            auto-focus="true"
+            maxlength="240"
+            fixed="true"
+            show-confirm-bar="{{showConfirmBar}}"
+            cursor-spacing="100"
+            bindinput="bindTextAreaInput"
+          />
+          <view
+            class="inputDialog_textarea_length"
+            style="color: {{ textareaLength <= 200 ? 'rgba(204,204,204,1)' : 'rgba(255,80,80,1)' }}"
+          >
+            <span>{{ textareaLength }}/</span>
+            <span>200</span>
+          </view>
+        </view>
+        <view class="inputDialog_but">
+          <view @tap="cancelDialog" class="inputDialog_but_left">取消</view>
+          <view
+            @tap="submitDispose"
+            class="inputDialog_but_right"
+            style="color: {{ textareaLength <= 200 ? 'rgba(93,156,236,1)' : 'rgba(204,204,204,1)' }}"
+          >
+            确定
+          </view>
+        </view>
+      </view>
+    </view>
+
+  </view>
+</template>
+
+<style lang = "less" src = 'vacationList.less'></style>
+
+<script>
+  import wepy from 'wepy';
+  import {
+    serviceRequest
+  } from '../../../utils/request';
+  import CommonSearch from '../../../components/commonSearch/commonSearch'; //常用搜索
+  import BlankDataPage from '../../../components/blankDataPage/blankDataPage'; //空数据页面
+  export default class LeadsList extends wepy.page {
+    config = {
+      navigationBarTitleText: '请假审核'
+    }
+    data = {
+      reviewOrCancelBrn: false, // 请假审核和驳回按钮
+      showConfirmBar: false,
+      nameOrMobile: undefined, //手机号或姓名搜索
+      importance: undefined, //重要程度搜索
+      checkStatusData: null, // 搜索审核状态
+
+      beforeSelectedList: [], // 选中的列表之前的数据
+      checkSelect: [], // 点击选择的数组数据
+      placeholder: '请输入姓名/手机号搜索',
+      superSearchVisible: false,
+
+      checkList: [], // 选择的框
+      detailShow: false, // 展开数据显隐
+      nameOrMobile: null, // 搜索数据内容
+      
+      maskDialog: false, // 提交弹框页面
+      forLeaveType: null, // 点击按钮，0是驳回，1是通过
+      textareaValue: '', // 审核的备注
+      textareaLength: 0, // 备注的长度
+
+      list: null, //列表数据
+      resultCount: null, //列表数据总数
+      pageIndex: 0, //数据页面
+      pageSize: 10, //每页数据数量
+
+      searchLoading: false, //下拉记载更多
+      searchLoadingComplete: false, //加载完毕
+
+      // 高级搜索
+      checkStatusKey: null, // 选中的审核状态
+      startDate: null, // 开始时间
+      endDate: null, // 结束时间
+     
+      checkStatusList: [ // 审核状态
+        {
+          key: '1',
+          value: '待审核'
+        },
+        {
+          key: '2',
+          value: '已驳回'
+        },
+        {
+          key: '3',
+          value: '已通过'
+        },
+        {
+          key: '4',
+          value: '已失效'
+        }
+      ]
+    }
+
+    // 按钮隐藏
+    buttonHidden() {
+      const btnList = wx.getStorageSync('session').btnPermis.split(',');
+      btnList.filter(item => {
+        // 请假审核和驳回按钮
+        if (item === '506000002') {
+          this.reviewOrCancelBrn = true
+        }
+      })
+    }
+
+
+    //初始化进入页面
+    onLoad(query) {
+
+    }
+    //页面 出现时调用
+    onShow() {
+      this.buttonHidden()
+      this.queryVacationListFun()
+    }
+
+    // 实时获取
+    bindTextAreaInput(e) {
+      this.textareaValue = e.detail.value
+      this.textareaLength = e.detail.cursor
+    }
+
+    // 查询学员请假记录
+    queryVacationListFun() {
+      wx.showLoading({
+        title: '加载中',
+      })
+      let url = `${this.$parent.service.base_url}/ss-crm-provider/cerp/vacation/queryVacationList`;
+      let params = {
+        pageIndex: 0,
+        pageSize: this.pageSize,
+        miniName: this.nameOrMobile,
+        auditStatus: this.checkStatusKey,
+        startDate: this.startDate,
+        endDate: this.endDate
+      }
+      serviceRequest(url, params).then((res) => {
+        if(res.errorCode === 0) {
+          this.superSearchVisible = false
+          wx.hideLoading()
+          this.list = res.results
+          if( res.data.resultCount != 0 && this.list.length === res.data.resultCount) {
+            this.searchLoadingComplete = true
+          } else {
+            this.searchLoadingComplete = false
+          }
+
+          this.resultCount = res.data.resultCount
+          this.$apply()
+        } else {
+          wx.hideLoading();
+          wx.showModal({
+            content: res.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          return;
+        }
+      })
+    }
+
+    // 请假审核
+    vacationAuditFun(params) {
+      let url = `${this.$parent.service.base_url}/ss-crm-provider/cerp/vacation/vacationAudit`;
+      serviceRequest(url, params).then((res) => {
+        this.pageIndex = params.pageIndex;
+        if(res.errorCode === 0) {
+          this.maskDialog = false
+          this.textareaLength = 0
+          wx.showToast({
+            title: '成功',
+            icon: 'success',
+            duration: 1000
+          });
+          this.queryVacationListFun()
+        } else {
+          this.maskDialog = false
+          this.textareaLength = 0
+          wx.showModal({
+            content: res.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+        }
+      })
+    }
+
+    methods = {
+      // 下拉加载更多
+      scrollToLower(e) {
+        let {
+          list,
+          pageSize,
+          pageIndex
+        } = this
+        this.searchLoadingComplete = false // 设置加载完成
+        this.searchLoading = true; //设置为加载状态
+        let url = `${this.$parent.service.base_url}/ss-crm-provider/cerp/vacation/queryVacationList`;
+        let params = {
+          pageIndex: ++pageIndex,
+          pageSize: pageSize,
+          miniName: this.nameOrMobile,
+          auditStatus: this.checkStatusKey,
+          startDate: this.startDate,
+          endDate: this.endDate
+        }
+        serviceRequest(url, params).then((res) => {
+          if(res.errorCode === 0) {
+            this.pageIndex = params.pageIndex
+            this.searchLoading = false
+            wx.hideLoading()
+            this.list = [...list, ...res.results]
+
+            if( res.data.resultCount != 0 && this.list.length === res.data.resultCount ) {
+              this.searchLoadingComplete = true
+            } else {
+              this.searchLoadingComplete = false
+            }
+
+            this.$apply()
+          } else {
+            this.searchLoading = false
+            wx.hideLoading()
+            wx.showModal({
+              content: res.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+            return;
+          }
+        })
+      },
+
+      // 弹框取消按钮
+      cancelDialog() {
+        this.maskDialog = false
+        this.textareaLength = 0
+      },
+      // 请假审核通过或驳回
+      submitDispose() {
+        if(this.textareaLength <= 50) {
+            // this.maskDialog = false
+          if(this.forLeaveType === '0') { // 驳回操作
+            let params = {
+              auditStatus: '2', // 驳回状态
+              remark: this.textareaValue,
+              ids: this.checkList.join(',')
+            }
+            this.vacationAuditFun(params)
+          }else if(this.forLeaveType === '1') { // 通过操作
+            let params = {
+              auditStatus: '3', // 通过状态
+              remark: this.textareaValue,
+              ids: this.checkList.join(',')
+            }
+            this.vacationAuditFun(params)
+          }
+        }
+      },
+      // 展开更多现实
+      showDataMore(index) {
+        if(this.detailShow === index) {
+          this.detailShow = -1
+        } else {
+          this.detailShow = index
+        }
+      },
+      // 选择的处理对象
+      checkboxChange(e) {
+        this.checkList = e.detail.value
+        this.list.map(item => {
+          item.checked = false
+          this.checkList.forEach(checkItem => {
+            if(item.id === checkItem) {
+              item.checked = true
+            }
+          })
+        })
+      },
+      //关闭高级搜索
+      closeSuperSearch(e) {
+        this.superSearchVisible = false;
+      },
+      // 高级搜索选择审核状态
+      checkStatus(e) {
+        this.checkStatusKey = e.detail.value
+      },
+
+      //高级搜索 点击搜索
+      confirmSuperSearch(e) {
+        if(this.startDate && !this.endDate) {
+          wx.showModal({
+            content: '请选择结束时间',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+        } else if (!this.startDate && this.endDate) {
+          wx.showModal({
+            content: '请选择开始时间',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+        } else {
+          this.queryVacationListFun()
+        }
+      },
+       //高级搜索 重置
+      resetSuperSearch() {
+        this.checkStatusKey = null // 选中的审核状态
+        this.startDate = null // 开始时间
+        this.endDate = null // 结束时间
+        this.superSearchVisible = false
+        this.queryVacationListFun()
+        this.$apply()
+      },
+      //提交时间开始
+      beginTimeChange(e) {
+        this.startDate = e.detail.value
+      },
+      //提交时间结束
+      endTimeChange(e) {
+        this.endDate = e.detail.value
+      },
+      // 驳回审核
+      rejectBack() {
+        if( this.checkList.length === 0 ) {
+          wx.showModal({
+            content: '请选择操作学员',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+        } else {
+          this.maskDialog = true
+          this.forLeaveType = '0'
+        }
+      },
+      // 通过审核
+      passCheck() {
+        if( this.checkList.length === 0 ) {
+          wx.showModal({
+            content: '请选择操作学员',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+        } else {
+          this.maskDialog = true
+          this.forLeaveType = '1'
+        }
+      }
+    }
+    events = {
+      //点击搜索进行 数据搜索
+      onSearch(value) {
+        this.nameOrMobile = value
+        this.queryVacationListFun()
+      },
+      //高级搜索
+      superSearch() {
+        this.superSearchVisible = true
+      }
+    }
+    components = {
+      commonSearch: CommonSearch,
+      blankDataPage: BlankDataPage
+    }
+  }
+</script>

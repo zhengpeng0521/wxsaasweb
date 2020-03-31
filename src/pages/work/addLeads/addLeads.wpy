@@ -1,0 +1,549 @@
+<template>
+  <view class = 'form_container' style = 'overflow:scroll'>
+    <form bindsubmit = 'confirmAddLeads' >
+      <view class="form_box">
+        <view class = 'form_item' >
+          <view class = 'form_item_label' >跟进状态<text class = 'is_required' >*</text></view>
+          <view class = 'form_item_value' >
+            <picker value = '{{ followStatusIndex }}' name = 'studentFollowState' bindchange = 'followStatusSelect' range = '{{ followStatusList }}' range-key = 'value' >
+              <view class = 'picker' >{{ followStatusList[followStatusIndex].value }}</view>
+              <view hidden = '{{ !followStatusVisible }}' class = 'picker_placeholder' >请选择</view>
+            </picker>
+          </view>
+        </view>
+				<view class = 'form_item' hidden = "{{ editType === '2' || addType === '2'}}">
+          <view class = 'form_item_label'>重要程度</view>
+          <view class = 'form_item_value' >
+            <picker value = '{{ importStatusIndex }}' name = 'importance' bindchange = 'importStatusSelect' range = '{{ importStatusList }}' range-key = 'value' >
+              <view class = 'picker' >{{ importStatusList[importStatusIndex].value }}</view>
+              <view hidden = '{{ !importStatusVisible }}' class = 'picker_placeholder' >请选择</view>
+            </picker>
+          </view>
+        </view>
+        <!-- <view class = 'form_item' >
+          <view class = 'form_item_label' >录入区域<text class = 'is_required' >*</text></view>
+          <view class = 'form_item_value' >
+            <radio-group name = 'addType' bindchange = 'selectAddType' >
+              <repeat for = '{{ addTypeList }}'>
+                <label class = 'radio' >
+                  <radio color = "#5d9cec" value = '{{ item.id }}' checked = '{{ item.checked }}' />{{ item.value }}
+                </label>
+              </repeat>
+            </radio-group>
+          </view>
+        </view> -->
+        <view class = 'form_item' hidden="{{addType === '1' || editType == '1'}}">
+          <view class = 'form_item_label'>负责销售<text class = 'is_required' >*</text></view>
+          <view class = 'form_item_value' >
+            <picker value = '{{ sellerIndex }}' name = 'sellerId' bindchange = 'sellerSelect' range = '{{ sellerSelectList }}' range-key = 'sellerName' >
+              <view class = 'picker' >{{ sellerSelectList[sellerIndex].sellerName }}</view>
+              <view hidden = '{{ !sellerVisible }}' class = 'picker_placeholder' >请选择</view>
+            </picker>
+          </view>
+        </view>
+      </view>
+        <view class="form_box_add">
+        <view class = 'form_item' >
+          <view class = 'form_item_label' >学员姓名<text class = 'is_required' >*</text></view>
+          <view class = 'form_item_value' >
+            <input value = '{{ leadsDetailInfo.name }}' name = 'name' placeholder-class = 'placeholder_input' placeholder = '请输入姓名' />
+          </view>
+        </view>
+        <view class = 'form_item' >
+          <view class = 'form_item_label' >一级来源<text class = 'is_required' >*</text></view>
+          <view class = 'form_item_value' >
+            <picker value = '{{ firstChannelIndex }}' name = 'firstChannel' bindchange = 'firstChannelSelect' range = '{{ firstChannelList }}' range-key = 'value' >
+              <view class = "picker" >{{ firstChannelList[firstChannelIndex].value }}</view>
+              <view hidden = '{{ !firstChannelVisible }}' class = 'picker_placeholder' >请选择</view>
+            </picker>
+          </view>
+        </view>
+        <view class = 'form_item' >
+          <view class = 'form_item_label' >性别</view>
+          <view class = 'form_item_value' >
+            <radio-group name = 'sex'>
+              <repeat for = '{{ sexArrs }}'>
+                  <radio value = '{{ item.id }}' checked = '{{ item.checked }}' />
+                  <label class = 'radio' >
+                  {{ item.value }}
+                  </label>
+              </repeat>
+            </radio-group>
+          </view>
+        </view>
+        <view class = 'form_item' >
+          <view class = 'form_item_label' >生日</view>
+          <view class = 'form_item_value' style = 'height:85rpx;line-height:85rpx'>
+            <picker name = 'birthday' mode = 'date' value = '{{ birthday }}' bindchange = 'birthdayChange' >
+              <view style = 'height:85rpx;line-height:85rpx'>{{ birthday }}</view>
+              <view hidden = '{{ !birthdayVisible }}' class = 'picker_placeholder' style = 'height:85rpx;line-height:85rpx'>请选择</view>
+            </picker>
+          </view>
+        </view>
+        <view class = 'form_item' >
+          <view class = 'form_item_label' >昵称</view>
+          <view class = 'form_item_value' >
+            <input value = '{{ leadsDetailInfo.nickName }}' name = 'nickName' placeholder-class = 'placeholder_input' placeholder = '请输入昵称' />
+          </view>
+        </view>
+      </view>
+            <view class = 'form_box_parent'>
+                <repeat for = '{{ parentList }}' item = 'item' index = 'index'>
+                    <view class = 'form_box_parent_item'>
+                        <view class = 'form_item' >
+                            <view class = 'form_item_label' >家长姓名<text class = 'is_required' >*</text></view>
+                            <view class = 'form_item_value' >
+                                <input value = '{{ item.item.parentName }}' name = "{{ 'parentName'+index }}" placeholder-class = 'placeholder_input' placeholder = '请输入姓名' bindchange = 'parentNameChange({{index}})'/>
+                            </view>
+                        </view>
+                        <view class = 'form_item'>
+                            <view class = 'form_item_label' >手机号码<text class = 'is_required' >*</text></view>
+                            <view class = 'form_item_value' >
+                                <input
+                                    class = "{{ firstChannelDisabled ? 'input_disabled' : '' }}"
+                                    disabled = "{{ firstChannelDisabled }}"
+                                    value = '{{ item.item.parentMobile }}'
+                                    bindchange = 'parentMobileChange({{index}})'
+                                    name = "{{ 'parentMobile'+index }}" type = 'number'
+                                    placeholder-class = 'placeholder_input'
+                                    placeholder = '请输入号码' />
+                            </view>
+                        </view>
+                        <view hidden="{{deleteStuHidden != '402000002'}}"><view class = 'form_box_parent_delete' @tap = 'deleteParent({{index}})' hidden = '{{!!leadsId || parentList.length==1}}'>删除</view></view>
+                    </view>
+
+                </repeat>
+            </view>
+            <view class = 'form_box_parent_add' @tap = 'addParent()' hidden = '{{!!leadsId}}'>+新增家长</view>
+      <view class = 'btnArea'>
+        <button disabled = '{{loading}}' loading = '{{loading}}' class = 'btn_save' hover-class = 'btn_save_hover' formType = 'submit' >提交</button>
+      </view>
+    </form>
+  </view>
+</template>
+
+<style lang = "less" src = 'addLeads.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import moment from 'moment';
+	import { serviceRequest } from '../../../utils/request';
+
+	export default class addLeads extends wepy.page {
+		config = {
+			navigationBarTitleText : '添加名单'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+	  		title : '闪闪云校, 一站式早教管理云平台',
+	  		path : '/pages/initPage/initPage',
+			  imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+	  		success : function( res ) {
+				  wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+		  	},
+		  	fail : function( res ){}
+			}
+	  }
+
+		data = {
+			deleteStuHidden :'',
+			uid              :null,//个人信息
+      routeType              : undefined,  //编辑时的路由
+			orgName                : undefined,
+			orgId                  : undefined,
+			leadsId                : undefined,             //名单id
+			leadsDetailInfo        : undefined,             //名单详情
+			parentId               : undefined,
+			//跟进状态
+			followStatusIndex     : 0,
+			followStatusList      : [],
+			followStatusVisible   : true,
+      //重要程度
+      importStatusIndex     : 0,
+			importStatusList      : [],
+			importStatusVisible   : true,
+
+			addType               : null, //添加的时候 1来自公海，2来自潜在
+			editType:  null, // 编辑的时候 1来自公海，2来自潜在
+
+			//负责销售
+			sellerVisible         : true,
+			sellerIndex           : 0,
+			sellerSelectList      : [],
+
+			//一级来源
+			firstChannelList      : [],
+			firstChannelVisible   : true,
+			firstChannelIndex     : 0,
+
+			birthday              : undefined , //moment().format('YYYY-MM-DD'),
+			birthdayVisible       : true,
+
+			addTypeList           : [{ id : '1', value : '放入公海' },{ id : '2', value : '分配销售' }],
+			sexArrs               : [{ id : '1', value : '男' },{ id : '2', value : '女' }],
+
+			loading               : false,
+
+			firstChannelDisabled  : false,            //一级来源不可改
+      firstChannelStatus    : false,            //因saas端设置问题判断一级来源是否可修改（默认可修改）
+
+      parentList            : [{
+                                  key  : 0,
+                                  item : {},
+                              }],
+      checkStatus           : undefined,
+		};
+
+		components = {
+
+		};
+
+		methods = {
+			//选择跟进状态
+			followStatusSelect( e ){
+				if( !!this.followStatusVisible ){
+					this.followStatusVisible = false;
+				}
+				this.followStatusIndex = e.detail.value;
+			},
+
+      //选择重要程度
+      importStatusSelect( e ){
+				if( !!this.importStatusVisible ){
+					this.importStatusVisible = false;
+				}
+				  this.importStatusIndex = e.detail.value;
+			},
+
+			//选择录入区域
+			// selectAddType( e ){
+			// 	this.addType = e.detail.value;       //录入区域 存下来
+			// },
+
+			// 选择销售
+			sellerSelect( e ){
+				if( !!this.sellerVisible ){
+					this.sellerVisible = false;
+				}
+				this.sellerIndex = e.detail.value;
+			},
+
+			//选择 生日
+			birthdayChange( e ){
+				if( !!this.birthdayVisible ){
+					this.birthdayVisible = false;
+				}
+				this.birthday = e.detail.value;
+			},
+
+			//选择 一级来源
+			firstChannelSelect( e ){
+				if( this.firstChannelList[ e.detail.value ].key === '1' ){
+					wx.showModal({ content : '微官网不能选择', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !!this.firstChannelVisible ){
+					this.firstChannelVisible = false;
+				}
+				this.firstChannelIndex = e.detail.value;
+			},
+
+      //添加家长
+      addParent(){
+        let list = this.parentList;
+        let maxItem = list[ list.length - 1 ] || {};
+        let maxKey = maxItem.key;
+        this.parentList.push({
+            key  : maxKey + 1,
+            item : {}
+        })
+
+      },
+
+      //删除家长
+      deleteParent(key){
+        let list = this.parentList;
+        let newList = [];
+        !!list&&list.map((item,index)=>{
+          if(key != index){
+             newList.push(item)
+          }
+        })
+        this.parentList = newList;
+      },
+
+      //家长输入事件
+      parentNameChange(key,e){
+        let list = this.parentList;
+        !!list&&list.map((item,index)=>{
+          if(key == index){
+            item.item.parentName = e.detail.value
+          }
+        })
+        this.parentList = list ;
+      },
+
+      //手机输入事件
+      parentMobileChange(key,e){
+        let list = this.parentList;
+        !!list&&list.map((item,index)=>{
+          if(key == index){
+           item.item.parentMobile = e.detail.value
+          }
+        })
+        this.parentList = list ;
+      },
+
+			//确认新增 名单
+			confirmAddLeads( e ){
+        this.checkStatus = undefined;
+        let values = e.detail.value;
+        let dataSource = [];
+        this.parentList && (this.parentList).map((item, index) => {
+          let objItem = {};
+          objItem.parentMobile = item.item.parentMobile;
+          objItem.parentName = item.item.parentName;
+          if(!!item.item.parentId){
+              objItem.parentId = item.item.parentId;
+          }
+          dataSource.push(objItem);
+          if( values['parentMobile'+index].length !== 11 || !(/[0-9]{11}/.test( values['parentMobile'+index] )) ){
+              this.checkStatus = 'parentMobileError';
+          }
+          if( !values['parentMobile'+index] && values['parentMobile'+index] =='' ){
+              this.checkStatus = 'parentMobileNull';
+          }
+          if( !values['parentName'+index] && values['parentName'+index]=='' ){
+              this.checkStatus = 'parentName';
+          }
+        })
+        if( !!this.checkStatus && this.checkStatus == 'parentName' ){
+					wx.showModal({ content : '请输入家长姓名', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+        if( !!this.checkStatus && this.checkStatus == 'parentMobileError' ){
+					wx.showModal({ content : '手机号格式错误', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+        if( !!this.checkStatus && this.checkStatus == 'parentMobileNull' ){
+					wx.showModal({ content : '请输入手机号码', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !!this.followStatusVisible ){
+					wx.showModal({ content : '请选择跟进状态', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				// if( !values.addType ){
+				// 	wx.showModal({ content : '选择录入区域', showCancel : false, confirmColor : '#5d9cec' });
+				// 	return;
+				// }
+				if( !!this.sellerVisible && this.addType == '2' ){
+					wx.showModal({ content : '请选择负责销售', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !values.name ){
+					wx.showModal({ content : '请输入学员姓名', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+
+				if( !!this.firstChannelVisible ){
+					wx.showModal({ content : '请选择一级来源', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				this.loading = true;
+				let params = {
+					id                 : this.leadsId,
+					studentFollowState : this.followStatusList[ values.studentFollowState ].key,
+          importance         : this.importStatusList[ values.importance ].key,
+					addType            : this.addType,
+					sellerId           : this.addType == '2' ? this.sellerSelectList[ values.sellerId ].sellerId : '',
+					sellerName         : this.addType == '2' ? this.sellerSelectList[ values.sellerId ].sellerName : '',
+					name               : values.name,
+					parentList         : dataSource,
+					//list							 : dataSource,
+					firstChannel       : this.firstChannelList[ values.firstChannel ].key,
+					sex                : values.sex,
+					birthday           : this.birthday,
+					nickName           : values.nickName,
+					uid					:this.uid
+				}
+				let url = !!this.leadsId ? `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/editClue` : `${ this.$parent.service.base_url }/ss-crm-provider/wx/crm/stuInfo/clue/addClueStu`;
+				serviceRequest( url, params ).then(( ret ) => {
+					if( ret.errorCode === 0 ){
+						wx.showToast({ title : '保存成功', icon : 'success', duration : 1000 });
+						this.loading = false;
+						this.$apply();
+						//埋点, 若新增成功则数据增加
+						if( !this.leadsId ){
+							wx.reportAnalytics('add_leads', {
+								org_name : this.orgName,
+								org_id   : this.orgId
+							});
+						}
+
+						if(!!this.leadsId) { // 编辑
+							setTimeout(()=>{
+								wx.navigateBack({
+									delta: 2
+								})
+							}, 1000);
+						} else { // 增加
+							setTimeout(()=>{
+								wx.navigateBack({
+									delta: 1
+								})
+							}, 1000);
+						}
+						
+						params.importanceName = this.importStatusList[ values.importance ].value;
+						!!this.leadsId && wx.setStorageSync( 'currentItem', params );
+					}else{
+						this.loading = false;
+						this.$apply();
+						wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					}
+				});
+			}
+    };
+
+		events = {
+		};
+
+    onShow(){
+      wx.showLoading({
+			  title : '加载中...'
+		  })
+      //判断一级开源是否可编辑
+      let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/confChannelEditResult`;
+      const resultsParams = {
+        confkey: 'FIRSTCHANNELEDIT'
+      }
+			serviceRequest( url, resultsParams ).then(( ret ) => {
+				if( !!ret && ret.errorCode === 0 ){
+          if(ret.value==='1'){
+              this.firstChannelStatus = false
+          }else if(ret.value==='2'){
+              this.firstChannelStatus = true
+          }
+          this.$apply();
+          wx.hideLoading();
+				}else{
+					wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+			});
+    };
+// 删除隐藏
+    buttonHidden() {
+      const btnList = wx.getStorageSync('session').btnPermis.split(',');
+      btnList.filter(item => {
+        if(item === '402000002'){
+          this.deleteStuHidden = '402000002'        
+        }
+      })
+    };
+		onLoad( params ){
+			this.buttonHidden();
+			wx.getStorageSync('session')
+			this.uid=(wx.getStorageSync('session').uid)
+			this.comeAdd = params.routeType // 从哪里过来的添加名单
+        // 添加名单时。addType=1。公海。  2潜在
+        if (this.comeAdd === 'sea') {
+          this.addType = '1'
+        } else if (this.comeAdd === 'my') {
+          this.addType = '2'
+        }
+
+			this.orgName = this.$parent._init_data.orgName;         //将机构名称存下来
+			this.orgId = this.$parent._init_data.orgId;
+
+			// 编辑名单时的操作
+			this.routeType = !!params.routeType && params.routeType ;
+			if (this.routeType === 'sea') {
+				this.editType = '1'
+			} else if (this.routeType === 'my') {
+				this.editType = '2'
+			}
+			let self = this;
+			let str = params.str;      //名单详情
+			this.leadsDetailInfo = !!str && JSON.parse( str ) || undefined;
+			this.followStatusList = this.$parent._init_data.followStatusList;    //跟进状态 下拉列表
+      this.importStatusList = this.$parent._init_data.importStatusList;     //重要程度 下拉表
+			this.sellerSelectList = this.$parent._init_data.sellerSelectList;     //销售 下拉列表
+			this.firstChannelList = this.$parent._init_data.firstChannelList;     //一级来源 下拉列表
+			if( !!this.leadsDetailInfo ){
+				if( self.leadsDetailInfo.firstChannel === '1' ){
+					this.firstChannelDisabled = true;
+				}
+				this.leadsId = this.leadsDetailInfo.id;
+				if( !!this.leadsId ){ //编辑名单
+					wx.setNavigationBarTitle({
+						title : '编辑名单'
+					})
+				}
+        //渲染家长
+        if( !!self.leadsDetailInfo.parentList ){
+            let list = self.leadsDetailInfo.parentList;
+            let listArr = [];
+            list.map((item,index)=>{
+                let obj = {};
+                obj.key = index;
+                obj.item = item;
+                listArr.push(obj);
+            })
+            self.parentList = listArr;
+				}
+
+				//将 跟进状态的值塞回去
+				!!this.followStatusList && this.followStatusList.map(function( item, index ){
+					if( !!self.leadsDetailInfo.studentFollowState && item.key == self.leadsDetailInfo.studentFollowState ){
+						self.followStatusVisible = false;
+						self.followStatusIndex = index;
+					}
+				})
+        //将 重要程度的值塞回去
+        !!this.importStatusList && this.importStatusList.map(function( item, index ){
+					if( !!self.leadsDetailInfo.importance && item.value == self.leadsDetailInfo.importance ){
+						self.importStatusVisible = false;
+						self.importStatusIndex = index;
+					}
+				})
+				//一级来源
+				!!this.firstChannelList && this.firstChannelList.map( function( item, index ){
+					if( !!self.leadsDetailInfo.channel && self.leadsDetailInfo.channel == item.key ){
+						self.firstChannelIndex = index;
+						self.firstChannelVisible = false;
+					}
+				})
+				// 录入区域
+				// if( !!this.leadsDetailInfo.sellerId ){
+				// 	this.addTypeList = [{ id : '1', value : '放入公海' },{ id : '2', value : '分配销售', checked : true }];
+				// 	this.addType = '2';
+				// }else{
+				// 	this.addTypeList = [{ id : '1', value : '放入公海', checked : true },{ id : '2', value : '分配销售' }];
+				// 	this.addType = '1';
+				// }
+				//负责销售
+				!!this.sellerSelectList && this.sellerSelectList.map( function( item, index ){
+					if( !!self.leadsDetailInfo.sellerId && self.leadsDetailInfo.sellerId == item.sellerId ){
+						self.sellerIndex = index;
+						self.sellerVisible = false;
+					}
+				})
+				//性别
+				if( this.leadsDetailInfo.sex == '1' ){
+					this.sexArrs = [{ id : '1', value : '男', checked : true },{ id : '2', value : '女' }];
+				}else if( this.leadsDetailInfo.sex == '2' ){
+					this.sexArrs = [{ id : '1', value : '男' },{ id : '2', value : '女', checked : true }];
+				}
+				//生日
+				if( !!this.leadsDetailInfo.birthday ){
+					this.birthdayVisible = false;
+					this.birthday = this.leadsDetailInfo.birthday;
+				}
+			}
+		};
+
+	}
+</script>

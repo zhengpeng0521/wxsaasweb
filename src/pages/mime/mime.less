@@ -1,0 +1,129 @@
+@import '../../common.less';
+
+.text_overflow{
+	text-overflow : ellipsis;
+	overflow : hidden;
+	white-space : nowrap;
+}
+.mime_header{
+	position : fixed;
+	top : 0;
+	display : flex;
+	align-items : center;
+	width : 100%;
+	height : 230rpx;
+	background : -webkit-gradient(linear, left top, left bottom, color-stop(0%,#5D9CEC), color-stop(100%,#2E70C4) )
+}
+.mime_header_headImg{
+	width : 160rpx;
+	height : 160rpx;
+	margin-left : 40rpx;
+	border-radius : 50%;
+	background-repeat : no-repeat;
+	background-size : cover;
+}
+.mime_header_info{
+	flex : 1;
+	max-width : 490rpx;
+	min-width : 460rpx;
+	margin-left : 60rpx;
+	height : 140rpx;
+	color : #ffffff;
+	font-size : 36rpx;
+}
+.mime_header_info_block{
+	display : flex;
+	align-items : flex-end;
+	height : 36rpx;
+	margin-bottom : 36rpx;
+}
+.mime_header_info_name{
+	height : 36rpx;
+	line-height : 36rpx;
+	margin-right : 20rpx;
+}
+.mime_header_info_role{
+	height : 28rpx;
+	line-height : 28rpx;
+	padding : 0 6rpx;
+	margin-right : 10rpx;
+	font-size : 24rpx;
+	color : #ffffff;
+	border : 1rpx solid #ffffff;
+	border-radius : @border_radius;
+}
+.mime_header_info_role:last-child{
+	margin-right : none;
+}
+.mime_header_info_mobile{
+	font-size : @base_font_size;
+	height : @base_font_size;
+	line-height : @base_font_size;
+	margin-bottom : 16rpx;
+}
+.mime_header_info_org{
+	font-size : @base_font_size;
+	height : @base_font_size;
+	line-height : @base_font_size;
+}
+
+
+.mime_content{
+	padding-top : 260rpx;
+}
+.mime_content_box{
+	background : @base_background;
+	padding-left : 30rpx;
+}
+.mime_content_item{
+	display : flex;
+	align-items : center;
+	height : 88rpx;
+	padding-right : 30rpx;
+	font-size : @lg_font_size;
+	color : #000000;
+	border-bottom : 1rpx solid @border_color;
+	box-sizing : border-box;
+}
+.mime_content_item_icon{
+	width : 40rpx;
+	height : 40rpx;
+	margin-right : 20rpx;
+//	border-radius : 50%;
+	background-size : cover;
+	background-repeat : no-repeat;
+}
+.mime_content_item_label{
+	height : @lg_font_size;
+	line-height : @lg_font_size;
+}
+.mime_content_item_value{
+	flex : 1;
+	position : relative;
+	width : 452rpx;
+	padding-right : 50rpx;
+	text-align : right;
+}
+.mime_content_item_value::after{
+	content : '';
+	display : inline-block;
+	height : 18rpx;
+	width : 18rpx;
+	border-width : 2rpx 2rpx 0 0;
+	border-color : @value_color;
+	border-style : solid;
+	transform : matrix(0.71, 0.71, -0.71, 0.71, 0, 0);
+	position : absolute;
+	top : 50%;
+	margin-top : -8rpx;
+	right : 4rpx;
+}
+.mime_logout{
+	margin-top : 30rpx;
+	height : 88rpx;
+	line-height : 88rpx;
+	background : @base_background;
+	color : @base_color;
+	text-align : center;
+	font-size : @lg_font_size;
+}

@@ -1,0 +1,470 @@
+<template>
+  <view class="contain" style="height:100%;">
+    <view class="list_item">
+      <view class="list_item_line_center">
+        <view class="list_item_course_name">{{formData.courseName}}</view>
+        <view class="list_item_course_time">{{formData.startTime}}-{{formData.endTime}}</view>
+      </view>
+      <view class="list_item_line_pos">
+        <view class="list_item_course_value">标题 : {{formData.title}}</view>
+        <view class="list_item_course_value">教室 : {{formData.roomName}}</view>
+        <view class="list_item_course_value">主教 : {{formData.mtnames}}</view>
+        <view class="list_item_course_value">最大人数 : {{formData.maxNum}}</view>
+        <view class="list_item_course_value">助教 : {{formData.atNames}}</view>
+        <view class="list_item_course_value">消耗课时 : {{formData.cost}}</view>
+      </view>
+    </view>
+    <view class="tap_item_wrapper">
+      <view class="tap_item{{type == 'stuList' ? ' active' : ''}}" @tap.stop="changType('stuList')">上课 ({{formData.stuList.length}}) <view class="posLine"></view></view>
+      <view class="tap_item{{type == 'lineStuList' ? ' active' : ''}}" @tap.stop="changType('lineStuList')">排队 ({{formData.lineStuList.length}}) <view class="posLine"></view></view>
+      <view class="tap_item{{type == 'mulStuList' ? ' active' : ''}}" @tap.stop="changType('mulStuList')">补课 ({{formData.mulStuList.length}}) <view class="posLine"></view></view>
+      <view class="tap_item{{type == 'tryStuList' ? ' active' : ''}}" @tap.stop="changType('tryStuList')">试听 ({{formData.tryStuList.length}}) <view class="posLine"></view></view>
+      <view class="tap_item{{type == 'leaveStuList' ? ' active' : ''}}" @tap.stop="changType('leaveStuList')">请假 ({{formData.leaveStuList.length}}) <view class="posLine"></view></view>
+    </view>
+    <view class="type_change">
+      <view class="type_one">
+        <view hidden="{{type != 'stuList'}}" style="height:100%;">
+          <block wx:if="{{formData.stuList && formData.stuList.length == 0}}">
+            <blankDataPageOne title = '暂无上课学员数据~' />
+          </block>
+          <block wx:else>
+            <scroll-view scroll-y style="height:100%;">
+              <repeat for="{{formData.stuList}}" key="index" index="index" item="item">
+                <view class="type_change_box">
+                  <view class="list_item_line_pos">
+                    <view class="list_item_course_value">学员姓名 : {{item.name}}</view>
+                    <view class="list_item_course_value">联系方式 : {{item.mobile}}</view>
+                    <view class="list_item_course_value">剩余课时 : {{item.periodLeft ? item.periodLeft : '0'}}</view>
+                    <view class="list_item_course_value">当前状态 : {{item.s_type}}</view>
+                  </view>
+                  <view class="btn_box">
+                    <button size="mini"  hidden="{{Cancel != '505000005'}}" plain="true" class="cancel" @tap="stuListCancel({{item.id}})" style="border:0;padding:0;width:50%;color:#5D9CEC;font-size:28rpx;"><view class="icon_bg_box"><view class="icon_bg" style="background-image : url('https://img.ishanshan.com/gimg/n/20190815/482fddb10d7c63435c313584e4bd2ef8');"></view>取消</view></button>
+                   <view hidden="{{askForLeavenew !='506000002'}}" class="ask"> <button hidden="{{item.s_type == '请假'}}"  size="mini" plain="true" class="ask" @tap="stuListAsk({{item.id}},{{item.name}})" style="border:0;padding:0;color:#5D9CEC;font-size:28rpx;"><view class="icon_bg_box"><view class="icon_bg" style="background-image : url('https://img.ishanshan.com/gimg/n/20190815/23ba952a1fee523d4cab66fa1e2fe554');"></view>请假</view></button></view>
+                  </view>
+                </view>
+              </repeat>
+            </scroll-view>
+          </block>
+        </view>
+        <view hidden="{{type != 'lineStuList'}}" style="height:100%;">
+          <block wx:if="{{formData.lineStuList && formData.lineStuList.length == 0}}">
+            <blankDataPageTwo title = '暂无排队学员数据~' />
+          </block>
+          <block wx:else>
+            <scroll-view scroll-y style="height:100%;">
+              <repeat for="{{formData.lineStuList}}" key="index" index="index" item="item">
+                <view class="type_change_box">
+                  <view class="list_item_line_pos">
+                    <view class="list_item_course_value">学员姓名 : {{item.name}}</view>
+                    <view class="list_item_course_value">联系方式 : {{item.mobile}}</view>
+                    <view class="list_item_course_value">剩余课时 : {{item.periodLeft ? item.periodLeft : '0'}}</view>
+                    <view class="list_item_course_value">当前状态 : {{item.s_type}}</view>
+                  </view>
+                  <view class="btn_box">
+                    <button size="mini" plain="true" hidden="{{Cancel != '505000005'}}" class="cancel" @tap="stuListCancel({{item.id}})" style="border:0;padding:0;width:50%;color:#5D9CEC;font-size:28rpx;"><view class="icon_bg_box"><view class="icon_bg" style="background-image : url('https://img.ishanshan.com/gimg/n/20190815/482fddb10d7c63435c313584e4bd2ef8');"></view>取消</view></button>
+                   <button size="mini" plain="true" class="ask" @tap="lineStuAsk({{item.id}})" style="border:0;padding:0;color:#5D9CEC;font-size:28rpx;"><view class="icon_bg_box"><view class="icon_bg" style="background-image : url('https://img.ishanshan.com/gimg/n/20190815/f7764ad89135b6146e369f5d210017cb');"></view>转为上课学员</view></button>
+                  </view>
+                </view>
+              </repeat>
+            </scroll-view>
+          </block>
+        </view>
+        <view hidden="{{type != 'mulStuList'}}" style="height:100%;">
+          <block wx:if="{{formData.mulStuList && formData.mulStuList.length == 0}}">
+            <blankDataPageThree title = '暂无补课学员数据~' />
+          </block>
+          <block wx:else>
+            <scroll-view scroll-y style="height:100%;">
+              <repeat for="{{formData.mulStuList}}" key="index" index="index" item="item">
+                <view class="type_change_box">
+                  <view class="list_item_line_pos">
+                    <view class="list_item_course_value">学员姓名 : {{item.name}}</view>
+                    <view class="list_item_course_value">联系方式 : {{item.mobile}}</view>
+                    <view class="list_item_course_value">剩余课时 : {{item.periodLeft ? item.periodLeft : '0'}}</view>
+                  </view>
+                </view>
+              </repeat>
+            </scroll-view>
+          </block>
+        </view>
+        <view hidden="{{type != 'tryStuList'}}" style="height:100%;">
+          <block wx:if="{{formData.tryStuList && formData.tryStuList.length == 0}}">
+            <blankDataPageFour title = '暂无试听数据~' />
+          </block>
+          <block wx:else>
+            <scroll-view scroll-y style="height:100%;">
+              <repeat for="{{formData.tryStuList}}" key="index" index="index" item="item">
+                <view class="type_change_box">
+                  <view class="list_item_line_pos">
+                    <view class="list_item_line_pos">
+                      <view class="list_item_course_value">学员姓名 : {{item.name}}</view>
+                      <view class="list_item_course_value">联系方式 : {{item.mobile}}</view>
+                      <view class="list_item_course_value">剩余课时 : {{item.periodLeft ? item.periodLeft : '0'}}</view>
+                      <view class="list_item_course_value">当前状态 : {{item.s_type}}</view>
+                    </view>
+                  </view>
+                  <view class="btn_box">
+                    <button size="mini" plain="true" hidden="{{Cancel != '505000005'}}" class="cancel" @tap="tryStuListCancel({{item.audition_id}})" style="border:0;padding:0;color:#5D9CEC;font-size:28rpx;"><view class="icon_bg_box"><view class="icon_bg" style="background-image : url('https://img.ishanshan.com/gimg/n/20190815/482fddb10d7c63435c313584e4bd2ef8');"></view>取消</view></button>
+                  </view>
+                </view>
+              </repeat>
+            </scroll-view>
+          </block>
+        </view>
+
+         <view hidden="{{type != 'leaveStuList'}}" style="height:100%;">
+          <block wx:if="{{formData.leaveStuList && formData.leaveStuList.length == 0}}">
+            <blankDataPageFour title = '暂无试听数据~' />
+          </block>
+          <block wx:else>
+            <scroll-view scroll-y style="height:100%;">
+              <repeat for="{{formData.leaveStuList}}" key="index" index="index" item="item">
+                <view class="type_change_box">
+                  <view class="list_item_line_pos">
+                    <view class="list_item_line_pos">
+                      <view class="list_item_course_value">学员姓名 : {{item.name}}</view>
+                      <view class="list_item_course_value">联系方式 : {{item.mobile}}</view>
+                      <view class="list_item_course_value">剩余课时 : {{item.periodLeft ? item.periodLeft : '0'}}</view>
+                      <view class="list_item_course_value">当前状态 : {{item.s_type}}</view>
+                      <view class="list_item_course_value">学员来源 : {{item.s_type}}</view>
+                    </view>
+                  </view>
+                  <view class="btn_box">
+                    <button size="mini" plain="true" hidden="{{Cancel != '505000005'}}" class="cancel" @tap="leaveStuListCancel({{item.id}})" style="border:0;padding:0;color:#5D9CEC;font-size:28rpx;"><view class="icon_bg_box"><view class="icon_bg" style="background-image : url('https://img.ishanshan.com/gimg/n/20190815/482fddb10d7c63435c313584e4bd2ef8');"></view>取消</view></button>
+                  </view>
+                </view>
+              </repeat>
+            </scroll-view>
+          </block>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<style lang = "less" src = 'orderListDetail.less' scoped></style>
+<script>
+  import wepy from 'wepy'
+  import {serviceRequest } from '../../../../utils/request';
+  import BlankDataPage from '../../../../components/blankDataPage/blankDataPage';
+  export default class orderListDetail extends wepy.page {
+    config = {
+      navigationBarTitleText: '课表详情'
+    }
+    onShareAppMessage(res) {
+      return {
+        title: '闪闪云校, 一站式早教管理云平台',
+        path: '/pages/initPage/initPage',
+        imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+        success: function (res) {
+          wx.showToast({ title: '转发成功', icon: 'success', duration: 1000 })
+        },
+        fail: function (res) {
+        }
+      }
+    }
+    onLoad(option){
+      this.buttonHidden()
+      this.option=option;
+      wx.showLoading({title: '加载中'})
+      let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cp/detailQuery`;
+      let params = option;
+      serviceRequest( url, params ).then((ret) => {
+        wx.hideLoading();
+        if( ret && (ret.errorCode == 0) ){
+          if(ret.stuList.length > 0){
+            ret.stuList.map(res=>{
+              if(res.stu_type == 1){
+                switch (res.sign_type) {
+                  case '1':
+                    res.s_type='预约'
+                    break;
+                  case '2':
+                    res.s_type='排队'
+                    break;
+                  case '3':
+                    res.s_type='出勤'
+                    break;
+                  case '4':
+                    res.s_type='请假'
+                    break;
+                }
+              }else if(res.stu_type == 2){
+                switch (res.sign_type) {
+                  case '1':
+                    res.s_type='预约'
+                    break;
+                  case '3':
+                    res.s_type='出勤'
+                    break;
+                  case '4':
+                    res.s_type='请假'
+                    break;
+                  case '5':
+                    res.s_type='旷课'
+                    break;
+                  case '6':
+                    res.s_type='取消'
+                    break;
+                }
+              }
+            })
+          }
+          if(ret.lineStuList.length > 0){
+            ret.lineStuList.map(res=>{
+              if(res.stu_type == 1){
+                switch (res.sign_type) {
+                  case '1':
+                    res.s_type='预约'
+                    break;
+                  case '2':
+                    res.s_type='排队'
+                    break;
+                  case '3':
+                    res.s_type='出勤'
+                    break;
+                  case '4':
+                    res.s_type='请假'
+                    break;
+                }
+              }else if(res.stu_type == 2){
+                switch (res.sign_type) {
+                  case '1':
+                    res.s_type='预约'
+                    break;
+                  case '3':
+                    res.s_type='出勤'
+                    break;
+                  case '4':
+                    res.s_type='请假'
+                    break;
+                  case '5':
+                    res.s_type='旷课'
+                    break;
+                  case '6':
+                    res.s_type='取消'
+                    break;
+                }
+              }
+            })
+          }
+          if(ret.tryStuList.length > 0){
+            ret.tryStuList.map(res=>{
+              switch (res.status) {
+                case '1':
+                  res.s_type='已预约'
+                  break;
+                case '2':
+                  res.s_type='已试听'
+                  break;
+                case '3':
+                  res.s_type='旷课'
+                  break;
+                case '0':
+                  res.s_type='取消'
+                  break;
+              }
+            })
+          }
+          ret.atNames = option.atNames?(option.atNames.split(',').length > 2 ? ( option.atNames.split(',')[0] + ',' +option.atNames.split(',')[1] + '...等' + option.atNames.split(',').length + '人' ) : option.atNames):'';
+          ret.mtnames = ret.mtnames.split(',').length > 2 ? ( ret.mtnames.split(',')[0] + ',' +ret.mtnames.split(',')[1] + '...等' + ret.mtnames.split(',').length + '人' ) : ret.mtnames;
+          this.formData=ret;
+          this.$apply();
+        }else{
+          wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+        }
+      })
+    }
+    //请假
+     buttonHidden() {
+      const btnList = wx.getStorageSync('session').btnPermis.split(',');
+      btnList.filter(item => {
+        if(item === '406000002'){
+          this.askForLeavenew ='506000002'        
+        }
+         if(item === '505000005'){
+          this.Cancel = '505000005'        
+        }
+      })
+    };
+    components={
+      blankDataPageOne : BlankDataPage,
+      blankDataPageTwo : BlankDataPage,
+      blankDataPageThree : BlankDataPage,
+      blankDataPageFour : BlankDataPage
+    }
+    data={
+      askForLeavenew : '',//请假按钮
+      Cancel         : '',//取消
+      type : 'stuList',
+      formData:{},
+      option:{}
+    }
+    methods={
+      changType(type){
+        this.type =  type ;
+      },
+      stuListCancel(id){
+        let that=this;
+        wx.showActionSheet({
+          itemList:['操作有误','节假日放假','老师请假','学员调班','从班级移除','老师离职'],
+          itemColor:'#007AFF',
+          success(res){
+            let url = `${ that.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/stuSign`;
+            let params = {
+              cpStuId:id,
+              reason:(res.tapIndex + 1).toString(),
+              signType:'6'
+            }
+            wx.showLoading({title: '加载中'})
+            serviceRequest( url, params ).then((ret) => {
+              wx.hideLoading();
+              if( ret && (ret.errorCode == 0) ){
+                wx.showToast({
+                  title: '成功',
+                  icon: 'success',
+                  duration: 500,
+                  mask:true
+                })
+                setTimeout(() => {
+                  that.onLoad(that.option);
+                }, 500);
+              }else{
+                wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+              }
+            })
+          }
+        })
+      },
+      stuListAsk(id,name){
+        let that=this;
+        wx.showModal({
+          title:'确定请假吗？',
+          content:'请假学员：' + name,
+          success(res){
+            if(res.confirm){
+              let url = `${ that.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/stuSign`;
+              let params = {
+                cpStuId:id,
+                signType:'4'
+              }
+              wx.showLoading({title: '加载中'})
+              serviceRequest( url, params ).then((ret) => {
+                wx.hideLoading();
+                if( ret && (ret.errorCode == 0) ){
+                  wx.showToast({
+                    title: '成功',
+                    icon: 'success',
+                    duration: 500,
+                    mask:true
+                  })
+                  setTimeout(() => {
+                    that.onLoad(that.option);
+                  }, 500);
+                }else{
+                  wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+                }
+              })
+            }
+          }
+        })
+      },
+      lineStuAsk(id){
+        let that=this;
+        wx.showModal({
+          content:'确认要转为上课学员么',
+          success(res){
+            if(res.confirm){
+              let url = `${ that.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/inlineChange`;
+              let params = {
+                cpStuId:id
+              }
+              wx.showLoading({title: '加载中'})
+              serviceRequest( url, params ).then((ret) => {
+                wx.hideLoading();
+                if( ret && (ret.errorCode == 0) ){
+                  wx.showToast({
+                    title: '成功',
+                    icon: 'success',
+                    duration: 500,
+                    mask:true
+                  })
+                  setTimeout(() => {
+                    that.onLoad(that.option);
+                  }, 500);
+                }else{
+                  wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+                }
+              })
+            }
+          }
+        })
+      },
+      tryStuListCancel(id){
+        let that=this;
+        wx.showActionSheet({
+          itemList:['操作有误','节假日放假','老师请假','学员调班','从班级移除','老师离职'],
+          itemColor:'#007AFF',
+          success(res){
+            let url = `${ that.$parent.service.base_url }/ss-crm-provider/wx/crm/subscribeAudition/updateStatus`;
+            let params = {
+              ids:id,
+              reason:(res.tapIndex + 1).toString(),
+              status:'0'
+            }
+            wx.showLoading({title: '加载中'})
+            serviceRequest( url, params ).then((ret) => {
+              wx.hideLoading();
+              if( ret && (ret.errorCode == 0) ){
+                wx.showToast({
+                  title: '成功',
+                  icon: 'success',
+                  duration: 500,
+                  mask:true
+                })
+                setTimeout(() => {
+                  that.onLoad(that.option);
+                }, 500);
+              }else{
+                wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+              }
+            })
+          }
+        })
+      },
+      leaveStuListCancel(id) {
+        console.log(id,'请假-------')
+        let that=this;
+        wx.showActionSheet({
+          itemList:['操作有误','节假日放假','老师请假','学员调班','从班级移除','老师离职'],
+          itemColor:'#007AFF',
+          success(res){
+            let url = `${ that.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/stuSign`;
+            let params = {
+              cpStuId:id,
+              reason:(res.tapIndex + 1).toString(),
+              signType:'6'
+            }
+            wx.showLoading({title: '加载中'})
+            serviceRequest( url, params ).then((ret) => {
+              wx.hideLoading();
+              if( ret && (ret.errorCode == 0) ){
+                wx.showToast({
+                  title: '成功',
+                  icon: 'success',
+                  duration: 500,
+                  mask:true
+                })
+                setTimeout(() => {
+                  that.onLoad(that.option);
+                }, 500);
+              }else{
+                wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+              }
+            })
+          }
+        })
+      }
+    }
+  }
+</script>

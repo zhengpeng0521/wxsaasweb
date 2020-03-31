@@ -1,0 +1,102 @@
+.authority{
+  height: 100%;
+  background-color: #EFEFF4;
+  padding-top: 32rpx;
+  box-sizing: border-box;
+
+  .authority_container{
+    width: 100%;
+    background-color: #fff;
+    padding-left: 30rpx;
+
+    .issue_switch{
+      margin-right: 40rpx;
+    }
+    .issue_content{
+      width: 720rpx;
+      display: flex;
+      justify-content: space-between;
+      padding: 30rpx 0;
+      border-bottom: 1px solid #E5E5E5;
+      color: #333;
+      font-size: 32rpx;
+    }
+
+    .issue_radio{
+      .radio{
+        margin: 0;
+      }
+      .radio_item{
+        padding: 40rpx 0;
+      }
+      .first{
+        border-bottom: 1px solid #E5E5E5;
+      }
+      .radio_text{
+        margin-left: 20rpx;
+        color: #333;
+        font-size: 28rpx;
+      }
+      radio .wx-radio-input {
+        width: 44rpx;
+        height: 44rpx;
+        border-radius: 50%;
+        border: 1px solid #C9C9C9;
+      }
+      radio .wx-radio-input.wx-radio-input-checked::before {
+        width: 44rpx;
+        height: 44rpx;
+        border-radius: 50%;
+        border: 1px solid #5D9CEC;
+        color: #fff;
+        line-height: 44rpx;
+        text-align: center;
+        background: #5D9CEC;
+        transform: translate(-50%, -50%) scale(1);
+        -webkit-transform:translate(-50%, -50%) scale(1);
+      }
+    }
+  }
+  .blacklist{
+    color: #333;
+    font-size: 32rpx;
+    display: flex;
+    justify-content: space-between;
+    padding: 30rpx 40rpx 30rpx 30rpx;
+    background-color: #fff;
+    margin-top: 30rpx;
+  }
+
+  .wx-switch-input{
+    width:94rpx !important;
+    height:50rpx !important;
+    background: #5D9CEC !important;
+    border: 1px solid #D6D6D6 !important;
+  }
+  .wx-switch-input::before{
+    width: 90rpx !important;
+    height: 46rpx !important;
+  }
+  .wx-switch-input::after{
+    width: 46rpx !important;
+    height: 46rpx !important;
+  }
+
+  .tip{
+    color: #888;
+    font-size: 28rpx;
+    margin-top: 32rpx;
+    text-align: center;
+  }
+  .save_btn{
+    margin-top: 60rpx;
+    padding: 0 40rpx;
+
+    button{
+      background-color: #5D9CEC;
+      border-radius: 10rpx;
+      color: #fff;
+      font-size: 34rpx;
+    }
+  }
+}

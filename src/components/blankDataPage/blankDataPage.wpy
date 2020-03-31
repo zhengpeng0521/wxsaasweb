@@ -1,0 +1,25 @@
+<style type = 'less' src = 'commonSearch.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+
+	export default class BlankDataPage extends wepy.component {
+		props = {
+			title : {
+				type    : String,
+				default : null
+			}
+		}
+		onLoad(){
+		}
+  	}
+</script>
+
+<template>
+	<!-- 空数据页面 -->
+	<view class = 'blank_data_content' >
+		<view class = 'blank_data_content_img'></view>
+		<view class = 'blank_data_content_value'>{{ title }}</view>
+	</view>
+	<!-- 空数据页面 -->
+</template>

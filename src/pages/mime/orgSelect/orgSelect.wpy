@@ -1,0 +1,103 @@
+<style lang = "less" src = 'orgSelect.less'>
+
+</style>
+
+<script>
+  import wepy from 'wepy';
+  import {
+    serviceRequest
+  } from '../../../utils/request';
+  export default class OrgSelect extends wepy.page {
+    config = {
+      navigationBarTitleText: '切换校区'
+    }
+    onShareAppMessage(res) {
+      return {
+        title: '闪闪云校, 一站式早教管理云平台',
+        path: '/pages/initPage/initPage',
+        imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+        success: function(res) {
+          wx.showToast({
+            title: '转发成功',
+            icon: 'success',
+            duration: 1000
+          })
+        },
+        fail: function(res) {}
+      }
+    }
+    data = {
+      list: [], //租户列表
+      userId: null,
+      tenantId: null,
+      belongOrgId: null
+    }
+    methods = {
+      //选择校区
+      selectOrgIdToSystem(item) {
+        const params = {
+          changeUid: Number(this.userId), //原来的
+          changeTenantId: item.tenantId,
+          changeOrgId: item.orgId
+        };
+         wx.showLoading({
+          title: '加载中...'
+        });
+        serviceRequest(`${ this.$parent.service.base_url }/ss-crm-provider/wx/auth/change`, params).then((ret) => {
+          if (!!ret && ret.errorCode === 0) {
+            wx.hideLoading();
+            wx.showToast({
+              title: '成功',
+              icon: 'success',
+              duration: 1000
+            });
+
+            this.$parent._init_data.userInfo = ret.data; //用户个人信息
+            this.$parent._init_data.orgId = ret.data.orgId;
+            
+            wx.setStorageSync('token', ret.data.jwtToken);
+
+            // 请求session
+            serviceRequest(`${ this.$parent.service.base_url }/ss-crm-provider/wx/auth/session`).then((ret) => {
+              this.$parent._init_data.session = ret.data.session;
+              wx.setStorageSync('session', ret.data.session);
+              this.$parent._init_data.orgName = ret.data.session.orgName;
+            });
+            setTimeout(() => {
+              wx.navigateBack({
+                url: '../mime'
+              })
+            }, 1000)
+          } else {
+            wx.hideLoading();
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+          }
+        })
+      }
+    }
+    onLoad(params) {
+      this.list = this.$parent._init_data.orgIdList; //校区列表
+      this.userId = (wx.getStorageSync('session').uid);
+      this.tenantId = (wx.getStorageSync('session').tenantId);
+    }
+  }
+</script>
+
+<template>
+  <view class='container'>
+    <view class='select_header'>共{{ list.length }}个校区</view>
+    <view class='select_content'>
+      <repeat for='{{ list }}' item='item'>
+        <view class='select_item' hover-class='select_item_hover' @tap='selectOrgIdToSystem({{item}})'>
+          <view class='select_item_item'>
+            {{ item.orgName }}
+          </view>
+        </view>
+      </repeat>
+    </view>
+  </view>
+</template>

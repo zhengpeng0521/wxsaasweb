@@ -1,0 +1,89 @@
+@import '../../../../../../common.less';
+.sure_wrapper{
+  width: 100%;
+  height: 88rpx;
+  background: @base_background;
+  border-top: 2rpx solid #eee;
+  position: fixed;
+  left: 0;
+  bottom:0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.choosed_num{
+  margin-left: 30rpx;
+  font-size: 24rpx;
+}
+.choosed_num text{
+  color: #333333;
+}
+.sure_btn_wrapper{
+  overflow: hidden;
+  zoom: 1;
+  height: 100%;
+}
+.sure_btn{
+  float: right;
+  height: 100%;
+  line-height: 100%;
+  color: #fff;
+  background: @base_color;
+  width: 254rpx;
+  text-align: center;
+  line-height: @base_height;
+  font-size: 34rpx;
+}
+.scroll_wrapper{
+  padding-top: 88rpx;
+  background-color: @base_background;
+  height: calc(~'100% - 88rpx');
+}
+.scroll_box{
+  height: 100%;
+  position: relative;
+}
+.list_box{
+  display: flex;
+  border-bottom: 2rpx solid #EFEFF4;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22rpx 30rpx;
+}
+.list_item{
+  font-size: 28rpx;
+  margin-left: 30rpx;
+}
+.times{
+  color: #ccc;
+  margin-top: 20rpx;
+}
+//展示更多图标
+.list_item_pulldowm{
+	height : 56rpx;
+	width: 56rpx;
+	background-image:url('https://img.ishanshan.com/gimg/n/20190729/804d506e6d9201db4d67044aad08f8b8');
+	background-size : cover;
+	background-repeat : no-repeat;
+}
+.list_item_pullup{
+	height : 56rpx;
+	width: 56rpx;
+	background-image:url('https://img.ishanshan.com/gimg/n/20190729/804d506e6d9201db4d67044aad08f8b8');
+	background-size : cover;
+	background-repeat : no-repeat;
+	transform: rotateZ(180deg);
+}
+.list_more_info{
+  position: relative;
+  min-height: 150rpx;
+  border-bottom:2rpx solid #EFEFF4;
+  padding: 10rpx 40rpx;
+}
+.more_info_list{
+  display: flex;
+  justify-content: space-between;
+  color: #ccc;
+  font-size: @mid_font_size;
+  margin: 20rpx 0;
+}

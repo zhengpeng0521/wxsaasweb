@@ -1,0 +1,216 @@
+<style lang = "less" src = 'addOrderRecord.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import moment from 'moment';
+	import { serviceRequest } from '../../../../utils/request';
+	export default class AddOrderRecord extends wepy.page {
+		config = {
+			navigationBarTitleText : '新增预约试听'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+		  		title : '闪闪云校, 一站式早教管理云平台',
+		  		path : '/pages/initPage/initPage',
+				imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+		  		success : function( res ) {
+					wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+			  	},
+			  	fail : function( res ){
+			  	}
+			}
+	  	}
+
+		data = {
+			orgId           : undefined,
+			orgName         : undefined,
+			leadsItem       : {},                              //名单详情
+			leadsId         : undefined,                       //名单id
+			month           : moment().format('YYYY-MM'),      //年月
+			monthVisible    : true,                            //年月( 请选择 )显隐
+
+			dayList         : [ '暂无可选日期' ],
+			dayVisible      : true,
+			dayIndex        : 0,
+
+			loading         : false,
+			courseList      : [],          //课程 列表
+			courseItem      : {},
+		}
+
+		components = {
+		}
+
+		methods = {
+			//选择 年月
+			selectYearAndMonth( e ){
+				if( !!this.monthVisible ){
+					this.monthVisible = false;
+				}
+				this.courseList = [];            //清空课程数据
+				this.dayVisible = true;          //可选日期重新置为可选择
+				this.dayIndex = 0;
+				this.month = e.detail.value;
+
+				//查询 当前月份可选课程 日期
+				let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/subscribeAudition/tryDayQuery`;
+				serviceRequest( url, { month : e.detail.value } ).then(( ret ) => {
+					if( ret && ret.errorCode === 0 ){
+						if( ret.dayList.length > 0 ){
+							this.dayList = ret.dayList;
+						}else{
+							this.dayList = [ '暂无可选日期' ]
+						}
+						this.$apply();
+					}else{
+						wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					}
+				});
+			},
+
+			//选择 课程日期
+			daySelect( e ){
+				if( !this.monthVisible && this.dayList[0] !== '暂无可选日期'  ){
+					if( !!this.dayVisible ){
+						this.dayVisible = false;
+					}
+					this.courseList = [];
+					this.dayIndex = e.detail.value;
+					let date = this.dayList[ this.dayIndex ];
+					//查询 选择日期的 课程
+					let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/subscribeAudition/queryTryList`;
+					let params = { startDate : date, endDate : date, canTry : '1' };
+					serviceRequest( url, params ).then(( ret ) => {
+						if( ret && ret.errorCode === 0 ){
+							this.courseList = ret.results;
+							this.$apply();
+						}else{
+							wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+						}
+					});
+				}
+			},
+
+			//选择课程
+			selectCourse( e ){
+				let cpdId = e.detail.value;
+				let self = this;
+				!!this.courseList && this.courseList.map(function( item, index ){
+					if( item.cpdId == cpdId ){
+						self.courseItem = item;
+					}
+				})
+			},
+
+			//确认新增 预约试听
+			confirmAddOrderRecord( e ){
+				let values = e.detail.value;
+				if( !!this.monthVisible ){
+					wx.showModal({ content : '请选择试听年月', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !!this.dayVisible ){
+					wx.showModal({ content : '请选择日期', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( values.courseId == '' || values.courseId == undefined || values.courseId == null ){
+					wx.showModal({ content : '请选择课程', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				this.loading = true;
+				let params = {
+					source          : '2',
+					stuIds          : this.leadsId,
+					cpmId           : this.courseItem.cpmId,
+					cpdId           : this.courseItem.cpdId,
+					auditionTime    : this.courseItem.studyDate + ' ' + this.courseItem.startTime + ':00',
+					auditionEndTime : this.courseItem.studyDate + ' '  + this.courseItem.endTime + ':00',
+					courseName      : this.courseItem.courseName
+				}
+				let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/crm/subscribeAudition/create`;
+				serviceRequest( url, params ).then(( ret ) => {
+					if( ret && ret.errorCode === 0 ){
+						this.loading = false;
+						this.$apply();
+						//埋点, 若新增成功则数据增加
+						wx.reportAnalytics('add_order_record', {
+							org_name : this.orgName,
+							org_id   : this.orgId,
+						});
+						wx.navigateBack({
+							url : `../leadsDetail`
+						})
+					}else{
+						this.loading = false;
+						this.$apply();
+						wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					}
+				});
+			}
+		}
+
+		events = {
+		}
+
+		onLoad( params ) {
+			this.orgName = this.$parent._init_data.orgName;
+			this.orgId = this.$parent._init_data.orgId;
+			this.leadsItem = !!params.str && JSON.parse( params.str );
+			this.leadsId = this.leadsItem.id;
+		}
+	}
+</script>
+
+<template>
+	<view class = 'form_container' >
+		<view class = 'add_order_box' >
+			<form bindsubmit = 'confirmAddOrderRecord' >
+				<view class = 'form_box' >
+					<view class = 'form_item' >
+						<view class = 'form_item_label' >试听年月<text class = 'is_required' >*</text></view>
+						<view class = 'form_item_value' >
+							<picker name = 'month' mode = 'date' fields = 'month' value = '{{ month }}' bindchange = 'selectYearAndMonth' >
+								<view class = 'picker' >{{ month }}</view>
+								<view hidden = '{{ !monthVisible }}' class = 'picker_placeholder' >请选择</view>
+							</picker>
+						</view>
+					</view>
+					<view class = 'form_item' >
+						<view class = 'form_item_label' >可选日期<text class = 'is_required' >*</text></view>
+						<view class = 'form_item_value' >
+							<picker name = 'day' bindchange = 'daySelect' range = '{{ dayList }}' >
+								<view class = 'picker' >{{ dayList[ dayIndex ] }}</view>
+								<view hidden = '{{ !dayVisible }}' class = 'picker_placeholder' >请选择</view>
+							</picker>
+						</view>
+					</view>
+				</view>
+				<view class = 'course_wrap' hidden = '{{ courseList.length == 0 }}' >
+					<view class = 'course_title' >选择课程</view>
+					<view class = 'course_box' >
+						<radio-group name = 'courseId' bindchange = 'selectCourse' >
+							<repeat for = '{{ courseList }}' item = 'item' >
+								<view class = 'course_box_item' >
+									<radio style = 'font-size : 0' color = "#5d9cec" value = '{{ item.cpdId }}'>
+										<view class = 'course_box_item_radio'>{{ item.courseName }}</view>
+									</radio>
+									<view class = 'course_box_item_value' >
+										<text>{{ (!!item.startTime && item.startTime + '-' + item.endTime) || '' }}</text>
+										<text style = 'margin-left : 15rpx;'>{{ item.mtNames || '' }}</text>
+										<text style = 'margin-left : 15rpx;'>{{ (!!item.maxTryNum && item.tryNum + '/' + item.maxTryNum) || '' }}</text>
+									</view>
+								</view>
+							</repeat>
+						</radio-group>
+					</view>
+				</view>
+				<view class = 'btnArea' style = 'margin-bottom : 30rpx' >
+					<button disabled = '{{ loading }}' loading = '{{ loading }}' class = 'btn_save' hover-class = 'btn_save_hover' formType = 'submit' >
+						提交
+					</button>
+				</view>
+			</form>
+		</view>
+	</view>
+</template>

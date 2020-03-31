@@ -1,0 +1,63 @@
+@import '../../../../common.less';
+.form_container_con {
+    position:relative;
+    width:100%;
+    height:100vh;
+    padding-top:30rpx;
+    background:#EFEFF4;
+    box-sizing:border-box;
+    overflow:scroll;
+}
+.leads_info_box{
+	background : @base_background;
+}
+.leads_info_header{
+	margin-left : 40rpx;
+	height : 118rpx;
+	line-height : 118rpx;
+	font-size : 48rpx;
+	text-align : center;
+	padding-right : 40rpx;
+	border-bottom : 1px solid @border_color;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    overflow:hidden;
+}
+
+.leads_info_content{
+	padding : 40rpx;
+	background : @base_background;
+}
+.leads_info_item{
+	display : flex;
+	line-height : @mid_font_size;
+	height : @mid_font_size;
+	font-size : @mid_font_size;
+	margin-bottom : 32rpx;
+}
+.leads_info_item:last-child{
+	margin-bottom : 0;
+}
+.leads_info_item_label{
+	width : 120rpx;
+	color : @value_color;
+	text-align : justify;
+	text-align-last : justify;
+}
+.leads_info_item_value{
+	color : @label_color;
+	flex : 1;
+	text-align : right;
+}
+.leads_info_parent_item{
+    padding-top:40rpx;
+    height: auto;
+    overflow: hidden;
+}
+.leads_info_parent{
+    margin:30rpx 0;
+    height: auto;
+    overflow: hidden;
+    background: #fff;
+    padding:0 40rpx 40rpx 40rpx;
+}

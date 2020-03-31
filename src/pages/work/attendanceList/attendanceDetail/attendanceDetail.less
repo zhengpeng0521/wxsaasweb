@@ -1,0 +1,152 @@
+@import '../../../../common.less';
+.radioRed {
+	color: #c0c4cc;
+}
+.radioBlue {
+	color: #333;
+}
+
+.wx-radio-input.wx-radio-input-disabled{
+	border : none;
+}
+.attend_block{
+	height : calc( ~'100% - 118rpx' );
+	overflow : auto;
+}
+.attend_block_title{
+	height : @mid_font_size;
+	line-height : @mid_font_size;
+	font-size : @mid_font_size;
+	color : @value_color;
+	padding : 0 30rpx 20rpx;
+}
+.attend_item{
+	margin : 0 30rpx 30rpx;
+	background : @base_background;
+	border-radius : @border_radius;
+}
+.attend_item_top, .attend_item_bottom {
+	display : flex;
+	align-items : center;
+	width : 100%;
+	height : 95rpx;
+	padding : 0 30rpx;
+	box-sizing : border-box;
+	font-size : @mid_font_size;
+	color : @label_color;
+}
+.attend_item_bottom_disabled{
+	color : @dark_color;
+}
+.attend_item_top{
+	width : calc( ~'100% - 60rpx' );
+	padding : 0;
+	margin : 0 30rpx;
+}
+.attend_item_top{
+	border-bottom : 1rpx solid @border_color;
+}
+.attend_item_top_name{
+	font-size : @lg_font_size;
+}
+.attend_item_top_status{
+	padding : 0 12rpx;
+	margin-left : 10rpx;
+	height : @lg_font_size; line-height : @lg_font_size;
+	font-size : 24rpx;
+	color : @btn_color;
+	background : @base_color;
+	border-radius : 16rpx;
+}
+.stu_color{
+	background : #ADD1FF;
+}
+.mul_color{
+	background : #ACE2A9;
+}
+.try_color{
+	background : #EBB2B9;
+}
+.addType_radio_label{
+	margin-left : 80rpx;
+}
+.addType_radio_label:first-child{
+	margin : 0;
+}
+.addType_radio{
+	transform : scale( .8 );
+}
+.attend_detail_btn{
+	position : fixed;
+	padding : 0 40rpx;
+	bottom : 10rpx;
+	display : flex;
+	height : 88rpx;
+	align-items : center;
+}
+.attend_all_select{
+	display : flex;
+	align-items : center;
+	width : 250rpx;
+	height : 80rpx;
+	color : @label_color;
+}
+.attend_all_checked{
+	width : 46rpx;
+	height : 46rpx;
+	background : url('https://img.ishanshan.com/gimg/img/b9b75683152d33b43cb0c8a6195c6078') no-repeat;
+	background-size : cover;
+	border-radius : 50%;
+}
+.attend_all_not_checked{
+	width : 46rpx;
+	height : 46rpx;
+//	background : @base_background;
+	border-radius : 50%;
+	border : 1px solid #c9c9c9;
+	box-sizing : border-box;
+}
+.all_select_text{
+	margin-left : 16rpx;
+	height : @lg_font_size;
+	line-height : @lg_font_size;
+	font-size : @lg_font_size;
+}
+.all_select_text_disabled{
+	color: #cccccc;
+	margin-left : 16rpx;
+	height : @lg_font_size;
+	line-height : @lg_font_size;
+	font-size : @lg_font_size;
+}
+.attend_reset_btn{
+	padding : 0;
+	width : 200rpx;
+	font-size : @lg_font_size;
+	color : @btn_color;
+	background : @reset_background;
+	text-align : center;
+
+}
+.attend_confirm_btn{
+	padding : 0;
+	width : 200rpx;
+	margin-left : 30rpx;
+	background : @search_background;
+	color : @btn_color;
+	font-size : @lg_font_size;
+	text-align : center;
+}
+.attend_disabled_btn{
+	background : #DDD !important;
+	color : @btn_color !important;
+}
+
+//空数据页面
+.blank_data_page{
+	position :absolute;
+	width : 100%;
+	height : 100%;
+	background : @light_background;
+	z-index : 1000;
+}

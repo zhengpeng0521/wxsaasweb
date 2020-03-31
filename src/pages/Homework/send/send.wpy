@@ -1,0 +1,69 @@
+<style lang = "less" src = 'send.less' ></style>
+
+<script src="./send.js"></script>
+
+<template>
+  <view class = "send">
+    <view class = "attend_header" >
+      <view class = "attend_header_label" @tap = "clickToChangeDay('lastDay')" >
+        <view class = "attend_header_left_ba"></view><view class = "attend_header_left_value">上一天</view>
+      </view>
+      <view class = "attend_header_center" >
+        <picker mode = 'date' value = '{{ selectedDate }}' bindchange = 'selectCurrentDate' end = '{{ currentDate }}' >
+          <view class = 'picker' style = 'display : inline-block' >{{ selectedDate }}</view>
+          <view class = 'arrow_down'></view>
+        </picker>
+      </view>
+      <view class = "{{ currentDate == selectedDate ? 'attend_header_label_disabled' : 'attend_header_label' }}" @tap = "clickToChangeDay('nextDay')" >
+        <view class = "attend_header_left_value" >下一天</view>
+        <view class = "{{ currentDate == selectedDate ? 'attend_header_right_ba_disabled attend_header_right_ba' : 'attend_header_right_ba' }}" ></view>
+      </view>
+    </view>
+    <view class="list">
+      <repeat for="{{list}}" item="item" index="index">
+        <view class="class_item">
+          <view @tap="getCheckboxIdx({{index}})">
+            <checkbox-group class="className">
+              <label class="checkbox">
+                <checkbox class="class_checkbox" value="{{index}}" checked="{{item.checked === true}}"/>{{item.courseName}}
+              </label>
+            </checkbox-group>
+          </view>
+          <image
+            class="jiantou"
+            wx:if="{{item.optionflag !== true}}"
+            @tap="toggle({{index}})"
+            src="http://img.ishanshan.com/gimg/n/20191125/28b7fe8b4da5b1401d0ccf0aec55245c">
+          </image>
+          <image class="jiantou"
+            wx:if="{{item.optionflag === true}}"
+            @tap="toggle({{index}})"
+            src="http://img.ishanshan.com/gimg/n/20191125/0e791e3a21a05689d3766ccf64e5ea38">
+          </image>
+        </view>
+        <view class="children" wx:if="{{item.optionflag === true}}">
+          <view wx:if="{{!item.studentList}}" class="sutdent_no">暂无学员</view>
+          <checkbox-group class="sutdent" @change="getNum">
+            <repeat for="{{item.studentList}}" item="stuItem" index="stuIndex">
+              <view class="child_item">
+                <view @tap="getStuIndex({{index}},{{stuIndex}})">
+                  <label class="sutdent_checkbox">
+                    <checkbox value="{{index}}" disabled="{{!stuItem.parentId}}" checked="{{stuItem.checked === true}}"/>{{stuItem.stuName}}
+                  </label>
+                </view>
+                <view class="no_register" wx:if="{{!stuItem.parentId}}">未注册</view>
+              </view>
+            </repeat>
+          </checkbox-group>
+        </view>
+      </repeat>
+      <view wx:if="{{ list.length === 0 }}" class='blank_data_page'>
+        <blankDataPage title="暂无结果" />
+      </view>
+      <view class="btn_wrap" wx:if="{{ stuNum !== 0 }}">
+        <view class="stuNum">已选择：{{stuNum}}个学员</view>
+        <view @tap="studentSubmit" class="studentBtn">确定</view>
+      </view>
+    </view>
+  </view>
+</template>

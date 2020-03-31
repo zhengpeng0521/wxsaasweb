@@ -1,0 +1,103 @@
+<template>
+  <view class = 'form_container'>
+        <view class='contract-check_input'>
+            <input name = 'content' style = 'width : auto' maxlength = '-1' placeholder = '请输入备注,字数限制200字以内' placeholder-class = 'textarea_placeholder' bindinput="checkContentEvent"/>
+        </view>
+        <view class='contract_check_btn'>
+            <button class = 'contract_check_reject' @tap = 'contractCheckRejected'>驳回</button>
+            <button class = 'contract_check_pass' @tap = 'contractCheckPass()'>通过</button>
+        </view>
+  </view>
+</template>
+
+<style lang = "less" src = 'contractCheck.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import { serviceRequest } from '../../../../utils/request';
+
+	export default class ContractCheck extends wepy.page {
+		config = {
+			navigationBarTitleText : '合同审核'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+	  		title : '闪闪云校, 一站式早教管理云平台',
+	  		path : '/pages/initPage/initPage',
+			  imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+	  		success : function( res ) {
+				  wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+		  	},
+		  	fail : function( res ){}
+			}
+  	}
+
+		data = {
+      orderRemark        : undefined,
+      orderId            : undefined,
+      routerType         : undefined,
+		}
+
+		methods = {
+      checkContentEvent( e ){
+        this.orderRemark = e.detail.value;
+  		},
+      //通过
+      contractCheckPass(){
+        let params = {
+          orderId : this.orderId,
+          orderRemark : this.orderRemark,
+        }
+        let setDate = {
+          orderId : this.orderId,
+          orderState : '4',
+        }
+        let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/order/passOrder`;
+        serviceRequest( url, params ).then(( ret ) => {
+          if( ret && ret.errorCode === 0 ){
+            wx.showToast({ title : '审核成功', icon : 'success', duration : 1000 });
+            setTimeout(() => {
+              wx.navigateBack({
+                delta: 2
+              })
+            }, 1000);
+            !!this.orderId && wx.setStorageSync( 'contractListItem', setDate );
+          }else{
+            wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+          }
+        });
+      },
+      //驳回
+      contractCheckRejected(){
+        let params = {
+          orderId : this.orderId,
+          orderRemark : this.orderRemark,
+        }
+        let setDate = {
+          orderId : this.orderId,
+          orderState : '3',
+        }
+        let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/order/rejectOrder`;
+        serviceRequest( url, params ).then(( ret ) => {
+          if( ret && ret.errorCode === 0 ){
+            wx.showToast({ title : '驳回成功', icon : 'success', duration : 1000 });
+            setTimeout(() => {
+              wx.navigateBack({
+                delta: 2
+              })
+            }, 1000);
+            !!this.orderId && wx.setStorageSync( 'contractListItem', setDate );
+          }else{
+            wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+          }
+        });
+      },
+		}
+
+		onLoad( params ) {
+			this.orderId = params.orderId;
+            this.routerType = params.routerType;
+		}
+	}
+</script>

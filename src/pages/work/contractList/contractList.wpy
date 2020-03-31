@@ -1,0 +1,332 @@
+<style lang = "less" src = 'contractList.less' ></style>
+<script>
+    import wepy from 'wepy';
+	import moment from 'moment';
+	import { serviceRequest } from '../../../utils/request';
+	import CommonSearch from '../../../components/commonSearch/commonSearch';           //常用搜索
+	import BlankDataPage from '../../../components/blankDataPage/blankDataPage';        //空数据页面
+
+    export default class LeadsList extends wepy.page {
+		config = {
+			navigationBarTitleText : '合同管理',
+		}
+        data = {
+			condition                       : 'all',                 //判断全部合同以及我的合同
+			routerType                      : undefined,             //判断所进标签
+			list                            : [],                    //列表数据
+			resultCount                     : 28,                    //列表数据总数
+			pageIndex                       : 0,                     //数据页面
+			pageSize                        : 10,                    //每页数据数量
+			searchLoading                   : false,                 //下拉记载更多
+			searchLoadingComplete           : false,                 //加载完毕
+			//搜索属性
+			placeholder                     : '请输入姓名/手机号搜索',
+			//高级搜索
+			superSearchVisible              : false,
+       //手机号或姓名搜索
+      stuNameMobile                   : undefined,
+      //签约类型列表
+      signTypeList                    : [{key:'0',value:'新签约'},{key:'1',value:'续签'},{key:'2',value:'转介绍'}],
+      signType                        : undefined, //签约类型选中的数据
+      //审核状态列表
+      orderStateList                  : [{key:'1',value:'待审核'},{key:'3',value:'已驳回'},{key:'4',value:'审核通过'}],
+      orderState                      : undefined, //审核状态选中数据
+      //收款状态列表
+      receiptStatusList               : [{key:'0',value:'未收款 '},{key:'1',value:'已收款'},{key:'2',value:'部分收款'}],
+      receiptStatus                   : undefined, //收款状态选中数据
+
+		}
+    //请求列表数据
+    getContractList( params ){
+      wx.showLoading({
+				title: '加载中',
+				mask: true
+      })
+      this.searchLoadingComplete = false;          //去掉 已加载全部
+			let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/order/queryOrderList`;
+			serviceRequest( url, params ).then(( ret ) => {
+				if( !!ret && ret.errorCode === 0 ){
+          wx.hideLoading()
+					this.list =  ret.results ;
+					this.resultCount = ret.data.resultCount;
+          this.pageIndex = params.pageIndex;
+					// this.stuNameMobile = params.stuNameMobile;
+					// this.signType = params.signType;
+					// this.orderState = params.orderState;
+          // this.receiptStatus = params.receiptStatus;
+					this.$apply();
+				}else{
+          wx.hideLoading()
+					wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+			})
+    }
+        //初始化进入页面
+		onLoad( query ) {
+      if( query.key == 'crm_sorder_list' ){//我的名单 进入
+				wx.setNavigationBarTitle({
+					title : '我负责的合同'
+				})
+				this.condition = 'my';
+        this.routerType = 'crm_sorder_list';
+			}else if( query.key == 'crm_sorder_checklist' ){
+				wx.setNavigationBarTitle({
+					title : '审核合同'
+				});
+				this.condition = 'all';
+        this.routerType = 'crm_sorder_checklist';
+        this.orderState = '1';
+			}else{
+        this.routerType = 'crm_sorder_alllist';
+      }
+			let params = {
+				pageIndex : 0,
+				pageSize  : 10,
+        condition : this.condition,
+        orderState : this.routerType=='crm_sorder_checklist'?'1':undefined,
+			}
+			this.getContractList( params );
+		};
+        //页面 出现时调用
+		onShow(){
+			wx.hideLoading()
+			// let params = {
+			// 	pageIndex : 0,
+			// 	pageSize  : 10,
+      //   condition : this.condition,
+      //   orderState : this.routerType=='crm_sorder_checklist'?'1':undefined,
+			// }
+			// this.getContractList( params );
+		};
+
+    methods = {
+			//上拉加载更多
+			scrollToLower( e ){
+				if( !this.searchLoading ){
+					this.searchLoading = true;    //设置为加载状态
+					let { list, resultCount, condition, pageIndex } = this;     //列表数据 总数据 全部或我的 分页
+					let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/order/queryOrderList`;
+					let params = {
+						stuNameMobile      : this.stuNameMobile,              //手机号或姓名搜索
+            signType           : this.signType,
+            orderState         : this.orderState,
+            receiptStatus      : this.receiptStatus,
+						pageIndex          : ++pageIndex,
+						pageSize           : 10,
+            // condition          : this.condition,
+					}
+					if( list.length >= resultCount ){
+						this.searchLoadingComplete = true;
+						this.searchLoading = false;          //设置为加载状态
+					}else{
+						serviceRequest( url, params ).then(( ret ) => {
+							if( ret && ret.errorCode ===  0 ){
+								let newList = [ ...list, ...ret.results ];
+								this.list = newList;
+								this.searchLoading = false;
+								this.pageIndex = pageIndex;
+								this.$apply();
+							}else{
+								wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+							}
+						});
+					}
+				}
+			},
+      //高级搜索签约类型选中
+			signTypeChange( e ){
+				this.signType = e.detail.value;
+			},
+      //高级搜索审核状态选中
+			orderStateChange( e ){
+				this.orderState = e.detail.value;
+			},
+      //高级搜索收款状态选中
+			receiptStatusChange( e ){
+				this.receiptStatus = e.detail.value;
+			},
+
+			//关闭高级搜索
+			closeSuperSearch( e ){
+				this.superSearchVisible = false;
+			},
+
+			//高级搜索 搜索
+			confirmSuperSearch( e ){
+				let values = e.detail.value;
+				let params = {
+					pageIndex          : 0,
+					pageSize           : 10,
+          condition          : this.condition,
+					stuNameMobile      : this.stuNameMobile,     //手机号或姓名搜索
+          orderState         : this.orderState,
+          signType           : this.signType,
+          receiptStatus      : this.receiptStatus,
+				}
+				this.getContractList( params );
+				this.superSearchVisible = false;
+			},
+
+			//高级搜索 重置
+			resetSuperSearch(){
+				this.signType = '-1';
+				this.orderState = '-1';
+                this.receiptStatus = '-1';
+				let params = {
+					pageIndex          : 0,
+					pageSize           : 10,
+					stuNameMobile      : this.stuNameMobile,
+          condition          : this.condition,
+          orderState         : this.routerType == 'crm_sorder_checklist'?'1':undefined,
+				}
+				this.getContractList( params );
+				this.superSearchVisible = false;
+			},
+
+			//点击进入名单详情
+			clickToContractDetail( item ){
+        wx.navigateTo({
+					url : `../contractDetails/contractDetails?contractId=${ item.orderNumber }&routerType=${this.routerType}&orderState=${item.orderState}`
+				})
+			}
+		}
+        events = {
+			//点击搜索进行 数据搜索
+			onSearch( value ){
+				let params = {
+					pageIndex          : 0,
+					pageSize           : 10,
+					stuNameOrMobile      : value,
+          orderState         : this.routerType == 'crm_sorder_checklist'?'1':undefined,
+				}
+				this.getContractList( params );
+			},
+
+			//高级搜索
+			superSearch(){
+				this.superSearchVisible = true
+			}
+		}
+
+		components = {
+			commonSearch      : CommonSearch,
+			blankDataPage     : BlankDataPage
+		}
+    }
+</script>
+<template>
+	<view>
+		<view style = 'overflow : hidden; width : 100%; height : 100%'>
+			<!-- 搜索头部 -->
+			<commonSearch :placeholder.sync = 'placeholder'/>
+			<!-- 搜索头部 -->
+			<scroll-view scroll-y lower-threshold = '50' bindscrolltolower = 'scrollToLower' class = "'list_wrap_open'" >
+                <repeat for = '{{ list }}' item = 'item' >
+                    <view class = 'list_item' hover-class = 'list_item_hover' @tap = 'clickToContractDetail({{item}})'>
+                        <view class = 'list_item_item'>
+                            <view class = 'list_item_title'>
+                                <view class = 'list_item_title_name'>
+                                    <text>{{item.orderStuName[0].stuName}}</text>
+                                    <text hidden = "{{ item.orderStuName.length==1 }}">    等</text>
+                                </view>
+                                <view class = 'list_item_title_status'>
+                                    <text style='color:#5D9CEC'>{{
+                                             item.orderState && item.orderState=='0' ? '无效'
+                                            :item.orderState && item.orderState=='1' ? '待审核'
+                                            :item.orderState && item.orderState=='3' ? '已驳回'
+                                            :item.orderState && item.orderState=='4' ? '已通过'
+                                            :''
+                                        }}</text>
+                                    <text style='padding-left:30rpx;color:#FF7058'>{{
+                                             item.receiptStatus && item.receiptStatus=='0' ? '待收款'
+                                            :item.receiptStatus && item.receiptStatus=='1' ? '已收款'
+                                            :item.receiptStatus && item.receiptStatus=='2' ? '部分收款'
+                                            :''
+                                        }}</text>
+                                </view>
+                            </view>
+                            <view class = 'list_item_content'>
+                                <text>合同编号：</text>
+                                <text class = 'list_item_content_right'>{{item.orderNum}}</text>
+                            </view>
+                            <view class = 'list_item_content'>
+                                <text>合同金额：</text>
+                                <text class = 'list_item_content_right'>{{item.orderMoney}}元</text>
+                            </view>
+                            <view class = 'list_item_content'>
+                                <text>签约家长：</text>
+                                <text class = 'list_item_content_right'>{{item.parentName}}</text>
+                            </view>
+                            <view class = 'list_item_content'>
+                                <text>手机号码：</text>
+                                <text class = 'list_item_content_right'>{{item.mobile}}</text>
+                            </view>
+                            <view class = 'list_item_content'>
+                                <text>合同创建：</text>
+                                <text class = 'list_item_content_right'>{{item.orderCreatePerson}}</text>
+                            </view>
+                        </view>
+                    </view>
+                </repeat>
+
+                <view hidden = "{{ list.length !== 0 }}" class = 'blank_data_page' >
+                    <blankDataPage title = '暂无结果' />
+                </view>
+
+				<view class = 'loading' hidden = '{{ !searchLoading }}' >拼命加载中...</view>
+				<view class = 'loading' hidden = '{{ !searchLoadingComplete }}' >已加载全部</view>
+			</scroll-view>
+		</view>
+		<view>
+			<view hidden = '{{ !superSearchVisible }}' class = 'super_search_wrap' @tap = 'closeSuperSearch' ></view>
+			<view class = "{{ superSearchVisible ? 'super_search_block open_superSearch' : 'super_search_block' }}" >
+				<form bindsubmit = 'confirmSuperSearch' bindreset = 'resetSuperSearch' >
+					<view class = 'super_search_item' >
+						<view class = 'super_search_item_label' >签约类型</view>
+						<view class = 'super_search_item_content' >
+							<radio-group name = 'studentFollowState' bindchange = 'signTypeChange' >
+								<repeat for = '{{ signTypeList    }}' >
+									<label class = 'super_search_label' >
+										<radio color = '#5d9cec' class = 'super_search_item_radio' value = '{{ item.key }}' />
+										<view class = "{{ item.key == signType ? 'super_search_value super_search_select' : 'super_search_value' }}" >{{ item.value }}</view>
+									</label>
+								</repeat>
+							</radio-group>
+						</view>
+					</view>
+					<view class = 'super_search_item' >
+						<view class = 'super_search_item_label' >审核状态</view>
+						<view class = 'super_search_item_content' >
+							<radio-group name = 'firstChannel' bindchange = 'orderStateChange' >
+								<repeat for = '{{ orderStateList }}'>
+									<label class = 'super_search_label' >
+										<radio color = '#5d9cec' class = 'super_search_item_radio' value = '{{ item.key }}' />
+										<view class = "{{ item.key == orderState ? 'super_search_value super_search_select' : 'super_search_value' }}" >{{ item.value }}</view>
+									</label>
+								</repeat>
+							</radio-group>
+						</view>
+					</view>
+                    <view class = 'super_search_item' >
+						<view class = 'super_search_item_label' >收款状态</view>
+						<view class = 'super_search_item_content' >
+							<radio-group name = 'firstChannel' bindchange = 'receiptStatusChange' >
+								<repeat for = '{{ receiptStatusList }}'>
+									<label class = 'super_search_label' >
+										<radio color = '#5d9cec' class = 'super_search_item_radio' value = '{{ item.key }}' />
+										<view class = "{{ item.key == receiptStatus ? 'super_search_value super_search_select' : 'super_search_value' }}" >{{ item.value }}</view>
+									</label>
+								</repeat>
+							</radio-group>
+						</view>
+					</view>
+					<view class = 'super_search_btn_group' >
+						<button class = 'super_reset_btn' hover-class = 'btn_reset_hover' form-type = 'reset' >重置</button>
+						<button class = 'super_confirm_btn' hover-class = 'btn_save_hover' form-type = 'submit' >搜索</button>
+					</view>
+				</form>
+			</view>
+		</view>
+	</view>
+</template>

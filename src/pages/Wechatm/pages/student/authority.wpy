@@ -1,0 +1,104 @@
+<style lang = 'less' src = './less/authority.less' ></style>
+
+<script>
+  import wepy from 'wepy'
+  import { serviceRequestJson } from '../../../../utils/request'
+  export default class Authority extends wepy.page {
+    config = {
+      navigationBarTitleText: '权限设置'
+    }
+    data = {
+      issue: true,
+      blacklist: null,
+      release: null,
+      releaseRadio: 1,
+      customerId: null,
+      disabled: false
+    }
+    onLoad(e) {
+      this.customerId = e.id
+      this.getPermission()
+    }
+    async getPermission() {
+      const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/getPermission`
+      const res = await serviceRequestJson(url, {customerId: this.customerId})
+      const {errorCode, blacklist, release} = res
+      if (res && errorCode === 0) {
+        this.blacklist = blacklist
+        this.release = release
+        this.$apply()
+      }
+    }
+    methods = {
+      radioChange(e) {
+        this.release = +e.detail.value
+        this.releaseRadio = +e.detail.value
+      },
+      issueChange(e) {
+        if (e.detail.value === true) {
+          this.release = this.releaseRadio
+        } else {
+          this.release = 0
+        }
+      },
+      blackChange(e) {
+        if (e.detail.value === true) {
+          this.blacklist = 1
+        } else {
+          this.blacklist = 0
+        }
+      },
+      async save() {
+        this.disabled = true
+        const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/setPermission`
+        const data = {
+          customerId: this.customerId,
+          releases: this.release,
+          blacklist: this.blacklist
+        }
+        const res = await serviceRequestJson(url, data)
+        const {errorCode} = res
+        if (errorCode === 0) {
+          this.$parent._init_data.showList = true
+          wx.showToast({icon: 'none', title: '保存成功', duration: 500})
+          setTimeout(() => {
+            wx.navigateBack({ delta: 1 })
+          }, 500)
+        }
+      }
+    }
+  }
+</script>
+
+<template>
+  <view class="authority">
+    <view class="authority_container">
+      <view class="issue_content">
+        <view>家长发布权限</view>
+        <switch class="issue_switch" color="#5D9CEC" @change="issueChange" checked="{{release !== 0}}"/>
+      </view>
+      <view class="issue_radio" wx:if="{{release !== 0}}">
+        <radio-group class="radio-group" bindchange="radioChange">
+          <view class="radio_item first">
+            <radio class="radio" value="{{1}}" checked="{{release === 1}}">
+              <text class="radio_text">所有家长可见</text>
+            </radio>
+          </view>
+          <view class="radio_item">
+            <radio class="radio" value="{{2}}" checked="{{release === 2}}">
+              <text class="radio_text">班级家长可见</text>
+            </radio>
+          </view>
+        </radio-group>
+      </view>
+    </view>
+    <view class="blacklist">
+      <view>加入黑名单</view>
+      <switch color="#5D9CEC" @change="blackChange" checked="{{blacklist === 1}}"/>
+    </view>
+    <view class="tip">加入黑名单，家长无法进入机构进行查看、发布等操作</view>
+    <view class="save_btn" @tap="save">
+      <button disabled="{{disabled}}">保存设置</button>
+    </view>
+  </view>
+</template>

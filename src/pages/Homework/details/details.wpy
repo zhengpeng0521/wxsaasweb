@@ -1,0 +1,52 @@
+<style lang = "less" src = 'details.less' ></style>
+<template>
+  <view class="details">
+    <view class="details_content">
+      <text class="describe">{{list.content}}</text>
+      <view class="details_img">
+        <repeat for="{{list.imgs}}">
+          <image mode="widthFix" src="{{item}}" @tap="previewImage({{item}})"></image>
+        </repeat>
+      </view>
+      <view class="time_evaluate">
+        <view class="time">提交时间: {{list.workTime}}</view>
+        <view class="evaluate" @tap="toPage({{list}},{{itemt}})">
+          <image class="eav_img" src="http://img.ishanshan.com/gimg/n/20191120/b7de4cdc9eb7648ee1b46bd138b4557d"></image>
+          <text class="eav_text">评论</text>
+        </view>
+        <view class="line"></view>
+      </view>
+      <view class="comment">
+        <view
+          @longpress="delComment({{item}})"
+          wx:for="{{homeworkFeedbackList}}"
+          wx:key="item.id"
+          @tap="toPage({{list}},{{itemh}},{{item}})">
+          <view class="comment_item" wx:if="{{item.replyId === '0'}}">
+            <text class="per">{{item.customerName}} : </text>
+            <text>{{item.comment}}</text>
+          </view>
+          <view class="comment_item" wx:if="{{item.replyId !== '0'}}">
+            <text>
+              <text class="per">{{item.customerName}}</text>
+              <text> 回复 </text>
+              <text class="per">{{item.replyCustName}} : </text>
+            </text>
+            <text>{{item.comment}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="input_wrap" @tap="toPage({{list}},{{itemt}})">我也要说一句</view>
+    </view>
+    <view class="bottom">
+      <view wx:if="{{list.status != '4'}}" class="bottomBtn">
+        <button class="pass" @tap="pass" disabled="{{btnflag}}">批阅通过</button>
+        <button class="optimize" @tap="optimize" disabled="{{btnflag}}">重新优化</button>
+      </view>
+      <view wx:if="{{list.status == '4'}}" class="already">
+        <button class="already_btn" disabled="{{true}}">已批阅</button>
+      </view>
+    </view>
+  </view>
+</template>
+<script src="details.js"></script>

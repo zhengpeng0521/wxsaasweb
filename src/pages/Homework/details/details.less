@@ -1,0 +1,126 @@
+@import '../../../common.less';
+.details{
+  overflow-x: hidden;
+  padding-bottom: 140rpx;
+
+  .details_content{
+    padding: 40rpx 20rpx 0 20rpx;
+    // height: 100%;
+    // box-sizing: border-box;
+    // height : calc( ~'100vh - 148rpx' );
+    // overflow: auto;
+  }
+
+  .describe{
+    font-size: 30rpx;
+    color: #333;
+  }
+
+  .details_img{
+    margin-top: 20rpx;
+
+    image{
+      width: 100%;
+    }
+  }
+  .time_evaluate{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+  }
+  .evaluate{
+    margin-right: 20rpx;
+    padding: 15rpx 0 24rpx 0;
+    display: flex;
+    align-items: center;
+  }
+  .time{
+    color: #999;
+    font-size: 24rpx;
+    padding: 15rpx 0 24rpx 0;
+  }
+  .eav_img{
+    width: 38rpx;
+    height: 38rpx;
+    vertical-align: middle;
+    margin-right: 6rpx;
+  }
+  .eav_text{
+    font-size: 24rpx;
+    color: #333;
+    vertical-align: middle;
+  }
+  .line{
+    bottom: 0;
+    position: absolute;
+    width: 730rpx;
+    height: 1px;
+    background-color: @base_border_color;
+  }
+  .input_wrap{
+    background-color: #f7f7f7;
+    height: 64rpx;
+    line-height: 64rpx;
+    border-radius: 38rpx;
+    color: #ccc;
+    margin-top: 40rpx;
+    font-size: 24rpx;
+    padding-left: 32rpx;
+  }
+
+  .bottom {
+    width: 100%;
+    height: 140rpx;
+    position: fixed;
+    bottom: 0;
+    background-color: #fff;
+    padding-top: 20rpx;
+    box-sizing: border-box;
+
+    .already{
+      padding: 0 40rpx;
+      box-sizing: border-box;
+    }
+    .already_btn{
+      background-color: #eee;
+      color: #ccc;
+      width: 100%;
+    }
+    .bottomBtn,.already{
+      display: flex;
+      justify-content: space-between;
+    }
+    .pass,.optimize,.already_btn{
+      height: 88rpx;
+      line-height: 88rpx;
+      font-size: 34rpx;
+    }
+    .pass{
+      width: 414rpx;
+      background-color: #5D9CEC;
+      color: #fff;
+    }
+    .optimize{
+      width: 216rpx;
+      background-color: #fff;
+      color: #5D9CEC;
+      border: 1px solid #5D9CEC;
+    }
+  }
+
+  .comment_item{
+    margin-bottom: 10rpx;
+  }
+  .comment{
+    margin-top: 20rpx;
+    font-size: 26rpx;
+    color: #333;
+    font-weight: 400;
+
+    .per{
+      // font-weight: 500;
+      color: #68759C;
+    }
+  }
+}

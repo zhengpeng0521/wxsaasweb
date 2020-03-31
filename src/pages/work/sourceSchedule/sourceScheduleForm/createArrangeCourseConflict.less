@@ -1,0 +1,46 @@
+@import '../../../../common.less';
+
+.dialogBox{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 51;
+}
+.posBox{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  background: #fff;
+  width: 80%;
+  border-radius: @lg_border_radius;
+  box-shadow: 0 0 5px #888888;
+  z-index: 52;
+  padding: 30rpx;
+}
+.title{
+  text-align: center;
+  font-size: 36rpx;
+  line-height: 1.5;
+}
+.tip{
+  text-align: center;
+  font-size: 36rpx;
+  color: red;
+  line-height: 1.5;
+}
+.arrange{
+  background: red;
+  color: #fff;
+  border-radius: @border_radius;
+  padding: 6rpx 10rpx;
+}
+.btnSure{
+  width: 100%;
+	background-color: @base_color;
+  color:@btn_color;
+  margin-top: 30rpx;
+}

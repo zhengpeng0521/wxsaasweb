@@ -1,0 +1,39 @@
+<style lang = "less" src = 'introduceDetail.less' ></style>
+
+<script>
+	import wepy from 'wepy'
+
+	export default class IntroduceDetail extends wepy.page {
+		config = {
+			navigationBarTitleText : '闪闪云校'
+		}
+
+		data = {
+			url : undefined,
+		}
+
+		methods = {
+			//点击 申请试用跳转
+			clickToRegister(){
+				wx.navigateTo({
+					url : '../register/register'
+				})
+			}
+		}
+
+		onLoad( params ){
+			this.url = params.url;
+		}
+	}
+</script>
+
+<template>
+	<view class = 'container' >
+		<image style = 'width : 100%; height : 100%; display : block' mode = 'aspectFill' src = '{{ url }}' />
+		<view class = 'introduce_detail_btn' >
+			<button class = 'btn_save' hover-class = 'btn_save_hover' @tap = 'clickToRegister' >
+				申请试用
+			</button>
+		</view>
+	</view>
+</template>

@@ -1,0 +1,520 @@
+<style lang = "less" src = './sendpic.less' ></style>
+<script>
+import wepy from 'wepy'
+import { serviceRequestJson } from '../../../utils/request'
+import releasepic from '../../../components/releasepic/releasepic'
+export default class Sendpic extends wepy.page {
+  config = {
+    navigationStyle: 'custom'
+  }
+  components = {
+    releasepic: releasepic
+  }
+  data = {
+    autoFocus: true,
+    hitclor: '',
+    studentList: [],
+    classname: '',
+    classp: '',
+    currentCount: '',
+    statusBarHeight: 0,
+    titleBarHeight: 0,
+    statusAll: 0,
+    namet: '',
+    jsonObj: '',
+    type: {},
+    picshow: true,
+    numho: null,
+    con: {
+      left: '取消',
+      right: '保留',
+      contnet: '将此次编辑保留?'
+    },
+    sendTime: null
+  }
+  onLoad(query) {
+    let str = decodeURI(decodeURIComponent(query.str))
+    let types = (!!query.str && JSON.parse(str)) || {}
+    this.type = types
+    const type = types.type
+    switch (type) {
+      case 'comment':
+        this.currentCount = '评论'
+        break
+      case 'reply':
+        this.currentCount = '回复'
+        break
+      case 'homerela':
+        this.numho = true
+        this.currentCount = '布置作业'
+        break
+    }
+    this.$apply()
+  }
+  onShow() {
+    const pages = getCurrentPages() //eslint-disable-line
+    const currPage = pages[pages.length - 1]  // 当前页
+    if (currPage.data.pagetype !== undefined && currPage.data.pagetype !== null) {
+      let types = (!!currPage.data.pagetype && JSON.parse(currPage.data.pagetype)) || {}
+      if (types.status === 1) {
+        if (types.class.length > 1) {
+          let nameo = types.class[0]
+          this.classname = nameo + '等'
+        } else {
+          let nameo = types.class[0]
+          this.classname = nameo
+        }
+        this.classp = types.stuNum
+        this.studentList = types.studentList
+        this.sendTime = types.time
+        this.jsonObj = types.student
+      } else {
+        this.classname = ''
+      }
+      this.$apply()
+    }
+    setTimeout(() => {
+      const _this = this
+      wx.getSystemInfo({
+        success: function (res) {
+          const headerH = wx.getMenuButtonBoundingClientRect()
+          _this.statusBarHeight = res.statusBarHeight // 状态栏高度
+          _this.titleBarHeight = (headerH.bottom + headerH.top) - (res.statusBarHeight * 2)
+          _this.statusAll = _this.statusBarHeight + _this.titleBarHeight
+          wx.setStorageSync('statusAll', _this.statusBarHeight + _this.titleBarHeight)
+          _this.$apply()
+        },
+        failure() {
+          _this.statusBarHeight = 20
+          _this.titleBarHeight = 44
+          _this.statusAll = _this.statusBarHeight + _this.titleBarHeight
+          wx.setStorageSync('statusAll', _this.statusBarHeight + _this.titleBarHeight)
+          _this.$apply()
+        }
+      })
+    }, 100)
+  }
+  // 作业发布
+  async addHomework(parmen) {
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/addHomework`
+    const res = await serviceRequestJson(url, parmen)
+    if (res.errorCode === 0) {
+      wx.setStorageSync('updateHomework', true) // 通知首页刷新
+      wx.removeStorageSync('pasrmsAll')
+      wx.showToast({
+        title: '成功',
+        icon: 'success',
+        duration: 1000,
+        success: function () {
+          setTimeout(function () {
+            wx.navigateBack({
+              delta: 1
+            })
+          }, 1000)
+        }
+      })
+    }
+  }
+  onReady() {
+    let pasrmsAll = wx.getStorageSync('pasrmsAll')
+    if (pasrmsAll) {
+      this.classname = pasrmsAll.classname
+      this.classp = pasrmsAll.classp
+      this.namet = pasrmsAll.namet
+    }
+  }
+  events = {
+    myevent(type) {
+      if (this.namet === '' || this.namet === undefined) {
+        wx.showToast({
+          icon: 'none',
+          title: '作业标题不能为空!',
+          duration: 1000
+        })
+        this.hitclor = true
+        return
+      }
+      if (this.classname === '' || this.classname === undefined) {
+        wx.showToast({
+          icon: 'none',
+          title: '发送对象不能为空!',
+          duration: 2000
+        })
+        this.hitclor = true
+        return
+      }
+      this.hitclor = false
+      type.title = this.namet
+      type.jsonObj = this.jsonObj
+      // console.log(type)
+      const parmsw = {
+        content: type.content,
+        systemCode: 'ss'
+      }
+      let promiseArr = this.checkMsg(parmsw)
+      promiseArr.then((res) => {
+        if (res.data === true) {
+          this.addHomework(type)
+        } else {
+          wx.showToast({
+            icon: 'none',
+            title: '文字有敏感词汇,请重新输入',
+            duration: 2000
+          })
+        }
+      })
+    },
+    myevents(type) {
+      const parmsw = {
+        content: type.comment,
+        systemCode: 'ss'
+      }
+      let promiseArr = this.checkMsg(parmsw)
+      promiseArr.then((res) => {
+        if (res.data === true) {
+          this.addHomeworkFeedback(type)
+        } else {
+          wx.showToast({
+            icon: 'none',
+            title: '文字有敏感词汇,请重新输入',
+            duration: 2000
+          })
+        }
+      })
+    },
+    myevhome(type) {
+      const parmsw = {
+        content: type.content,
+        systemCode: 'ss'
+      }
+      let promiseArr = this.checkMsg(parmsw)
+      promiseArr.then((res) => {
+        if (res.data === true) {
+          // 编辑发布作业
+          this.editHomework(type)
+        } else {
+          wx.showToast({
+            icon: 'none',
+            title: '文字有敏感词汇,请重新输入',
+            duration: 2000
+          })
+        }
+      })
+    }
+  }
+  async checkMsg(parmen) {
+    if (parmen.content === '') {
+      let promise = new Promise((resolve, reject) => {
+        resolve({ data: true })
+      })
+      return promise
+    } else {
+      const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/checkMsg`
+      const res = await serviceRequestJson(url, parmen)
+      let promise = new Promise((resolve, reject) => {
+        resolve(res)
+      })
+      return promise
+    }
+  }
+  async editHomework(parms) {
+    let url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/editHomework`
+    const res = await serviceRequestJson(url, parms)
+    if (res.errorCode === 0) {
+      const type = {
+        id: parms.homeworkId
+      }
+      // 获取当前的页面栈
+      let pages = getCurrentPages() //eslint-disable-line
+      // 获取上一级页面，即pageA的page对象
+      let prevPage = pages[pages.length - 2]
+      prevPage.setData({
+        pagetype: type
+      })
+      wx.showToast({
+        title: '成功',
+        icon: 'success',
+        duration: 2000,
+        success: function () {
+          setTimeout(function () {
+            wx.navigateBack({
+              delta: 1
+            })
+          }, 1000)
+        }
+      })
+    }
+  }
+  async addHomeworkFeedback(parms) {
+    let url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/addHomeworkFeedback`
+    const res = await serviceRequestJson(url, parms)
+    if (res.errorCode === 0) {
+      wx.setStorageSync('detailsToBottm', 'true') // 评论之后让详情页跳到最底部
+      if (parms.replyId === 0) {
+        wx.reportAnalytics('homework_details_comment_finish', this.$parent.mId)
+      } else {
+        wx.reportAnalytics('homework_details_reply_finish', this.$parent.mId)
+      }
+      const type = {
+        stuHomeworkId: parms.stuHomeworkId
+      }
+      // 获取当前的页面栈
+      let pages = getCurrentPages() //eslint-disable-line
+      // 获取上一级页面，即pageA的page对象
+      let prevPage = pages[pages.length - 2]
+      prevPage.setData({
+        pagetype: type
+      })
+      wx.showToast({
+        title: '成功',
+        icon: 'success',
+        duration: 2000,
+        success: function () {
+          setTimeout(function () {
+            wx.navigateBack({
+              delta: 1
+            })
+          }, 1000)
+        }
+      })
+    }
+  }
+
+  async setStuHomeworkCache(parms, cansl) {
+    let url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/setHomeworkCache`
+    const res = await serviceRequestJson(url, parms)
+    if (res.errorCode === 0) {
+      const that = this
+      if (cansl) {
+        that.picshow = false
+        setTimeout(function () {
+          wx.navigateBack({
+            delta: 1
+          })
+        }, 1000)
+        return
+      }
+      wx.showToast({
+        title: '成功',
+        icon: 'success',
+        duration: 2000,
+        success: function () {
+          that.picshow = false
+          setTimeout(function () {
+            wx.navigateBack({
+              delta: 1
+            })
+          }, 1000)
+        }
+      })
+    }
+  }
+  methods = {
+    bindblurs: function (event) {
+      this.namet = event.detail.value
+      this.$com.releasepic.$data.height = 0
+    },
+    choseC() {
+      const items = {
+        type: this.studentList,
+        time: this.sendTime,
+        stuNum: this.classp
+      }
+      let str = JSON.stringify(items)
+      str = encodeURIComponent(encodeURI(str))
+      wx.navigateTo({
+        url: `../send/send?str=${str}`
+      })
+    },
+    backc() {
+      wx.navigateBack({
+        delta: 1
+      })
+    },
+    back() {
+      const that = this
+      const userword = that.$com.releasepic.$data.userword
+      const imgList = that.$com.releasepic.$data.imgList
+      const classname = that.classname
+      const classp = that.classp
+      const namet = that.namet
+      if (userword === '' && imgList.length === 0 && classname === '' && classp === '' && namet === '') {
+        wx.navigateBack({
+          delta: 1
+        })
+        return
+      }
+      wx.showModal({
+        content: '将此次编辑保留?',
+        cancelText: '取消',
+        confirmText: '保留',
+        confirmColor: '#5d9cec',
+        cancelColor: '#333333',
+        success(res) {
+          if (res.cancel) {
+            wx.reportAnalytics('arrangement_edit_cancel', that.$parent.mId)
+            if (that.type.homeworkId) {
+              const pasrms = {
+                homeworkId: that.type.homeworkId,
+                content: '',
+                imgs: '',
+                type: '2'
+              }
+              that.setStuHomeworkCache(pasrms, 'c')
+            } else {
+              wx.removeStorageSync('pasrmsAll')
+              wx.navigateBack({
+                delta: 1
+              })
+            }
+          } else if (res.confirm) {
+            wx.reportAnalytics('arrangement_edit_save', that.$parent.mId)
+            if (that.type.homeworkId) {
+              const pasrms = {
+                homeworkId: that.type.homeworkId,
+                content: that.$com.releasepic.$data.userword,
+                type: '2'
+              }
+              if (that.$com.releasepic.$data.imgList.length === 0) {
+                pasrms.imgs = ''
+              } else {
+                pasrms.imgs = JSON.stringify(that.$com.releasepic.$data.imgList)
+              }
+              that.setStuHomeworkCache(pasrms)
+            } else {
+              const pasrms = {
+                content: that.$com.releasepic.$data.userword,
+                imgs: that.$com.releasepic.$data.imgList,
+                classname: that.classname,
+                classp: that.classp,
+                namet: that.namet
+              }
+              wx.setStorageSync('pasrmsAll', pasrms)
+              wx.showToast({
+                title: '成功',
+                icon: 'success',
+                duration: 2000,
+                success: function () {
+                  that.picshow = false
+                  setTimeout(function () {
+                    wx.navigateBack({
+                      delta: 1
+                    })
+                  }, 1000)
+                }
+              })
+            }
+          }
+        }
+      })
+    }
+  }
+}
+</script>
+
+<template>
+  <view style="height: 100%">
+    <view class='nav-bar'>
+      <view
+        class="bar-top"
+        style="height:{{statusBarHeight}}px;"
+      ></view>
+      <view
+        class="bar-box"
+        style="height:{{titleBarHeight}}px;"
+      >
+        <view
+          class="back_wrap"
+          wx:if="{{numho}}"
+        >
+          <image
+            class="back"
+            @tap="back"
+            wx:if="{{picshow}}"
+            src="http://img.ishanshan.com/gimg/n/20191017/c3fe587bdbc19f568b55fe532bb9d73f"
+          ></image>
+          <image
+            class="back"
+            wx:else
+            src="http://img.ishanshan.com/gimg/n/20191017/c3fe587bdbc19f568b55fe532bb9d73f"
+          ></image>
+        </view>
+
+        <view
+          class="back_wrap"
+          @tap="backc"
+          wx:else
+        >
+          <image
+            class="back"
+            src="http://img.ishanshan.com/gimg/n/20191017/c3fe587bdbc19f568b55fe532bb9d73f"
+          ></image>
+        </view>
+        <view class='center-cell'>{{currentCount}}</view>
+      </view>
+    </view>
+    <view style="padding-top:{{statusAll}}px" />
+    <view wx:if="{{type.type === 'homerela'}}">
+      <view wx:if="{{type.content}}">
+        <view class="wraplh">
+          <view class="title">作业标题</view>
+          <input
+            value="{{type.content.title}}"
+            maxlength="15"
+            disabled='true'
+          />
+        </view>
+        <view class="line"></view>
+        <view class="wraplh">
+          <view class="title">发送对象</view>
+          <view class="wrapls">
+            <view class="word">{{type.content.courseName}} {{type.content.sendNum}}人</view>
+            <image
+              style="width: 16rpx; height: 26rpx"
+              src="http://img.ishanshan.com/gimg/user/n///277217752547065857.png"
+            >
+          </view>
+        </view>
+      </view>
+      <view wx:else>
+        <view class="wraplh">
+          <view class="title">作业标题</view>
+          <input
+            placeholder-class="place-holder"
+            placeholder="请输入作业标题"
+            value="{{namet}}"
+            bindblur="bindblurs"
+            focus={{autoFocus}}
+            maxlength="15"
+          />
+        </view>
+        <view class="line"></view>
+        <view class="wraplh">
+          <view class="title">发送对象</view>
+          <view
+            class="wrapls"
+            @tap="choseC"
+          >
+            <view
+              class="word"
+              wx:if="{{classname}}"
+            >{{classname}} {{classp}}人</view>
+            <view
+              class="word"
+              wx:else
+            >请选择</view>
+            <image
+              style="width: 16rpx; height: 26rpx"
+              src="http://img.ishanshan.com/gimg/user/n///277217752547065857.png"
+            >
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="botsty" />
+    <releasepic
+      :type.sync="type"
+      :hitclor.sync="hitclor"
+    />
+  </view>
+</template>

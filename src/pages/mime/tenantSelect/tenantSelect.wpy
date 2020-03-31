@@ -1,0 +1,84 @@
+<style lang = "less" src = 'tenantSelect.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import { serviceRequest, loginRequest } from '../../../utils/request';
+
+	export default class TenantSelect extends wepy.page {
+		config = {
+			navigationBarTitleText : '选择商户'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+		  		title : '闪闪云校, 一站式早教管理云平台',
+		  		path : '/pages/initPage/initPage',
+				imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+		  		success : function( res ) {
+					wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+			  	},
+			  	fail : function( res ){
+			  	}
+			}
+	  	}
+
+		data = {
+			list : [],           //租户列表
+		}
+
+		methods = {
+			//选择商户 进入小程序
+			selectOrgIdToSystem( tenantId, orgName, orgId ){
+				let params = {
+					account  : this.$parent._init_data.account,
+					password : this.$parent._init_data.password,
+					code     : this.$parent._init_data.code,
+					tenantId,
+					orgId
+				}
+				loginRequest( `${this.$parent.service.base_url}/crm-server-provider/miniapp/loginPost`, params )
+					.then(( ret ) => {
+						if( !!ret && ret.errorCode == 9000 ){
+							let openid = ret.openid;
+							let token = ret.token;
+							let userId = ret.userId;
+							wx.setStorageSync( 'openid', openid );
+							wx.setStorageSync( 'token', token );
+							wx.setStorageSync( 'userId', userId );
+							wx.reLaunch({
+								url : '../../tabBar/work/work'
+							})
+						}else{
+							wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec', success : function(){
+								wx.navigateBack({
+									delta : 1
+								})
+							}});
+							return;
+						}
+					})
+			}
+		}
+
+		onLoad( params ){
+			this.list = this.$parent._init_data.tenantIdList;        //租户列表
+		}
+	}
+</script>
+
+<template>
+	<view class = 'container' >
+		<view class = 'select_header' >共{{ list.length }}个商户</view>
+		<view class = 'select_content' >
+			<repeat for = '{{ list }}' item = 'item' >
+				<view class = 'select_item' hover-class = 'select_item_hover' @tap = 'selectOrgIdToSystem({{ item.tenantId }},{{ item.orgName }},{{ item.orgId }})' >
+					<view class = 'select_item_item' >
+						<view class = 'select_item_label' >{{ item.orgName }}</view>
+						<view class = 'select_item_hq' hidden = "{{ item.orgKind !== '2' }}" >总部</view>
+						<view class = "{{ item.activeStatus == '0' ? 'select_item_value_not_active' : 'select_item_value_actived' }}" >{{ item.activeStatus == '0' ? '未激活' : '已激活' }}</view>
+					</view>
+				</view>
+			</repeat>
+		</view>
+	</view>
+</template>

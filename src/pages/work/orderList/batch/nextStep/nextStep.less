@@ -1,0 +1,108 @@
+@import '../../../../../common.less';
+.arrow_down{
+	width : 0; height : 0;
+	display : inline-block;
+	vertical-align : middle;
+	margin-left : 10rpx;
+	border : 10rpx solid transparent;
+	border-top-color : @value_color;
+}
+.header{
+  height: @base_height;
+  line-height: @base_height;
+  display: flex;
+  justify-content: center;
+  border-bottom:2rpx solid #eee; 
+}
+.sure_wrapper{
+  width: 100%;
+  height: 88rpx;
+  background: @base_background;
+  border-top: 2rpx solid #eee;
+  position: fixed;
+  left: 0;
+  bottom:0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sure_btn_wrapper{
+  overflow: hidden;
+  zoom: 1;
+  height: 100%;
+}
+.sure_btn{
+  float: right;
+  height: 100%;
+  line-height: 100%;
+  color: #fff;
+  background: @base_color;
+  width: 254rpx;
+  text-align: center;
+  line-height: @base_height;
+  font-size: 34rpx;
+}
+.content{
+  height: calc(~'100% - 180rpx');
+}
+.list_item{
+	position : relative;
+	margin : 15rpx 0 15rpx 0;
+	padding : 30rpx;
+	box-sizing : border-box;
+	border-radius : 6rpx;
+	background : @base_background;
+  font-size : 0;
+  border-bottom:2rpx solid #eeeeee;
+  display: flex;
+  align-items: center;
+}
+.list_item_line_center{
+	display: flex;
+	justify-content: space-between;
+	margin-bottom : 40rpx;
+	align-items: center;
+}
+.list_item_line_pos{
+	position: relative;
+}
+.list_item_course_time{
+	font-size : @mid_font_size;
+	height : @mid_font_size;
+	line-height : @mid_font_size;
+	color : @value_color;
+}
+.list_item_course_time::before{
+	content : '';
+	display : inline-block;
+	margin-right : 7rpx;
+	width : 20rpx;
+	height : 20rpx;
+	background-image : url('https://img.ishanshan.com/gimg/img/952faa0bde604c9ba1c726b2c931a703');
+	background-size : cover;
+	background-repeat : no-repeat;
+}
+.list_item:first-child{
+	margin-top : 0;
+}
+.list_item_course_value{
+	display : inline-block;
+	vertical-align : top;
+	width : 50%;
+	padding-right : 20rpx;
+	height : @mid_font_size;
+	line-height: @mid_font_size;
+	font-size : @mid_font_size;
+	color : @value_color;
+	box-sizing : border-box;
+	text-overflow : ellipsis;
+	overflow : hidden;
+  white-space : nowrap;
+  margin-bottom : 20rpx
+}
+.list_item_course_title{
+	height : @lg_font_size;
+	line-height : @lg_font_size;
+	font-size : @lg_font_size;
+	color : @value_color;
+}

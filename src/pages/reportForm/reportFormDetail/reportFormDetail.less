@@ -1,0 +1,275 @@
+@import '../../../common.less';
+
+.container {
+  background:#EFEFF4;
+  font-family:PingFangSC-Regular,PingFang SC;
+  position: relative;
+  overflow: auto;
+  .mask {
+    width:100%;
+    height:calc(~ "100% - 150rpx");
+    position:fixed;
+    background-color:#EFEFF4;
+    z-index:99;
+    top:150rpx;
+    left:0;
+    .projectList {
+      span{
+        display: block;
+        width: 100%;
+        height: 80rpx;
+        line-height: 80rpx;
+        background: #fff;
+        border-bottom: 1px solid #f3f3f3;
+        text-align: center;
+        font-size: 28rpx;
+        font-weight: 500;
+      }
+      span:last-child{
+        border-bottom: 0;
+      }
+      .cancelProjectList {
+        background: #A9B2BC;
+        width: 600rpx;
+        height: 80rpx;
+        margin:auto;
+        color: #fff;
+        font-size: 34rpx;
+        border-radius: 12rpx;
+        line-height: 80rpx;
+        text-align: center;
+        margin-top: 40rpx;
+      }
+    }
+
+    .selectDate {
+      .selectDataTop {
+        display: block;
+        width: 100%;
+        height: 140rpx;
+        padding: 30rpx 40rpx;
+        background: #fff;
+        .selectDateOne {
+          font-size:24rpx;
+          font-weight:400;
+          color:#999;
+          float: left;
+          width: 120rpx;
+          height: 60rpx;
+          border:1rpx solid rgba(204,204,204,1);
+          border-radius: 40rpx;
+          margin-bottom: 20rpx;
+          margin-left: 10rpx;
+          text-align: center;
+          line-height: 60rpx;
+        }
+        .selectDateOneActive {
+          font-size:24rpx;
+          font-weight:400;
+          color:rgba(255,255,255,1);
+          float: left;
+          width: 120rpx;
+          height: 60rpx;
+          border:1rpx solid #EFEFF4;
+          border-radius: 40rpx;
+          margin-bottom: 20rpx;
+          margin-left: 10rpx;
+          text-align: center;
+          line-height: 60rpx;
+          background:#5D9CEC;
+        }
+      }
+
+      .selectDateBottom {
+        display: block;
+        width: calc( ~ "100% - 80rpx" );
+        height: 176rpx;
+        margin-top: 40rpx;
+        background: #fff;
+        padding: 0 40rpx;
+      }
+
+      .bottonStyle {
+        margin-top: 40rpx;
+        display: block;
+        width: 100%;
+        height: 80rpx;
+        display: flex;
+        justify-content : space-around;
+        .btn_cancel {
+          display: block;
+          background: #A9B2BC;
+          width: 260rpx;
+          height: 80rpx;
+          margin:auto;
+          color: #fff;
+          font-size: 34rpx;
+        }
+        .btn_confirm {
+          display: block;
+          background: #5D9CEC;
+          width: 260rpx;
+          height: 80rpx;
+          margin:auto;
+          color: #fff;
+          font-size: 34rpx;
+        }
+      }
+    }
+  }
+  .detailTop {
+    position : fixed;
+    top : 0rpx;
+    display : flex;
+    align-items : center;
+    justify-content : space-around;
+    width : 100%;
+    height:110rpx;
+    background:rgba(255,255,255,1);
+    box-shadow:1px 1px 10px 1px rgba(93,156,236,0.13);
+    font-size : @mid_font_size;
+    color : @label_color;
+    font-weight:400;
+    // font-size:16px;
+    // color:#666;
+    .detailTopName{
+      position: relative;
+      .triangle {
+        position: absolute;
+        top: 15rpx;
+        right: -15px;
+        width: 0;
+        height: 0;
+        border-left: 12rpx solid transparent;
+        border-right: 12rpx solid transparent;
+        border-top: 16rpx solid #666666;
+      }
+    }
+    .detailTopText {
+      position: relative;
+      .triangle {
+        position: absolute;
+        top: 15rpx;
+        right: -15px;
+        width: 0;
+        height: 0;
+        border-left: 12rpx solid transparent;
+        border-right: 12rpx solid transparent;
+        border-top: 16rpx solid #666666;
+      }
+    }
+  }
+  .detailMain {
+    margin-top: 110rpx;
+    width: 100%;
+    .detailMainTop {
+      margin-top: 150rpx;
+      width: 54%;
+      height: 100rpx;
+      padding-top: 20rpx;
+      padding-left: 46%;
+      border-bottom: 1rpx solid #EFEFF4;
+      background: #fff;
+      .detailMainTopAll {
+        height: 80rpx;
+        .detailMainTopOne {
+          display: inline-block;
+          font-size: 63rpx;
+          font-weight: 500;
+          color: #333;
+        }
+        .detailMainTopTwo {
+          display: inline-block;
+          font-size: 20rpx;
+          font-weight: 400;
+          margin-left: 20rpx;
+          color: #666;
+        }
+      }
+    }
+    .detailMainAll {
+      width: 100%;
+      background: #fff;
+      .detailMainTitle {
+        height: 60rpx;
+        font-size: 28rpx;
+          color: #333;
+        .detailMainTitleOne {
+          width: 40%;
+          height: 60rpx;
+          text-align: center;
+          line-height: 60rpx;
+          float: left;
+        }
+        .detailMainTitleTwo {
+          height: 60rpx;
+          width: 40%;
+          text-align: center;
+          line-height: 60rpx;
+          float: right;
+        }
+      }
+      .repeatDetail {
+        margin: 0 auto;
+        height: 60rpx;
+        font-size: 24rpx;
+        color: #666;
+        .repeatName {
+          width: 40%;
+          height: 60rpx;
+          text-align: center;
+          line-height: 60rpx;
+          float: left;
+        }
+        .repeatNum{
+          height: 60rpx;
+          width: 40%;
+          text-align: center;
+          line-height: 60rpx;
+          float: right;
+        }
+      }
+    }
+  }
+}
+
+
+.picker_time_block{
+	position : absolute;
+	bottom : 0;
+	width : 100%;
+	height : 570rpx;
+	background : #ffffff;
+	z-index : 1002;
+}
+.picker_time_block_hidden{
+	bottom : -570rpx;
+}
+.picker_time_block_header{
+	display : flex;
+	justify-content : space-between;
+	width : 100%;
+	height : 92rpx;
+	line-height : 92rpx;
+	padding : 0 30rpx;
+	font-size : 34rpx;
+	border-bottom : 1rpx solid #F2F2F2;
+	box-sizing : border-box;
+}
+.picker_time_block_header_cancel{
+	color : #888888;
+}
+.picker_time_block_header_confirm{
+	color : #1AAD19;
+}
+.picker_time_box{
+	with : 100%;
+	height : 478rpx;
+	font-size : 26rpx;
+}
+.indicator_class{
+	height : 64rpx;
+}
+.picker_view_column{
+	text-align : center;
+}

@@ -1,0 +1,107 @@
+<style lang = "less" src = 'batch.less' scoped></style>
+<script>
+  import wepy from 'wepy'
+  import batchOfTrainees from './components/batchOfTrainees/batchOfTrainees'
+  import batchOfClasses from './components/batchOfClasses/batchOfClasses'
+  import { serviceRequest } from '../../../../utils/request'
+   export default class batch extends wepy.page {
+    config = {
+      navigationBarTitleText: '批量约课'
+    }
+    onShareAppMessage(res) {
+      return {
+        title: '闪闪云校, 一站式早教管理云平台',
+        path: '/pages/initPage/initPage',
+        imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+        success: function (res) {
+          wx.showToast({ title: '转发成功', icon: 'success', duration: 1000 })
+        },
+        fail: function (res) {
+        }
+      }
+    }
+    onLoad(option){
+      this.cpmId=option.cpmId;
+      this.cpdId=option.cpdId;
+      this.courseId=option.courseId;
+
+      wx.showLoading({title: '加载中'});
+      let num = 0;
+      {
+        let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/crm/stuInfo/clue/appointmentStuQuery`;
+        let params={
+          pageSize: 99999,
+          type: "2"
+        }
+        serviceRequest( url, params ).then((ret) => {
+          num++;
+          if(num == 2){
+            wx.hideLoading();
+          }
+          if( ret && (ret.errorCode == 0) ){
+            ret.results.map(data=>{
+              return data.checked=false;
+            })
+            this.trainees=ret.results;
+            this.$apply();
+          }else{
+            wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+          }
+        })
+      }
+      {
+        let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cls/classGradeSummary`;
+        let params={
+          pageSize: 99999,
+          courseId: option.courseId
+        }
+        serviceRequest( url, params ).then((ret) => {
+          num++;
+          if(num == 2){
+            wx.hideLoading();
+          }
+          if( ret && (ret.errorCode == 0) ){
+            ret.results.map(res=>{
+              return res.more_turn=false
+            })
+            this.classes=ret.results;
+            this.$apply();
+          }else{
+            wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+          }
+        })
+      }
+    }
+    components={
+      batchOfTrainees,
+      batchOfClasses
+    }
+    data={
+      trainees:[], //学员列表
+      classes:[], //班级列表
+      type:0, // 0预约学员 1预约班级
+      cpmId:'',
+      cpdId:'',
+      courseId:''
+    }
+    methods={
+      changeType(index){
+        this.$invoke('batchOfTrainees','init')
+        this.$invoke('batchOfClasses','init')
+        this.type = index ;
+      }
+    }
+  }
+</script>
+<template>
+  <view class="container">
+    <view class="tapItemWrapper">
+      <view class="tapItem{{type == 0 ? ' active' : ''}}" @tap="changeType(0)">预约学员<view class="posLine"></view></view>
+      <view class="tapItem{{type == 1 ? ' active' : ''}}" @tap="changeType(1)">预约班级<view class="posLine"></view></view>
+    </view>
+    <view style="height:calc(100% - 178rpx);">
+      <batchOfTrainees wx:if="{{type == 0}}" :list.sync="trainees" :cpmId.sync="cpmId" :cpdId.sync="cpdId" :courseId.sync="courseId"></batchOfTrainees>
+      <batchOfClasses wx:if="{{type == 1}}" :list.sync="classes" :cpmId.sync="cpmId" :cpdId.sync="cpdId" :courseId.sync="courseId"></batchOfClasses>
+    </view>
+  </view>
+</template>

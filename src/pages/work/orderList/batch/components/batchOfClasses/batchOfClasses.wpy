@@ -1,0 +1,153 @@
+<style lang = "less" src = 'batchOfClasses.less' scoped></style>
+<script>
+import wepy from 'wepy'
+import CommonSearch from '../../../../../../components/commonSearch/commonSearch'
+import BlankDataPage from '../../../../../../components/blankDataPage/blankDataPage';
+import { serviceRequest } from '../../../../../../utils/request';
+export default class batchOfClasses extends wepy.component {
+  components = {
+    CommonSearch,
+    blankDataPage:BlankDataPage
+  }
+  props = {
+    list :{
+      type : Array,
+      default : [],
+      // twoWay:true
+    },
+    cpmId: {
+      type: String,
+      default: ''
+    },
+    cpdId: {
+      type: String,
+      default: ''
+    }
+  }
+  data = {
+    show_list:[],
+    init: {
+      has_super_search: false,
+      placeholder_text_align: 'left'
+    },
+    placeholder: '搜索班级名称',
+    class_name:'',
+    class_id:''
+  }
+  watch={
+    list(newvalue,oldvalue){
+      this.show_list = newvalue;
+      this.$apply();
+    }
+  }
+  methods={
+    init(){
+      this.show_list=this.list;
+      this.class_name='';
+      this.class_id='';
+    },
+    chooseItem(e){
+      this.class_name=e.detail.value.split(',')[1];
+      this.class_id=e.detail.value.split(',')[0];
+    },
+    sureBtn(e){
+      if(!!this.class_id){
+        wx.navigateTo({
+          url : `nextStep/nextStep?courseId=${this.courseId}&cpmId=${this.cpmId}&clsId=${this.class_id}`
+        })
+      }else{
+        wx.showToast({
+          title:'请选择班级',
+          icon:'none'
+        })
+      }
+    },
+    moreTurn(index,clsId){
+      this.show_list[index].more_turn = !this.show_list[index].more_turn;
+      if(clsId && !this.show_list[index].more_info ){
+        wx.showLoading({
+          title: '加载中',
+        })
+        let url = `${ this.$parent.$parent.service.base_url }/ss-crm-provider/wx/cerp/cls/queryClassStuList`;
+        let params = {
+          clsId: clsId,
+          pageIndex: 0,
+          pageSize: 99999
+        }
+        serviceRequest( url, params ).then((ret) => {
+          wx.hideLoading();
+          if( ret && (ret.errorCode == 0) ){
+            this.show_list[index].more_info=ret.results;
+            this.$apply();
+          }else{
+            wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+          }
+        })
+      }
+    }
+  }
+  events={
+    onSearch(value){
+      this.show_list=[];
+      this.list.map(res=>{
+        if(res.clsName.includes(value)){
+          this.show_list.push( res )
+        }
+      })
+    }
+  }
+}
+</script>
+<template>
+  <view style="height:100%;">
+    <CommonSearch
+      :init.sync="init"
+      :placeholder.sync="placeholder"
+    ></CommonSearch>
+    <view class="scroll_wrapper">
+      <scroll-view scroll-y class="scroll_box">
+        <block wx:if="{{show_list.length == 0}}">
+          <blankDataPage title = '暂无数据~' />
+        </block>
+        <block wx:else>
+          <radio-group bindchange="chooseItem">
+            <repeat for="{{show_list}}" key="index" index="index" item="item">
+              <label class="list_box">
+                <view style="display:flex;align-items:center;">
+                  <radio class="circel_radio" value="{{item.clsId+','+item.clsName}}" />
+                  <view class="list_item">
+                    <view class="course_name">{{item.clsName}}</view>
+                    <view class="times">{{item.maxNum - item.stuNum}}/{{item.maxNum}}</view>
+                  </view>
+                </view>
+                <view hidden="{{item.more_turn}}" class="list_item_pulldowm" @tap.stop="moreTurn({{index}},{{item.clsId}})"></view>
+                <view hidden="{{!item.more_turn}}" class="list_item_pullup" @tap.stop="moreTurn({{index}},'')"></view>
+              </label>
+              <view class="list_more_info" hidden="{{!item.more_turn}}">
+                <block wx:if="{{ !item.more_info || item.more_info.length == 0}}">
+                  <blankDataPage title = '暂无数据~' />
+                </block>
+                <block wx:else>
+                  <repeat for="{{item.more_info}}" key="index" index="index" item="item">
+                      <view class="more_info_list">
+                        <text>{{item.name}}</text>
+                        <text>剩余课时 : {{item.periodAvailable}}</text>
+                      </view>
+                  </repeat>
+                </block>
+              </view>
+            </repeat>
+          </radio-group>
+        </block>
+      </scroll-view>
+    </view>
+    <view class="sure_wrapper">
+      <view class="choosed_num">
+        已选择：<text>{{class_name}}</text>
+      </view>
+      <view class="sure_btn_wrapper">
+        <view class="sure_btn" hover-class="btn_save_hover" hover-start-time="20" hover-stay-time="70" @tap="sureBtn">下一步</view>
+      </view>
+    </view>
+  </view>
+</template>

@@ -1,0 +1,227 @@
+<style lang = "less" src = 'appointmentOfTrainees.less' scoped></style>
+<script>
+import wepy from 'wepy'
+import CommonSearch from '../../../../../../components/commonSearch/commonSearch'
+import BlankDataPage from '../../../../../../components/blankDataPage/blankDataPage';
+import { serviceRequest } from '../../../../../../utils/request';
+export default class appointmentOfTrainees extends wepy.component {
+  components = {
+    CommonSearch,
+    blankDataPage:BlankDataPage
+  }
+  props = {
+    list :{
+      type : Array,
+      default : [],
+      twoway:true
+    },
+    cpmId: {
+      type: String,
+      default: ''
+    },
+    cpdId: {
+      type: String,
+      default: ''
+    }
+  }
+  data = {
+    show_list:[],
+    init: {
+      has_super_search: false,
+      placeholder_text_align: 'left'
+    },
+    placeholder: '搜索学员姓名',
+    all_list_id:[]
+  }
+  watch={
+    list(newvalue,oldvalue){
+      this.show_list = newvalue;
+      this.$apply();
+    }
+  }
+  methods={
+    init(){
+      this.show_list=this.list;
+      this.all_list_id=[]
+    },
+    sureFn(){
+      if(this.all_list_id.length == 0){
+        wx.showToast({
+          title:'请选择学员',
+          icon:'none'
+        })
+      }else if(this.all_list_id.length > 30){
+        wx.showToast({
+          title: '所选人数不能超过30人',
+          icon: 'none',
+          duration: 1000
+        })
+      }else{
+        let url = `${ this.$parent.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/stuCheckBirthday`;
+        let params={
+          cpmId: this.cpmId,
+          stuIds: this.all_list_id.join(',')
+        }
+        wx.showLoading({title: '请勿关闭',mask:true});
+        serviceRequest(url, params).then(ret=>{
+          if( ret && (ret.errorCode == 0) ){
+            let c_url = `${ this.$parent.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/stuCreate`;
+            let c_params={
+              cpmId: this.cpmId,
+              cpdIds: this.cpdId,
+              stuId: this.all_list_id.join(',')
+            }
+            serviceRequest(c_url, c_params).then(res=>{
+              if( res && (res.errorCode == 0) ){
+                this.repeatCallBack(res.data)
+              }else if( res && res.errorCode == 110201 ){
+                wx.hideLoading();
+                wx.showModal({ 
+                  content : res.errorMessage,
+                  showCancel : false, 
+                  confirmColor : '#5d9cec',
+                  success(){
+                    wx.navigateBack({
+                      delta: 1
+                    })
+                  }
+                });
+              }else{
+                wx.hideLoading();
+                wx.showModal({ content : res.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+              }
+            })
+          }else{
+            wx.hideLoading();
+            wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+          }
+        })
+      }
+    },
+    listChange(e){
+      if(e.detail.value.length > 30){
+        wx.showToast({
+          title: '所选人数不能超过30人',
+          icon: 'none',
+          duration: 1000
+        })
+      }
+      this.all_list_id=e.detail.value;
+    }
+  }
+  repeatCallBack(id){
+    let url = `${ this.$parent.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/polling`;
+    let params={
+      taskId:id
+    }
+    let newc=setInterval(() => {
+      serviceRequest(url, params).then(ret=>{
+        if( ret && (ret.errorCode == 0) ){
+          if(ret.status== '1'){
+            wx.hideLoading();
+            clearInterval(newc)
+            if(ret.message && Object.keys(ret.message).length > 0){
+              wx.showModal({ content : ret.message[""].join("\r\n") || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+            }else{
+              if(ret.errorMessage == '成功'){
+                wx.showToast({
+                  title: '成功',
+                  icon: 'success',
+                  duration: 500,
+                  mask:true
+                })
+                setTimeout(() => {
+                  wx.navigateBack({
+                    delta: 1
+                  })
+                }, 500);
+              }else{
+                wx.showModal({ 
+                  content : ret.errorMessage, 
+                  showCancel : false, 
+                  confirmColor : '#5d9cec',
+                  success(data){
+                    if(data.confirm){
+                      wx.navigateBack({
+                        delta: 1
+                      })
+                    }
+                  }
+                });
+              }
+            }
+          }
+        }else{
+          wx.hideLoading();
+          clearInterval(newc)
+          wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+        }
+      })
+    }, 1000);
+  }
+  events={
+    onSearch(value){
+      this.show_list=[];
+      this.list.map(res=>{
+        if(res.stuName.includes(value)){
+          this.show_list.push( res )
+        }
+      })
+    }
+  }
+}
+</script>
+<template>
+  <view style="height:100%;">
+    <CommonSearch
+      :init.sync="init"
+      :placeholder.sync="placeholder"
+    ></CommonSearch>
+    <view class="scroll_wrapper">
+      <scroll-view scroll-y class="scroll_box">
+        <block wx:if="{{show_list.length == 0}}">
+          <blankDataPage title = '暂无学员数据~' />
+        </block>
+        <block wx:else>
+          <checkbox-group bindchange="listChange">
+            <repeat for="{{show_list}}" key="index" index="index" item="item">
+              <label class="list_item">
+                <view style="display:flex;align-items:center;">
+                  <checkbox class="circel_box" value="{{item.stuId}}" checked="{{item.checked}}" style="margin-right:70rpx;" />
+                  <view class="avatar_nick">
+                    <view class="avatar" style="background-image:url({{item.sex == '1' ? 'https://img.ishanshan.com/gimg/img/d75fdb312bbaca043a97d24c5453a337' : 'https://img.ishanshan.com/gimg/img/ad8cc625441146bdf8e373dec1cd600f'}})">
+                    </view>
+                    <view class="nick">{{item.stuName}}</view>
+                  </view>
+                </view>
+                <view class="rest_time">
+                  剩余课时：{{item.surplusHour != null ? item.surplusHour: 0 }}
+                </view>
+              </label>
+            </repeat>
+          </checkbox-group>
+        </block>
+      </scroll-view>
+    </view>
+    <view class="sure_wrapper">
+      <view class="all_seleted">
+        <view class="already">已选择 : {{all_list_id.length}}人<text style="color:#ccc;">（最多可选30人）</text></view>
+        <!-- <checkbox-group bindchange="checkboxChange">
+          <label>
+            <checkbox
+              class="circel_box"
+            />全选
+          </label>
+        </checkbox-group> -->
+      </view>
+      <view class="sure_btn_wrapper">
+        <view class="sure_btn" hover-class="btn_save_hover" hover-start-time="20" hover-stay-time="70" @tap="sureFn">确定选择</view>
+        <!-- <view class="choosed_num">
+          <view class="already_choosed">已选择:<text>{{all_list_id.length}}人</text></view>
+          <view class="max_choosed">最多可选{{list.length > 50 ? 50 : list.length}}人</view>
+        </view> -->
+      </view>
+    </view>
+  </view>
+</template>
+

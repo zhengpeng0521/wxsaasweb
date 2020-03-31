@@ -1,0 +1,139 @@
+<style lang = "less" src = 'appointmentOfClasses.less' scoped></style>
+<script>
+  import wepy from 'wepy'
+  import CommonSearch from '../../../../../../components/commonSearch/commonSearch'
+  import BlankDataPage from '../../../../../../components/blankDataPage/blankDataPage';
+  import { serviceRequest} from '../../../../../../utils/request';
+  export default class appointmentOfClasses extends wepy.component {
+    components = {
+      CommonSearch,
+      blankDataPage:BlankDataPage
+    }
+    props = {
+      list :{
+        type : Array,
+        default : []
+      },
+      cpmId: {
+        type: String,
+        default: ''
+      },
+      cpdId: {
+        type: String,
+        default: ''
+      }
+    }
+    data = {
+      show_list:[],
+      init: {
+        has_super_search: false,
+        placeholder_text_align: 'left'
+      },
+      placeholder: '搜索班级名称',
+      class_name:'',
+      class_id:''
+    }
+    watch={
+      list(newvalue,oldvalue){
+        this.show_list = newvalue;
+        this.$apply();
+      }
+    }
+    methods={
+      init(){
+        this.show_list=this.list;
+        this.class_name='';
+        this.class_id='';
+      },
+      chooseItem(e){
+        this.class_name=e.detail.value.split(',')[1];
+        this.class_id=e.detail.value.split(',')[0];
+      },
+      sureBtn(e){
+        if(!!this.class_id){
+          let url = `${ this.$parent.$parent.service.base_url }/ss-crm-provider/wx/cerp/clscpbook/create`;
+          let params={
+            cpmId: this.cpmId,
+            cpdId: this.cpdId,
+            clsId: this.class_id
+          }
+          wx.showLoading({title: '加载中',mask:true});
+          serviceRequest(url, params).then(ret=>{
+            wx.hideLoading();
+            if( ret && (ret.errorCode == 0) ){
+              wx.showToast({
+                  title: '成功',
+                  icon: 'success',
+                  duration: 500
+                })
+              setTimeout(() => {
+                wx.navigateBack({
+                  delta: 1
+                })
+              }, 500);
+            }else if( ret && ret.errorCode == 110201 ){
+              wx.showModal({ content : ret.errorMessage, showCancel : false, confirmColor : '#5d9cec',success(data){
+                wx.navigateBack({
+                  delta: 1
+                })
+              } });
+            }else{
+              wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+            }
+          })
+        }else{
+          wx.showToast({
+            title:'请选择班级',
+            icon:'none'
+          })
+        }
+      }
+    }
+    events={
+      onSearch(value){
+        this.show_list=[];
+        this.list.map(res=>{
+          if(res.clsName.includes(value)){
+            this.show_list.push( res )
+          }
+        })
+      }
+    }
+  }
+</script>
+<template>
+  <view style="height:100%;">
+    <CommonSearch
+      :init.sync="init"
+      :placeholder.sync="placeholder"
+    ></CommonSearch>
+    <view class="scroll_wrapper">
+      <scroll-view scroll-y class="scroll_box">
+        <block wx:if="{{show_list.length == 0}}">
+          <blankDataPage title = '暂无数据~' />
+        </block>
+        <block wx:else>
+          <radio-group bindchange="chooseItem">
+            <repeat for="{{show_list}}" key="index" index="index" item="item">
+              <label class="list_box">
+                <view class="list_item">
+                  <view class="course_name">{{item.clsName}}</view>
+                  <view class="times">{{item.maxNum - item.stuNum}}/{{item.maxNum}}</view>
+                </view>
+                <radio class="radio" value="{{item.clsId+','+item.clsName}}" />
+              </label>
+            </repeat>
+          </radio-group>
+        </block>
+      </scroll-view>
+    </view>
+    <view class="sure_wrapper">
+      <view class="choosed_num">
+        已选择：<text>{{class_name}}</text>
+      </view>
+      <view class="sure_btn_wrapper">
+        <view class="sure_btn" hover-class="btn_save_hover" hover-start-time="20" hover-stay-time="70" @tap="sureBtn">确定选择</view>
+      </view>
+    </view>
+  </view>
+</template>

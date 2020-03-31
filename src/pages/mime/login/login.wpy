@@ -1,0 +1,124 @@
+<style lang = "less" src = 'login.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import { serviceRequest, loginRequest } from '../../../utils/request';
+
+	export default class Login extends wepy.page {
+		config = {
+			navigationBarTitleText : '登录'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+        title : '闪闪云校, 一站式早教管理云平台',
+        path : '/pages/initPage/initPage',
+        imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+        success : function( res ) {
+        wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+        },
+        fail : function( res ){
+        }
+			}
+	  }
+
+		data = {
+			loading : false               //按钮提交loading
+		}
+
+		methods = {
+			//确认登录
+			confirmLogin( e ){
+				let values = e.detail.value;
+				//为空 校验
+				if( !values.account ){
+					wx.showModal({ content : '请输入账号', showCancel : false, confirmColor : '#5d9cec' })
+					return;
+				}
+				if( !values.password ){
+					wx.showModal({ content : '请输入密码', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				this.loading = true;
+				wepy.login().then(( res ) => {
+					let params = {
+						code     : res.code,
+						account  : values.account,
+						password : values.password
+					}
+          // ss-crm-provider/miniapp/auth/login
+					loginRequest( `${ this.$parent.service.base_url }/ss-crm-provider/wx/auth/login`, params ).then(( ret ) => {
+						if( !!ret && ret.errorCode === 0 ){
+							this.loading = false;
+              this.$parent._init_data.userInfo = ret.data               //用户个人信息
+							this.$parent._init_data.account = values.account;         //账户存到全局
+							this.$parent._init_data.password = values.password;       //密码存到全局
+							wx.setStorageSync( 'token', ret.data.jwtToken);      //token
+
+							// 请求session
+							serviceRequest(`${ this.$parent.service.base_url }/ss-crm-provider/wx/auth/session`).then((ret) => {
+								if(ret.errorCode === 0) {
+									this.$parent._init_data.session = ret.data.session;
+									wx.setStorageSync( 'session', ret.data.session);
+									// 跳转页面
+									wx.reLaunch({
+										url : '../../tabBar/work/work'
+									})
+								}
+							})
+						}else{
+							this.loading = false;
+							this.$apply();
+							wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+							return;
+						}
+					})
+				})
+				.catch( ( err ) => console.log( err ) )
+			},
+
+			//申请注册
+			clickToRegister(){
+				wx.navigateTo({
+					url : '../register/register'
+				})
+			}
+		}
+
+		onLoad( params ){
+			wx.hideHomeButton()
+		}
+	}
+</script>
+
+<template>
+	<view class = 'container' >
+		<view class = 'image' >
+			<image style = 'width : 200rpx; height : 200rpx' src = 'https://img.ishanshan.com/gimg/img/0fc43cd4a42f60c405b243f049003309!s300' />
+		</view>
+		<view class = 'title'>闪闪云校</view>
+		<view class = 'tip' >一站式早教管理云平台</view>
+		<form bindsubmit = 'confirmLogin' >
+			<view class = 'user' >
+				<view class = 'user_icon' >
+				</view>
+				<view class = 'user_input' >
+					<input name = 'account' placeholder-class = 'placeholder_input' placeholder = '请输入账号' />
+				</view>
+			</view>
+			<view class = 'password' >
+				<view class = 'password_icon' >
+				</view>
+				<view class = 'password_input' >
+					<input name = 'password' password placeholder-class = 'placeholder_input' placeholder = '请输入密码' />
+				</view>
+			</view>
+			<view class = 'login_btn'>
+				<button disabled = '{{ loading }}' loading = '{{ loading }}' formType = 'submit' class = 'btn_save' hover-class = 'btn_save_hover' >
+					登录
+				</button>
+			</view>
+		</form>
+		<view class = 'register' @tap.stop = 'clickToRegister' >申请试用</view>
+	</view>
+</template>

@@ -1,0 +1,224 @@
+@import '../../../common.less';
+
+.leads_detail_header{
+	position : fixed;
+	top : 0;
+	display : flex;
+	align-items : center;
+//	justify-content : center;
+	width : 100%;
+	height : 220rpx;
+	background : -webkit-gradient(linear, left top, left bottom, color-stop(0%,#5D9CEC), color-stop(100%,#2E70C4) )
+}
+.header_img_block{
+	flex : 1;
+	height : 100%;
+	text-align : center;
+    width:30%;
+
+}
+.header_img{
+	width : 120rpx;
+	height : 120rpx;
+	background-size : cover;
+	background-repeat : no-repeat;
+//	border-radius : 50%;
+	margin : 12rpx auto 14rpx;
+}
+.header_leads_name{
+	font-size : @lg_font_size;
+	height : @lg_font_size;
+	line-height : @lg_font_size;
+	color : @btn_color;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    overflow:hidden;
+    width:100%;
+}
+.header_opera_item{
+	height : 100rpx;
+	text-align : center;
+}
+.header_opera_item_icon{
+	margin : 10rpx auto 14rpx;
+	width : 40rpx;
+	height : 40rpx;
+	background-repeat : no-repeat;
+	background-size : cover;
+}
+.header_opera_item_value{
+	color : @btn_color;
+	hegiht : @base_font_size;
+	line-height : @base_font_size;
+	font-size : @base_font_size;
+}
+
+/*tab 样式*/
+.leads_tab{
+	position : fixed;
+	top : 220rpx;
+	display : flex;
+	align-items : center;
+	justify-content : space-around;
+	height : 94rpx;
+	width : 100%;
+	background : @base_background;
+}
+.leads_tab_item{
+	width : 170rpx;
+	height : 94rpx;
+	line-height : 88rpx;
+	text-align : center;
+	font-size : @mid_font_size;
+	color : @label_color;
+	box-sizing : border-box;
+}
+.leads_tab_item_selected{
+	color : @base_color;
+	border-bottom : 6rpx solid @base_color;
+}
+
+/*可滚动区域*/
+.loading_box{
+	position : absolute;
+	bottom : 0;
+	width : 100%;
+	height : calc( ~'100% - 314rpx');
+	z-index : 999;
+}
+.leads_scroll_view{
+	height : calc( ~'100% - 422rpx');
+	padding : 314rpx 0 108rpx;
+}
+.leads_scroll_content{
+	height : 100%;
+}
+.blank_data_page{
+	position : absolute;
+	width : 100%; height : 100%;
+}
+.leads_scroll_item{
+	position : relative;
+}
+.leads_scroll_item_block{
+	padding-bottom : 0;
+}
+.line{
+	height : 100%;
+	width : 0;
+	border-right : 4rpx dashed @border_color;
+}
+.leads_scroll_item::before{
+	position : absolute;
+	top : 62rpx;
+	left : 22rpx;
+	content : '';
+	display : inline-block;
+	width : 20rpx; height : 20rpx;
+	background : @base_color;
+	margin-right : 10rpx;
+	border-radius : 50%;
+}
+.leads_scroll_item:first-child::before{   //第一个
+	top : 42rpx;
+}
+.leads_scroll_item_block{
+	margin-left : 30rpx;
+	padding-top : 60rpx;
+	border-left : 4rpx dashed #ddd;
+}
+.leads_scroll_item:first-child .leads_scroll_item_block{ //第一个
+	padding-top : 40rpx;
+}
+
+.leads_scroll_item_label{
+	font-size : @mid_font_size;
+	height : @mid_font_size;
+	line-height : @mid_font_size;
+	color : @label_color;
+	padding-left : 20rpx;
+}
+.leads_scroll_list_item{
+	position : relative;
+	width : 600rpx;
+	margin-top : 20rpx;
+	margin-left : 76rpx;
+	padding : 30rpx;
+	background : @base_background;
+	box-sizing : border-box;
+	border-radius : @border_radius;
+
+}
+.leads_scroll_item_time{
+	position : absolute;
+	right : 30rpx;
+	top : 30rpx;
+	font-size : @mid_font_size;
+	height : @mid_font_size;
+	line-height : @mid_font_size;
+	color : @value_color;
+}
+.leads_scroll_item_time::before{
+	content : '';
+	display : inline-block;
+	margin-right : 7rpx;
+	width : 20rpx;
+	height : 20rpx;
+	background-image : url('https://img.ishanshan.com/gimg/img/952faa0bde604c9ba1c726b2c931a703');
+	background-size : cover;
+	background-repeat : no-repeat;
+}
+.list_item_value{
+	height : @base_font_size;
+	line-height : @base_font_size;
+	font-size : @base_font_size;
+	color : @dark_color;
+}
+.list_item_content{
+	margin-top : 34rpx;
+	font-size : @mid_font_size;
+	line-height : 40rpx;
+	color : @label_color;
+	overflow : hidden;
+}
+.list_item_status{
+	margin-top : 30rpx;
+	line-height : @mid_font_size;
+	text-align : right;
+	font-size : @mid_font_size;
+}
+.list_item_operation{
+	display : flex;
+	justify-content : flex-end;
+	margin-top : 20rpx;
+	height : 60rpx;
+	line-height : 60rpx;
+	font-size : @mid_font_size;
+	color : #fff;
+}
+.list_item_operation_cancel, .list_item_operation_confirm{
+	width : 104rpx;
+	text-align : center;
+	border-radius : @border_radius;
+}
+.list_item_operation_cancel{
+	background : @reset_background;
+}
+.list_item_operation_confirm{
+	background : @search_background;
+	margin-left : 20rpx;
+}
+
+.leads_loading{
+	margin-left : 30rpx;
+	border-left : 4rpx dashed #ddd;
+}
+
+//按钮操作区域
+.leads_btn_area{
+	position : fixed;
+	bottom : 10rpx;
+	width : 100%;
+	padding : 0 40rpx;
+	box-sizing : border-box;
+}

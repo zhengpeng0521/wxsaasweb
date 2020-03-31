@@ -1,0 +1,542 @@
+<style lang = "less" src = 'parentNoticeDetail.less'>
+</style>
+
+<script>
+import wepy from 'wepy'
+import moment from 'moment'
+import {
+  serviceRequest
+} from '../../../../utils/request'
+import UploadImg from '../../../../components/uploadImg/uploadImg'
+import BlankDataPage from '../../../../components/blankDataPage/blankDataPage'
+export default class ParentNoticeDetail extends wepy.page {
+    config = {
+      navigationBarTitleText: '家校互评'
+    }
+    data = {
+      orgId: undefined,
+      orgName: undefined,
+      tabKey: 'teacher', // tab页key值
+      currentItem: {}, // 当前选中的课程
+      courseInfo: {}, // 上课内容
+      pageLoading: false, // 页面加载loading
+      blankTitle: '暂无学员预约此课程~',
+      stuList: [], // 学员列表
+      parentList: [], // 家长评价列表
+      imgList: [], // 上传图片
+      maxLength: 9, // 最多上传 图片数
+      controls: false,
+      styeHidden: false,
+      videoI: false,
+      videoUrl: '',
+      wodrdh: false,
+      classEvaluate: false, // 上课内容编辑
+    }
+  components = {
+    uploadImg: UploadImg,
+    blankDataPage: BlankDataPage
+  }
+  // 按钮隐藏
+  buttonHidden() {
+    const btnList = wx.getStorageSync('session').btnPermis.split(',')
+    btnList.filter(item => {
+      if (item === '508000002') {
+        this.classEvaluate = true
+      }
+    })
+  };
+   events = {
+    videDetail(src) {
+      // 视频播放
+      let str = JSON.stringify(src)
+      str = encodeURIComponent(encodeURI(str))
+      wx.navigateTo({
+        url: `../../../Homework/videoDetail/videoDetail?str=${str}`
+      })
+    }
+  }
+    // 初始化进入页面
+    onLoad(query) {
+      this.currentItem = !!query.str && JSON.parse(decodeURIComponent(query.str))
+    //			this.imgList = this.currentItem.picList;
+      wx.setNavigationBarTitle({
+        title: this.currentItem.courseName
+      })
+    }    
+    // 页面 出现时调用
+    onShow() {
+      this.buttonHidden()
+      this.orgId = this.$parent._init_data.orgId
+      this.orgName = this.$parent._init_data.orgName
+      if (this.tabKey === 'teacher') { // 老师评价
+        this.getStuList()
+      } else if (this.tabKey === 'parent') {
+        this.getParentList()
+      } else if (this.tabKey === 'content') {
+      }
+      var that = this
+      wx.getSystemInfo({
+        success: function(res) {
+          that.systemInfo = res
+          if (res.platform == 'devtools') {
+            that.styeHidden = false
+          } else if (res.platform == 'ios') {
+            that.styeHidden = true
+          } else if (res.platform == 'android') {
+            that.styeHidden = false
+          }
+        }
+      })
+    }
+  // 得到学员列表
+  getStuList() {
+    if (!this.pageLoading) {
+      this.pageLoading = true
+      this.blankTitle = '暂无学员预约此课程~'
+      let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/teach/teacherCommonQuery`
+      let params = {
+        cpmId: this.currentItem.cpmId,
+        cpdId: this.currentItem.cpdId
+      }
+      serviceRequest(url, params).then((ret) => {
+        if (!!ret && ret.errorCode === 0) {
+          this.stuList = ret.results
+          this.pageLoading = false
+          this.$apply()
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          })
+        }
+      })
+    }
+  }
+  // 得到家长评价列表
+  getParentList() {
+    if (!this.pageLoading) {
+      this.pageLoading = true
+      this.blankTitle = '暂无家长评价~'
+      let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/teach/parentCommQuery`
+      let params = {
+        cpmId: this.currentItem.cpmId,
+        cpdId: this.currentItem.cpdId,
+        pageIndex: 0,
+        pageSize: 9999
+      }
+      serviceRequest(url, params).then((ret) => {
+        if (!!ret && ret.errorCode == 0) {
+          ret.results.map(res => {
+            if (res.pictures) {
+              res.new_pictures = []
+              let new_pictures = res.pictures.split(',')
+              new_pictures.map(ret => {
+                if (ret.includes('mp4')) {
+                  res.new_pictures.push({
+                    mp4: ret
+                  })
+                }
+                if (ret.includes('jpg') || ret.includes('jpeg') || ret.includes('png') || ret.includes('gif')) {
+                  res.new_pictures.push({
+                    img: ret
+                  })
+                }
+              })
+            }
+          })
+          this.parentList = ret.results
+          this.pageLoading = false
+          this.$apply()
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          })
+        }
+      })
+    }
+  }
+  // 得到上课内容
+  getContent() {
+    let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/teach/cpDetailQuery`
+    let params = {
+      cpmId: this.currentItem.cpmId,
+      cpdId: this.currentItem.cpdId
+    }
+    serviceRequest(url, params).then((ret) => {
+      const newArr = JSON.parse(ret.info.pictures)
+      let arrImg = []
+      for (var i = 0; i < newArr.length; i++) {
+        if (newArr[i].indexOf('mp4') != -1) {
+          arrImg.push({
+            video: newArr[i]
+          })
+        } else {
+          arrImg.push({
+            img: newArr[i]
+          })
+        }
+      }
+      // if(ret.info.pictures == '""'){
+      // 	arrImg = []
+      // }
+      if (!!ret && ret.errorCode === 0) {
+        this.courseInfo = ret.info // 上课内容详情
+        this.imgList = arrImg
+        this.$apply()
+      } else {
+        wx.showModal({
+          content: ret.errorMessage || '网络异常',
+          showCancel: false,
+          confirmColor: '#5d9cec'
+        })
+      }
+    })
+  }
+  methods = {
+    clickVideo(url) {
+      let str = JSON.stringify(url)
+      str = encodeURIComponent(encodeURI(str))
+      wx.navigateTo({
+        url: `../../../Homework/videoDetail/videoDetail?str=${str}`
+      })
+    },
+    // 预览图片
+    previewImage(index, ins) {
+      let newArr = []
+      // let dataset = e.target.dataset;
+      const src = this.parentList[index].new_pictures[ins].img
+      const newWatch = this.parentList[index].new_pictures
+      for (var i = 0; i < newWatch.length; i++) {
+        if (newWatch[i].img) {
+          newArr.push(newWatch[i].img)
+        }
+      }
+      wx.previewImage({
+        urls: newArr,
+        current: src
+      })
+    },
+    // 点击切换到 老师评价
+    clickToTeacherComment() {
+      if (this.tabKey !== 'teacher') {
+        this.tabKey = 'teacher'
+        this.getStuList()
+      }
+    },
+    // 点击切换到 家长评价
+    clickToParentComment() {
+      if (this.tabKey !== 'parent') {
+        this.tabKey = 'parent'
+        this.getParentList()
+      }
+    },
+    // 点击切换到上课内容
+    clickToCourseContent() {
+      if (this.tabKey !== 'content') {
+        this.tabKey = 'content'
+        this.getContent()
+      }
+    },
+    // 点击跳转到学员评价
+    clickToStuComment(item) {
+      let str = JSON.stringify(item)
+      str = encodeURIComponent(encodeURI(str))
+      wx.navigateTo({
+        url: `../parentNoticeItem/parentNoticeItem?str=${str}`
+      })
+    },
+    // 确认更新 上课内容
+    confirmToSaveCourseInfo(e) {
+      let values = e.detail.value
+      if (!values.content) {
+        wx.showModal({
+          content: '请填写课堂内容和课后作业',
+          showCancel: false,
+          confirmColor: '#5d9cec'
+        })
+        return
+      }
+      // if (!values.homework) {
+      //   wx.showModal({
+      //     content: '请填写课后作业',
+      //     showCancel: false,
+      //     confirmColor: '#5d9cec'
+      //   })
+      //   return
+      // }
+      let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/teach/cpContentUpdate`
+      let newsA = []
+      for (var i = 0; i < this.imgList.length; i++) {
+        if (this.imgList[i].img) {
+          newsA.push(this.imgList[i].img)
+        } else {
+          newsA.push(this.imgList[i].video)
+        }
+      }
+      let params = {
+        cpmId: this.currentItem.cpmId,
+        cpdId: this.currentItem.cpdId,
+        content: values.content,
+        homework: values.homework,
+        pictures: newsA, // JSON.stringify(this.imgList),
+        picNum: this.imgList.length
+      }
+      serviceRequest(url, params).then((ret) => {
+        if (!!ret && ret.errorCode == 0) {
+          if (!this.courseInfo.content && !this.courseInfo.homework) {
+            wx.reportAnalytics('course_content_add', {
+              org_name: this.orgName,
+              org_id: this.orgId
+            })
+          }
+          wx.navigateBack({
+            url: '../parentNotice',
+            success: function (res) {
+              setTimeout(() => {
+                wx.showToast({
+                  title: '提交成功',
+                  duration: 1000
+                })
+              }, 1000)
+            }
+          })
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          })
+        }
+      })
+    }
+  }
+}
+</script>
+
+<template>
+  <view class='container'>
+    <!-- <view
+      class="wrap"
+      wx:if="{{videoI}}"
+    >
+      <video
+        id='myvideo'
+        class="idVideo"
+        src="{{videoUrl}}"
+        custom-cache="{{controls}}"
+        autoplay="true"
+      >
+      </video>
+      <image
+        @tap.stop='videoTap'
+        class="imgAs"
+        src="http://img.ishanshan.com/gimg/user/n///261984025923551233.png"
+      />
+    </view> -->
+    <view class='parent_notice_header'>
+      <view class='leads_tab'>
+        <view
+          class="{{ tabKey == 'teacher' ? 'leads_tab_item leads_tab_item_selected' : 'leads_tab_item' }}"
+          @tap='clickToTeacherComment'
+        >老师评价</view>
+        <view
+          class="{{ tabKey == 'parent' ? 'leads_tab_item leads_tab_item_selected' : 'leads_tab_item' }}"
+          @tap='clickToParentComment'
+        >家长评价</view>
+        <view
+          class="{{ tabKey == 'content' ? 'leads_tab_item leads_tab_item_selected' : 'leads_tab_item' }}"
+          @tap='clickToCourseContent'
+        >上课内容</view>
+      </view>
+    </view>
+    <view
+      hidden='{{ !pageLoading }}'
+      class='loading_box'
+    >
+      <view class='loading_content'>
+        <view class='loading_cicle loading1'></view>
+        <view class='loading_cicle loading2'></view>
+        <view class='loading_cicle'></view>
+      </view>
+    </view>
+    <view
+      class='tab_content_block'
+      hidden="{{ tabKey !== 'teacher' }}"
+    >
+      <view
+        hidden="{{ stuList.length !== 0 }}"
+        class="blank_data_page"
+      >
+        <blankDataPage :title.sync='blankTitle' />
+      </view>
+      <view class='stu_list'>
+        <repeat for='{{ stuList }}'>
+          <view
+            class='stu_list_item'
+            @tap='clickToStuComment({{ item }})'
+          >
+            <view class='stu_list_item_name'>{{ item.stuName }}</view>
+            <view class="{{ item.signStatus == '1' ? 'stu_list_item_gray' : 'stu_list_item_name' }}">
+              （{{ item.signStatus == '1' ? '未考勤' : item.signStatus == '2' ? '排队' : item.signStatus == '3' ? '出勤' : item.signStatus == '4' ? '请假' : item.signStatus == '5' ? '旷课' : item.signStatus == '6' ? '取消' : '--' }}）
+            </view>
+            <view class="{{ item.isCommon == '0' ? 'stu_list_item_comment warn_color' : 'stu_list_item_comment confirm_color' }}">
+              {{ item.isCommon == '0' ? '未评价' : item.isCommon == '1' ? '已评价' : '' }}
+            </view>
+          </view>
+        </repeat>
+      </view>
+    </view>
+    <view
+      class='parent_block'
+      hidden="{{ tabKey !== 'parent' }}"
+    >
+      <view
+        hidden="{{ parentList.length !== 0 }}"
+        class="blank_data_page"
+      >
+        <blankDataPage :title.sync='blankTitle' />
+      </view>
+      <view class='parent_list'>
+        <repeat
+          for='{{ parentList }}'
+          index="indexa"
+        >
+          <view class='parent_list_item'>
+            <view class='parent_list_item_name'>{{item.parentName || '家长'}}</view>
+            <view class='parent_list_item_comment'>
+              <view class='parent_list_item_rate'>
+                <view class='parent_list_item_label'>综合评价</view>
+                <view class='parent_list_item_value'>
+                  <view
+                    hidden='{{ item.score < 1 }}'
+                    class='rate_level'
+                  ></view>
+                  <view
+                    hidden='{{ item.score < 2 }}'
+                    class='rate_level'
+                  ></view>
+                  <view
+                    hidden='{{ item.score < 3 }}'
+                    class='rate_level'
+                  ></view>
+                  <view
+                    hidden='{{ item.score < 4 }}'
+                    class='rate_level'
+                  ></view>
+                  <view
+                    hidden='{{ item.score < 5 }}'
+                    class='rate_level'
+                  ></view>
+                </view>
+              </view>
+              <view
+                wx:if="{{item.pictures}}"
+                class="picV"
+              >
+                <repeat
+                  for="{{item.new_pictures}}"
+                  index="indea"
+                >
+                  <view
+                    wx:if={{item.mp4}}
+                    class="conts"
+                  >
+                    <video
+                      controls="{{controls}}"
+                      show-fullscreen-btn='{{controls}}'
+                      show-play-btn="{{controls}}"
+                      show-center-play-btn="{{controls}}"
+                      show-progress="{{controls}}"
+                      enable-progress-gesture="{{controls}}"
+                      object-fit='cover'
+                      src="{{item.mp4}}"
+                      style="width:100%;height:100%;border-radius:10rpx"
+                    ></video>
+                    <image
+                      class="imgA"
+                      src="http://img.ishanshan.com/gimg/n/20190802/3d507eb0663a4904849084bc1b8529db"
+                      @tap='clickVideo({{ item.mp4 }})'
+                    />
+                  </view>
+                  <view
+                    wx:if={{item.img}}
+                    class="conts"
+                    style="background-image:url({{ item.img }});border-radius:10rpx;background-size:cover;background-position:center center"
+                    bindtap='previewImage({{indexa}},{{indea}})'
+                  >
+                    <!-- <image
+                        src="{{item.img}}"
+                        style="width:100%;height:100%;border-radius:10rpx"
+                      ></image> -->
+                  </view>
+                </repeat>
+              </view>
+              <view class='parent_list_item_comment_content'>
+                <view class='parent_list_item_label'>家长评价</view>
+                <view class='parent_list_item_value'>{{ item.comment || '暂无' }}</view>
+              </view>
+            </view>
+          </view>
+        </repeat>
+      </view>
+    </view>
+    <view
+      class='tab_content_block'
+      hidden="{{ tabKey !== 'content' }}"
+    >
+      <form bindsubmit='confirmToSaveCourseInfo'>
+        <view class='course_info'>
+          <view class='course_info_item'>
+            <view class='course_info_item_label'>主教</view>
+            <view class='course_info_item_value'>{{ currentItem.mtNames || '--' }}</view>
+          </view>
+          <view class='course_info_item'>
+            <view class='course_info_item_label'>上课时间</view>
+            <view class='course_info_item_value'>{{ currentItem.startTime + '~' + currentItem.endTime }}</view>
+          </view>
+          <view class='course_info_item'>
+            <view class='course_info_item_label'>教室</view>
+            <view class='course_info_item_value'>{{ currentItem.roomName || '--' }}</view>
+          </view>
+          <!-- nb -->
+          <view class='form_item_textarea'>
+            <view class='form_item_textarea_label'>课堂内容</view>
+            <view class='form_item_textarea_value'>
+              <textarea style="height:180rpx; z-index:-1;" hidden={{wodrdh}} value='{{ courseInfo.content + courseInfo.homework }}' name='content' class="{{ styeHidden == true ? 'styleMar' : 'styleAra' }}" adjust-position maxlength='1500' placeholder-class='textarea_placeholder' placeholder='请填写课堂内容及课后作业, 限1500字' />
+            </view>
+          </view>
+          <view class='form_item_upload_img'>
+            <view class='form_item_upload_img_label' style="width:20%">图片视频</view>
+            <view class='form_item_upload_img_value' style="width:75%">
+              <uploadImg :maxLength.sync='maxLength' :imgList.sync='imgList' :wodrdh.sync='wodrdh' @videDetail= "videDetail"/>
+            </view>
+          </view>
+        </view>
+        <view class='parent_notice_btn'>
+          <button wx:if="{{ classEvaluate }}" formType='submit' class='btn_save' hover-class='btn_save_hover'>
+              提交
+            </button>
+        </view>
+      </form>
+    </view>
+  </view>
+</template>
+
+<!--
+          <view class = 'form_item_textarea' >
+            <view class = 'form_item_textarea_label' >课后作业</view>
+            <view class = 'form_item_textarea_value' >
+              <textarea value = '{{ courseInfo.homework }}' name = 'homework' style = 'width : auto' maxlength = '200' auto-height placeholder-class = 'textarea_placeholder' placeholder = '请输入, 限200字' />
+            </view>
+          </view>-->
+
+<!--
+          <view class = 'form_item_textarea' >
+            <view class = 'form_item_textarea_label' >课堂内容</view>
+            <view class = 'form_item_textarea_value' >
+              <textarea value = '{{ courseInfo.content }}' name = 'content' style = 'width : auto' maxlength = '200' auto-height placeholder-class = 'textarea_placeholder' placeholder = '请输入, 限200字' />
+            </view>
+          </view>-->

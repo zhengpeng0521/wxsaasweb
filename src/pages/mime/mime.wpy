@@ -1,0 +1,201 @@
+<template>
+  <view class='container'>
+    <view class='mime_header'>
+      <view class='mime_header_headImg' style="background-image : url({{ userInfo.headImgurl || 'https://img.ishanshan.com/gimg/img/dc91f5c3897191554744b937f5a2d93d' }})"></view>
+      <view class='mime_header_info'>
+        <view class='mime_header_info_block'>
+          <view class='mime_header_info_name'>{{ userInfo.name }}</view>
+          <repeat for='{{ userInfo.roles }}'>
+            <view class='mime_header_info_role'>{{ item.role_name }}</view>
+          </repeat>
+        </view>
+        <view class='mime_header_info_mobile text_overflow'>{{ userInfo.mobile }}</view>
+        <view class='mime_header_info_org'>{{ userInfo.belongOrgName }}</view>
+      </view>
+    </view>
+    <view class='mime_content'>
+      <view class='mime_content_box'>
+        <view class='mime_content_item' @tap='clickToChangeOrg'>
+          <view class='mime_content_item_icon' style='background-image : url(https://img.ishanshan.com/gimg/img/1f520dab66da7b1d156d64ee84728549)'></view>
+          <view class='mime_content_item_label'>切换校区</view>
+          <view class='mime_content_item_value text_overflow'>{{ userInfo.orgName || '' }}</view>
+        </view>
+        <view class='mime_content_item' @tap='clickToAbout'>
+          <view class='mime_content_item_icon' style='background-image : url(https://img.ishanshan.com/gimg/img/fb27c428a2dac6fb6d06efb9fdc56b59)'></view>
+          <view class='mime_content_item_label'>关于</view>
+          <view class='mime_content_item_value'></view>
+        </view>
+      </view>
+      <view class='mime_logout' @tap='clickToLogout'>
+        退出登录
+      </view>
+    </view>
+  </view>
+</template>
+
+<!--<view class = 'mime_content_item' >
+  <view class = 'mime_content_item_icon' style = 'background-image : url(https://img.ishanshan.com/gimg/img/6a257b2fdaf8b4e58a5a1d82131a5379)'></view>
+  <view class = 'mime_content_item_label' >意见反馈</view>
+  <view class = 'mime_content_item_value' ></view>
+</view>-->
+
+<style lang = "less" src = 'mime.less'>
+
+</style>
+
+<script>
+  import wepy from 'wepy';
+  import {
+    serviceRequest,
+    loginRequest
+  } from '../../utils/request';
+  export default class Mime extends wepy.page {
+    config = {
+      navigationBarTitleText: '我的'
+    }
+    data = {
+      orgIdList: [], //校区orgId列表
+      userInfo: {},
+      orgName: undefined, //校区 名字
+      userId: null,
+    }
+    onShareAppMessage(res) {
+      return {
+        title: '闪闪云校, 一站式早教管理云平台',
+        path: '/pages/initPage/initPage',
+        imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+        success: function(res) {
+          wx.showToast({
+            title: '转发成功',
+            icon: 'success',
+            duration: 1000
+          })
+        },
+        fail: function(res) {}
+      }
+    }
+    methods = {
+      //切换校区
+      clickToChangeOrg() {
+        wx.navigateTo({
+          url: './orgSelect/orgSelect'
+        })
+      },
+      //跳到关于页面
+      clickToAbout() {
+        wx.navigateTo({
+          url: './about/about'
+        })
+      },
+      //退出登录
+      clickToLogout() {
+        let self = this;
+        wx.showModal({
+          content: '确认退出登录?',
+          confirmColor: '#5d9cec',
+          success: function(res) {
+            if (res.confirm) {
+              serviceRequest(`${ self.$parent.service.base_url }/ss-crm-provider/wx/auth/logout`).then((ret) => {
+                if (ret && ret.errorCode == 0) {
+                  wx.clearStorageSync();
+                  wx.reLaunch({
+                    url: './login/login'
+                  })
+                } else {
+                  wx.showModal({
+                    content: ret.errorMessage || '网络异常',
+                    showCancel: false,
+                    confirmColor: '#5d9cec'
+                  });
+                  wx.reLaunch({
+                    url: './login/login'
+                  })
+                }
+              });
+            }
+          }
+        })
+      }
+    }
+    onLoad(params) {
+      // wx.getStorageSync('session')
+      // this.userId = (wx.getStorageSync('session').uid)
+    };
+    //得到 校区列表
+    queryOrgListBySysUidFun() {
+      serviceRequest(`${ this.$parent.service.base_url }/ss-crm-provider/wx/my/org/queryOrgListBySysUid`, {
+          uid: this.userId
+        }).then((ret) => {
+          if (!!ret && ret.errorCode == 0) {
+            this.$parent._init_data.orgIdList = ret.results;
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+          }
+        })
+    };
+    //得到 用户信息
+    getBaseInfoFun() {
+      serviceRequest(`${ this.$parent.service.base_url }/ss-crm-provider/wx/my/getBaseInfo`, {
+        userId: this.userId
+      }).then((ret) => {
+        if (!!ret && ret.errorCode == 0) {
+          wx.hideLoading();
+          this.userInfo = ret.info;
+          this.orgName = ret.info.orgName;
+          this.$parent._init_data.orgName = ret.info.orgName;
+          this.$parent._init_data.orgId = ret.info.orgId;
+          this.$apply();
+        } else {
+          wx.hideLoading();
+        }
+      })
+    };
+    // 进入页面后请求的接口
+    getdataFun() {
+      // 请求session
+      serviceRequest(`${ this.$parent.service.base_url }/ss-crm-provider/wx/auth/session`).then((ret) => {
+        if (ret.errorCode === 0) {
+          this.$parent._init_data.session = ret.data.session;
+          wx.setStorageSync('session', ret.data.session);
+          this.userId = ret.data.session.uid;
+          this.getBaseInfoFun();
+        } else if (ret.errorCode === 990105 || ret.errorCode === 100033) {
+          wx.hideLoading();
+          this.$parent._init_data = {};
+          wx.clearStorageSync();
+          wx.showModal({
+            content: '网络异常，请重新登录',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          wx.reLaunch({
+            url: './login/login'
+          });
+        } else {
+          wx.hideLoading();
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+        }
+      })
+    }
+    onLoad() {
+      this.queryOrgListBySysUidFun()
+    }
+    onShow() {
+      wx.showLoading({
+        title: '加载中...',
+        mask: true
+      });
+      this.getdataFun();
+      //			this.orgName = this.$parent._init_data.orgName;     //更新切换后的校区
+    }
+  }
+</script>

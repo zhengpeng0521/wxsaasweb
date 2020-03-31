@@ -1,0 +1,57 @@
+@import '../../common.less';
+
+/*搜索样式  */
+.search_block{
+    position : fixed;
+    display : flex;
+    align-items : center;
+    justify-content : center;
+    width : 100%;
+    height : @base_height;
+    padding : 16rpx 0 16rpx 16rpx;
+    box-sizing : border-box;
+    background : @light_background;
+    z-index : 1000;
+}
+.search_block.no_super_search{
+    padding : 16rpx 16rpx 16rpx 16rpx !important;
+}
+.search_input{
+    display : flex;
+    align-items : center;
+    justify-content: center;
+    flex : 1;
+    padding : 0 44rpx;
+    background : @base_background;
+    font-size : @base_font_size;
+    border-radius : @lg_border_radius;
+}
+.common_search_placeholder{
+    display: inline-block;
+    height : @base_font_size;
+    line-height : @base_font_size;
+    font-size : @base_font_size;
+    color : @value_color;
+	text-align : center;
+}
+.common_search_placeholder.text_left{
+    text-align: left !important;
+}
+.common_search_placeholder.text_right{
+    text-align: right !important;
+}
+.search_icon{
+	position : relative;
+    width : 80rpx;
+    height : 88rpx;
+}
+.search_icon::before{
+	content : '';
+	position : absolute;
+	margin : auto; top : 0; bottom : 0; left : 0; right : 0;
+	width : 40rpx;
+    height : 36rpx;
+    background-image : url('https://img.ishanshan.com/gimg/img/de3926f45d1ab7727f060f9f4b71d450');
+	background-size : cover;
+	background-repeat : no-repeat;
+}

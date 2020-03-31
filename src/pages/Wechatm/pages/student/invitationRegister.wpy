@@ -1,0 +1,123 @@
+<style lang = 'less' src = 'less/invitationRegister.less' ></style>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class Student extends wepy.page {
+    config = {
+      navigationBarTitleText: '邀请学员'
+    }
+
+    data = {
+      authorization: false,
+      org_id: null,
+      tenant_id: null,
+      user_id: null
+    }
+
+    onLoad() {
+      const that = this
+      wx.getStorage({
+        key: 'authorization',
+        success: function(res) {
+          that.authorization = res.data
+          that.$apply()
+        }
+      })
+    }
+
+    onShow() {
+      this.org_id = wx.getStorageSync('tea_orgId')
+      this.tenant_id = wx.getStorageSync('tea_tenantId')
+      this.user_id = wx.getStorageSync('tea_uid')
+    }
+
+    download() {
+      let that = this
+      wx.getSetting({
+        success(res) {
+          if (!res.authSetting['scope.writePhotosAlbum'] || res.authSetting['scope.writePhotosAlbum'] === false) {
+            wx.authorize({
+              scope: 'scope.writePhotosAlbum',
+              success() {
+                that.saveImgToLocal()
+              },
+              fail() {
+                // 用户拒绝授权后的回调
+                that.authorization = true
+                wx.setStorage({
+                  key: 'authorization',
+                  data: that.authorization
+                })
+                that.$apply()
+              }
+            })
+          } else {
+            // 用户已经授权过了
+            that.saveImgToLocal()
+          }
+        }
+      })
+    }
+
+    saveImgToLocal() {
+      const _this = this
+      wx.downloadFile({
+        url: 'http://img.ishanshan.com/gimg/n/20191207/8061e5941ab8a57f41c2ebf22a7ef0a6',
+        success: function(res) {
+          if (res.statusCode === 200) {
+            wx.saveImageToPhotosAlbum({
+              filePath: res.tempFilePath,
+              success: function(data) {
+                wx.showToast({
+                  title: '保存成功',
+                  icon: 'success',
+                  duration: 2000
+                })
+                console.log(_this.org_id)
+                wx.reportAnalytics('invite_download', {
+                  org_id: _this.org_id,
+                  tenant_id: _this.tenant_id,
+                  user_id: _this.user_id
+                })
+              }
+            })
+          }
+        }
+      })
+    }
+
+    handleSetting(e) {
+      // 对用户的设置进行判断，如果没有授权，即使用户返回到保存页面，显示的也是“去授权”按钮；同意授权之后才显示保存按钮
+      if (!e.detail.authSetting['scope.writePhotosAlbum']) {
+        wx.showModal({
+          title: '警告',
+          content: '若不打开授权，则无法将图片保存在相册中!'
+        })
+        this.authorization = true
+      } else {
+        this.authorization = false
+      }
+      wx.setStorage({
+        key: 'authorization',
+        data: this.authorization
+      })
+      this.$apply()
+    }
+  }
+
+</script>
+
+<template>
+  <view class="invitationRegister">
+    <view class="download_container">
+      <image class="erweima" src="http://img.ishanshan.com/gimg/user/n///276589755834040321.png"></image>
+      <view class="hint">
+        <view>长按识别小程序码</view>
+        <view>查看小朋友的精彩时光</view>
+      </view>
+      <button class="download" @tap="download">下载海报</button>
+      <button wx:if="{{authorization}}" class="download openSetting" open-type="openSetting" @opensetting="handleSetting">下载海报</button>
+    </view>
+  </view>
+</template>

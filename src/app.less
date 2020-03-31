@@ -1,0 +1,447 @@
+@import './common.less';
+page{
+  height: 100%;
+}
+button::after{
+	border : none;
+}
+button::before{
+	border : none;
+}
+view{
+	font-family : "PingFangSC-Regular";
+}
+.container{
+	position : relative;
+	width : 100vw;
+	height : 100vh;
+	background : @light_background;
+	overflow : hidden;
+}
+
+/*高级搜索*/
+.super_search_wrap{
+	position : fixed;
+	top : 0; left : 0;
+	width : 100%;
+	height : 100%;
+	background : rgba( 0, 0, 0, .5 );
+	z-index : 1001;
+
+}
+.super_search_block{
+	position : fixed;
+	top : 0; right : -600rpx;
+	width : 600rpx;
+	height : 100%;
+	background : @base_background;
+	z-index : 1002;
+	transition : right .3s ease-in-out;
+}
+.open_superSearch{
+	right : 0;
+	transition : right .3s ease-in-out;
+}
+.super_search_item_div{
+    height : calc( ~'100% - 110rpx');
+	overflow : auto;
+}
+.super_search_item{
+	margin-left : 30rpx;
+	border-bottom : 1rpx solid @border_color;
+}
+.super_search_item_label{
+	font-size : @mid_font_size;
+	color : @label_color;
+	height : @mid_font_size;
+	line-height : 28rpx;
+	padding-top : 40rpx;
+}
+.super_search_item_content{
+	margin-left : -20rpx;
+	margin-bottom : 40rpx;
+}
+.super_search_label{
+	position : relative;
+	height : 60rpx;
+	width : 120rpx;
+}
+.super_search_item_radio{
+	display : none;
+}
+.super_search_value{
+	display : inline-block;
+	margin : 30rpx 0 0 20rpx;
+	width : 120rpx;
+//	padding : 0 20rpx;
+	height : 60rpx;
+	line-height : 58rpx;
+	text-align : center;
+	font-size : 26rpx;
+	border : 1rpx solid @base_color;
+	border-radius : @border_radius;
+	color : @base_color;
+	box-sizing : border-box;
+	text-overflow : ellipsis;
+	overflow : hidden;
+	white-space : nowrap;
+}
+.super_search_value:first-child{
+	margin-left : 0;
+}
+.super_search_value:nth-child(5n){
+	margin-left : 0;
+}
+.super_search_select{
+	background : @base_color;
+	color : @btn_color;
+}
+.super_search_btn_group{
+	position : absolute;
+	bottom : 10rpx;
+	display : flex;
+	justify-content : center;
+	width : 100%;
+	height : @base_height;
+	padding : 0 20rpx;
+	box-sizing : border-box;
+}
+.super_reset_btn, .super_confirm_btn{
+	width : 270rpx;
+	height : @base_height;
+	line-height : @base_height;
+	border-radius : @lg_border_radius;
+	text-align : center;
+	font-size : @lg_font_size;
+	color : #fff;
+}
+.super_reset_btn{
+	background : @reset_background;
+}
+.super_confirm_btn{
+	margin-left : 20rpx;
+	background : @search_background;
+}
+/*高级搜索*/
+
+/*表单 样式*/
+//表单页面 外层容器
+.form_container{
+	position : relative;
+	width : 100%;
+	height : 100vh;
+	padding-top : 30rpx;
+	background : @light_background;
+	box-sizing : border-box;
+	overflow : hidden;
+}
+.form_box{
+	background : @base_background;
+	padding-left : 30rpx;
+}
+.form_item{
+	display : flex;
+	align-items : center;
+	justify-content : center;
+	width : 100%;
+	height : @base_height;
+	padding-right : 30rpx;
+	box-sizing : border-box;
+	border-bottom : 1rpx solid @border_color;
+	color : @label_color;
+}
+.form_item:last-child{
+	border-bottom : none;
+}
+.form_item_label{
+	position : relative;
+	color : @label_color;
+	font-size : @lg_font_size;
+}
+.form_item_value{
+	position : relative;
+	margin-left : 30rpx;
+	flex : 1;
+	text-align : right;
+	font-size : @lg_font_size;
+	color : @label_color;
+}
+.input_disabled{
+	color : @value_color;
+}
+.placeholder_input{
+	color : @light_color !important;
+	font-size : @lg_font_size;
+}
+.placeholder_input_empty{
+	color : red !important;
+	font-size : @lg_font_size;
+}
+.picker_disabled{
+	color : @value_color;
+}
+.picker_placeholder{
+	position : absolute;
+	top : 0; right : 0;
+	width : 100%;
+	padding-right : 28rpx;
+	box-sizing : border-box;
+	background : #ffffff;
+	color : @light_color;
+}
+.picker_placeholder::before{
+	content : '';
+	display : inline-block;
+	height : 14rpx;
+	width : 14rpx;
+	border-width : 2rpx 2rpx 0 0;
+	border-color : @light_color;
+	border-style : solid;
+	transform : matrix(0.71, 0.71, -0.71, 0.71, 0, 0);
+	position : absolute;
+	top : 50%;
+	margin-top : -6rpx;
+	right : 2rpx;
+}
+.textarea_placeholder{
+	color : @light_color;
+	padding-top:1rpx
+}
+.is_required{
+	position : absolute;
+	right : -20rpx;
+	top : 0;
+	color : red;
+}
+
+.form_item_textarea{
+	display : flex;
+	// align-items : center;
+	width : 100%;
+	min-height : 88rpx;
+	padding : 28rpx 30rpx 28rpx 0;
+	font-size : @lg_font_size;
+	line-height : @lg_font_size;
+	color : @label_color;
+	border-bottom : 1rpx solid @border_color;
+	box-sizing : border-box;
+}
+.form_item_textarea:last-child{
+	border : none;
+}
+.form_item_textarea_label{
+	position : relative;
+	white-space : nowrap;
+}
+.form_item_textarea_value{
+	position : relative;
+	padding-left : 30rpx;
+	flex : 1;
+	box-sizing : border-box;
+}
+.form_item_textarea_value textarea{
+	width: auto; height: 500rpx;z-index:12;
+}
+//搜索 提交按钮样式
+.btnArea{
+	margin-top : 60rpx;
+	padding : 0 40rpx;
+}
+
+//搜索 表单按钮 样式
+.btn_save, .btn_reset, .btn_save_disabled{
+	height : @base_height;
+	line-height : @base_height;
+	font-size : @lg_font_size;
+}
+.btn_save{
+	background : @base_color;
+	color : @btn_color;
+}
+.btn_save_disabled{
+	background : #B5D3F9 !important;
+	color : @btn_color !important;
+}
+.btn_save_hover{
+	background : #5D93D8 !important;
+}
+
+//重置 注册按钮 样式
+.btn_reset{
+	background : @base_background;
+	color : @base_color;
+}
+.btn_reset_hover{
+	background : #98A2AD !important;
+}
+
+//radio 样式
+.radio{
+	margin-left : 40rpx;
+}
+
+/*表单 样式*/
+
+
+
+/*loading 动画效果*/
+.loading_content {
+	position : absolute; margin : auto; left : 0; right : 0; top : 0; bottom : 0;
+	width : 200rpx;
+	height : 40rpx;
+  	text-align : center;
+	display : flex;
+	justify-content : space-between;
+}
+
+.loading_content .loading_cicle{
+  display : inline-block;
+  width : 40rpx;
+  height : 40rpx;
+  background-color: #AED2FF;
+  border-radius : 50%;
+  -webkit-animation: bouncedelay 1.4s infinite ease-in-out;
+  animation: bouncedelay 1.4s infinite ease-in-out;
+  -webkit-animation-fill-mode : both;
+  animation-fill-mode : both;
+}
+
+.loading_content .loading1{
+  -webkit-animation-delay : -0.32s;
+  animation-delay : -0.32s;
+}
+
+.loading_content .loading2{
+  -webkit-animation-delay : -0.16s;
+  animation-delay : -0.16s;
+}
+@-webkit-keyframes bouncedelay {
+  0%, 80%, 100%{ -webkit-transform : scale(0.0) }
+  40% { -webkit-transform : scale(1.0) }
+}
+
+@keyframes bouncedelay {
+  	0%, 80%, 100%{ transform : scale(0.0); -webkit-transform : scale(0.0); }
+	40%{ transform : scale(1.0); -webkit-transform : scale(1.0); }
+}
+/*loading 动画效果*/
+
+/*下拉加载更多*/
+.loading{
+    padding: 30rpx;
+    text-align: center;
+	color : @value_color;
+	font-size : 24rpx;
+	background : @light_background;
+}
+/*下拉加载更多*/
+
+
+//校区 租户选择
+.select_header{
+	height : 78rpx;
+	line-height : 78rpx;
+	padding-left : 30rpx;
+	font-size : @base_font_size;
+	color : @value_color;
+}
+.select_content{
+	height : calc( ~'100% - 78rpx');
+	overflow : auto;
+	background : @base_background;
+}
+.select_item{
+	padding-left : 30rpx;
+}
+.select_item_item{
+	display : flex;
+	align-items : center;
+	height : @base_height;
+	line-height : @base_height;
+	border-bottom : 1rpx solid @border_color;
+	padding-right : 30rpx;
+	box-sizing : border-box;
+	font-size : @lg_font_size;
+	color : #000;
+}
+.select_item_hover{
+	background : #f6f6f8;
+}
+
+.select_item_value_not_active{
+	flex : 1;
+	text-align : right;
+	color : @warn_color;
+}
+.select_item_value_actived{
+	flex : 1;
+	text-align : right;
+	color : @confirm_color
+}
+.select_item:last-child{
+	border-bottom : none;
+}
+
+.cancel_color{
+	color : @cancel_color;
+}
+.confirm_color{
+	color : @confirm_color;
+}
+.process_color{
+	color : @process_color;
+}
+.warn_color{
+	color : @warn_color;
+}
+//复选框 无边框 白底 蓝色图标 样式
+.checkbox .wx-checkbox-input{
+	border:0;
+}
+.checkbox .wx-checkbox-input.wx-checkbox-input-checked{
+	border: none;
+}
+//复选框 圆形边框 蓝底 白色图标 样式
+.circel_box .wx-checkbox-input{
+	border-radius: 50%;
+}
+.circel_box .wx-checkbox-input.wx-checkbox-input-checked{
+	background: @base_color;
+	border-color: @base_color;
+}
+.circel_box .wx-checkbox-input.wx-checkbox-input-checked::before {
+	color: #fff;
+}
+
+.radio .wx-radio-input{
+	border:0;
+}
+.radio .wx-radio-input.wx-radio-input-checked{
+	border: none;
+	background:#fff !important;
+}
+/* 选中后的 对勾样式 （白色对勾 可根据UI需求自己修改） */
+.radio .wx-radio-input.wx-radio-input-checked::before{
+	color:#5D9CEC; /* 对勾颜色 白色 */
+}
+
+.circel_radio.has_border .wx-radio-input{
+	border:2rpx solid #e5e5e5 !important;
+}
+.circel_radio .wx-radio-input{
+	border-radius: 50%;
+}
+.circel_radio .wx-radio-input.wx-radio-input-checked{
+	background: @base_color !important;
+	border-color: @base_color !important;
+}
+.circel_radio .wx-radio-input.wx-radio-input-checked::before{
+	content:'';
+	border-radius: 50%;/* 圆角 */
+  width: 25rpx;/* 选中后对勾大小，不要超过背景的尺寸 */
+  height: 25rpx;/* 选中后对勾大小，不要超过背景的尺寸 */
+  line-height: 25rpx;
+  background: #fff;
+  transform:translate(-50%, -50%) scale(1);
+  -webkit-transform:translate(-50%, -50%) scale(1);
+}

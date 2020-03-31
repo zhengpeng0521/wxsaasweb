@@ -1,0 +1,48 @@
+@import '../../../../common.less';
+
+.add_order_box{
+	overflow : auto;
+	height : 100%;
+}
+.course_title{
+	height : 76rpx;
+	line-height : 76rpx;
+	background : @light_background;
+	font-size : @mid_font_size;
+	color : @value_color;
+	padding-left : 30rpx;
+}
+
+.course_box{
+	padding-left : 30rpx;
+	background : @base_background;
+}
+.course_box_item{
+	display : flex;
+	justify-content : center;
+	height : 88rpx;
+	line-height : 88rpx;
+	padding-right : 30rpx;
+	box-sizing : border-box;
+	font-size : @lg_font_size;
+	border-bottom : 1px solid @border_color;
+}
+.course_box_item:last-child{
+	border-bottom : none;
+}
+.course_box_item_radio{
+	max-width : 280rpx;
+	text-overflow : ellipsis;
+	overflow : hidden;
+	white-space : nowrap;
+	font-size : 32rpx;
+}
+.course_box_item_value{
+	flex : 1;
+	text-align : right;
+	color : @value_color;
+	font-size : @base_font_size;
+	text-overflow : ellipsis;
+	white-space : nowrap;
+	overflow : hidden;
+}

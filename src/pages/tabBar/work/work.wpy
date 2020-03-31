@@ -1,0 +1,343 @@
+<template>
+  <view>
+    <view
+      class="addMine"
+      wx:if="{{showt}}"
+    >
+      <image
+        src="http://img.ishanshan.com/gimg/user/n///282118796183863297.png"
+        style="width:20rpx;height:20rpx;padding:24rpx 24rpx 24rpx 0"
+        @tap="bword"
+      ></image>
+      <view>添加到我的小程序，打开更方便</view>
+    </view>
+    <view style="margin-top:{{showt === true ? '105rpx' : '0'}}"></view>
+    <!-- 常用功能区域 -->
+    <view class="commonArea">
+      <view class="commonAreaTop">
+        <view class="commonTitle">
+          <span></span>
+          <span>常用功能</span>
+        </view>
+      </view>
+      <view class="commonAreaBot">
+        <repeat
+          wx:if="{{workMenuList.length > 0 ? true : false }}"
+          for='{{ workMenuList }}'
+          key="index"
+          index="index"
+          item='item'
+        >
+          <view
+            class="commonClick"
+            @tap='clickToMenu({{ item.wx_key }}, {{ item.menu_key }})'
+          >
+            <button
+              wx:if="{{item.menu_key === 'class_show'}}"
+              open-type="getUserInfo"
+              @tap="accredit({{item.wx_key}})"
+              @getuserinfo="getUserInfo({{item.wx_key}})"
+              class="commonAreaBot_btn"
+            >
+              <image
+                style="width: 50rpx;height: 50rpx;display: block;margin: 0 auto 6rpx;"
+                src='{{ item.wx_icon }}'
+              />
+              <view>{{ item.name }}</view>
+            </button>
+            <view wx:else>
+              <image
+                class="commonImage"
+                src='{{ item.wx_icon }}'
+              />
+              <view class="commonAreaBot_text">
+                {{ item.name }}
+              </view>
+            </view>
+          </view>
+        </repeat>
+        <view
+          wx:if="{{workMenuList.length > 0 ? false : true }}"
+          class="commonNull"
+        >
+          未开放功能权限，请在电脑端设置
+        </view>
+      </view>
+    </view>
+    <!-- 数据展示区域 -->
+    <view
+      class="dataShow"
+      wx:if='{{ browseDatalist.length > 0 || studentDataList.length > 0 }}'
+    >
+      <view class="dataShowTop">
+        <view class="dataShowDetail">
+          <view class="dataShowTitle">
+            <span></span>
+            <span>机构概况</span>
+          </view>
+        </view>
+        <!-- 日周月 -->
+        <ul class="dayMonth">
+          <repeat
+            for='{{ dataWeekmonth }}'
+            key="index"
+            index="index"
+            item='item'
+          >
+            <ol
+              class="{{ index == colorDay ? 'active' : '' }}"
+              @tap="dayFun({{ index }})"
+            >{{ item }}</ol>
+          </repeat>
+        </ul>
+      </view>
+      <!-- 浏览数据 -->
+      <view class="browseData">
+        <repeat
+          for='{{ browseDatalist }}'
+          key="index"
+          index="index"
+          item='item'
+        >
+          <p>
+            <span>{{ item.name }}</span>
+            <span>{{ item.num }}</span>
+          </p>
+        </repeat>
+      </view>
+    </view>
+    <view
+      wx:else
+      class="dataHidden"
+    >
+      <image
+        class="imgStyle"
+        src='{{ backgrounImgUrl }}'
+      />
+      <view class="textStyle">
+        <p>暂无数据</p>
+        <p>可在电脑端首页-机构概况添加数据</p>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy';
+  import Toast from 'wepy-com-toast';
+  import {
+    serviceRequest
+  } from '../../../utils/request.js';
+  export default class Work extends wepy.page {
+    //配置文件 拆解为page.json
+    config = {
+      navigationBarTitleText: '闪闪云校',
+    }
+    data = {
+      showt: false,
+      waitList: [], // 待办事项
+      workMenuList: [], //工作部分菜单
+      backgrounImgUrl: 'http://img.ishanshan.com/gimg/n/20191105/a3c21c7dcd08fa915772e8b944aad49a',
+      childrenList: [],
+      flag: true,
+      dataWeekmonth: [
+        '日', '周', '月'
+      ],
+      colorDay: 0,
+      dateType: '1',
+      browseDatalist: [] // 展示的数据
+    }
+    onShareAppMessage(res) {
+      return {
+        title: '闪闪云校, 一站式早教管理云平台',
+        path: '/pages/initPage/initPage',
+        imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+        success: function(res) {
+          wx.showToast({
+            title: '转发成功',
+            icon: 'success',
+            duration: 1000
+          })
+        },
+        fail: function(res) {}
+      }
+    }
+    getUserInfo(res) {
+      if (res.detail.userInfo) {
+      wx.login({
+        success: function (resa) {
+          let type = {
+            userInfo: res.detail.rawData,
+            code: resa.code
+          }
+          type = JSON.stringify(type)
+          type = encodeURIComponent(encodeURI(type))
+          if (res.currentTarget.dataset.wpygetuserinfoA === 'classShow') {
+            wx.navigateTo({
+              url: `../../Wechatm/pages/classList/classList?type=${type}`
+            })
+          }
+          if (res.currentTarget.dataset.wpygetuserinfoA === 'homework') {
+            wx.navigateTo({
+              url: `../../Homework/homeworkList/homeworkList?type=${type}`
+            })
+          }
+        }
+      })
+    } else { }
+    }
+    // 筛选条件下拉列表
+    getListFun() {
+      serviceRequest(`${this.$parent.service.base_url}/ss-crm-provider/wx/my/dict/getList`, {
+        dictkey: ''
+      }).then((ret) => {
+        if (!!ret && ret.errorCode == 0) {
+          const retList = ret.listItem[0]
+          // 一级来源 下拉列表
+          this.$parent._init_data.firstChannelList = retList.firstChannel;
+          // 重要程度 下拉表
+          this.$parent._init_data.importStatusList = retList.importance;
+          // 跟进状态 下拉列表
+          this.$parent._init_data.followStatusList = retList.studentFollowState;
+          // 跟进方式 下拉列表
+          this.$parent._init_data.followTypeList = retList.studentFollowWay;
+          this.$apply();
+        }
+      });
+    };
+
+    sellerSummaryFun() {
+      //得到 销售 下拉列表
+      serviceRequest(`${this.$parent.service.base_url}/ss-crm-provider/wx/my/common/sellerSummary`).then((ret) => {
+        if (!!ret && ret.errorCode == 0) {
+          this.$parent._init_data.sellerSelectList = ret.results;
+          this.$apply();
+        }
+      });
+    };
+    methods = {
+      bword() {
+        wx.setStorageSync('tip', 'true')
+        this.showt = false
+      },
+      // 点击图标跳转
+      clickToMenu(wx_key, menu_key) {
+        if (menu_key != 'class_show') {
+          wx.navigateTo({
+            url: `../../work/${wx_key}/${wx_key}?key=${menu_key}`
+          })
+        }
+      },
+      // 点击日周月
+      dayFun(val) {
+        this.colorDay = val
+        if (val === 0) {
+          this.dateType = '1'
+        } else if (val === 1) {
+          this.dateType = '2'
+        } else if (val === 2) {
+          this.dateType = '3'
+        };
+        wx.showLoading({
+          title: '加载中...'
+        });
+        this.queryOrgDataFun()
+      }
+    };
+    //登录 获取菜单
+    queryUserMenuFun() {
+      let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/queryUserMenu`;
+      serviceRequest(url).then((ret) => {
+        if (!!ret && ret.errorCode == 0) {
+          let workMenu = !!ret.results && ret.results[0] || []; //得到工作部分 菜单
+          let reportMenu = !!ret.results && ret.results[1] || []; //得到报表部分 菜单
+          this.workMenuList = workMenu.children; //得到工作 下属菜单
+          this.$parent._init_data.reportMenu = reportMenu;
+          this.$apply();
+        } else {
+          wx.hideLoading();
+        }
+      })
+    };
+
+    // 待办事项
+    todoFun() {
+      serviceRequest(`${this.$parent.service.base_url}/ss-crm-provider/wx/home/todo`).then((ret) => {
+        if (!!ret && ret.errorCode == 0) {
+          wx.hideLoading();
+          this.waitList = ret.results
+          this.$apply();
+        } else {
+          wx.hideLoading();
+        }
+      })
+    };
+
+    // 机构概况
+    queryOrgDataFun() {
+      serviceRequest(`${this.$parent.service.base_url}/ss-crm-provider/wx/homeOrgData/queryOrgData`, {
+        dateType: this.dateType,
+        menuIds: wx.getStorageSync('session').permis
+      }).then((ret) => {
+        if (!!ret && ret.errorCode == 0) {
+          wx.hideLoading();
+          this.browseDatalist = ret.result;
+          this.$apply();
+        } else {
+          wx.hideLoading();
+        }
+      })
+    };
+    getDataFun() {
+      // 请求session
+      serviceRequest(`${ this.$parent.service.base_url }/ss-crm-provider/wx/auth/session`).then((ret) => {
+        if (ret.errorCode === 0) {
+          this.$parent._init_data.session = ret.data.session;
+          wx.setStorageSync('session', ret.data.session);
+          // 请求菜单
+          this.queryUserMenuFun()
+          // 请求机构概况
+          this.queryOrgDataFun()
+        } else if (ret.errorCode === 990105 || ret.errorCode === 100033) {
+          wx.hideLoading();
+          this.$parent._init_data = {};
+          wx.clearStorageSync();
+          wx.reLaunch({
+            url: '../../mime/login/login'
+          });
+          wx.showModal({
+            content: '网络异常，请重新登录',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+        } else {
+          wx.hideLoading();
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+        }
+      })
+    }
+    onLoad(params) {
+      this.getListFun();
+      this.sellerSummaryFun()
+      let hometop = wx.getStorageSync('tip')
+      if (hometop) {
+        this.showt = false
+      } else {
+        this.showt = true
+      }
+    }
+    onShow() {
+      wx.hideLoading()
+      wx.showLoading({
+        title: '加载中...'
+      });
+      this.getDataFun();
+    };
+  }
+</script>
+
+<style lang = 'less' src = 'work.less'></style>

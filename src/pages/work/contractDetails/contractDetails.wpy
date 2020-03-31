@@ -1,0 +1,290 @@
+<template>
+  <view>
+    <view class='contract_detail_con'>
+      <scroll-view scroll-y class = 'list_wrap_open' >
+                <view class='contract_detail'>
+                    <view class='contract_detail_item'>
+                        <text class = 'contract_detail_item_left'>所属校区：</text>
+                        <text class = 'contract_detail_item_right'>{{ contractDetail.orgName || '--' }}</text>
+                    </view>
+                    <view class='contract_detail_item'>
+                        <text class = 'contract_detail_item_left'>合同编号：</text>
+                        <text class = 'contract_detail_item_right'>{{ contractDetail.orderNum || '--' }}</text>
+                    </view>
+                    <view class='contract_detail_item'>
+                        <text class = 'contract_detail_item_left'>学员姓名：</text>
+                        <repeat for='{{stuInfo}}' item='item'>
+                            <text class = 'contract_detail_item_right' style = 'padding-left : 20rpx;'>{{ item.stuName || '--' }}   </text>
+                        </repeat>
+
+                    </view>
+                    <view class='contract_detail_item'>
+                        <text class = 'contract_detail_item_left'>会员卡号：</text>
+                        <text class = 'contract_detail_item_right'>{{ contractDetail.stuCardId || '--' }}</text>
+                    </view>
+                    <view class='contract_detail_item'>
+                        <text class = 'contract_detail_item_left'>签约家长：</text>
+                        <text class = 'contract_detail_item_right'>{{ contractDetail.parentName || '--' }}</text>
+                    </view>
+                    <view class='contract_detail_item'>
+                        <text class = 'contract_detail_item_left'>合同日期：</text>
+                        <text class = 'contract_detail_item_right'>{{ contractDetail.startTime +'至' +contractDetail.endTime|| '--' }}</text>
+                    </view>
+                    <view class='contract_detail_item'>
+                        <text class = 'contract_detail_item_left'>签订日期：</text>
+                        <text class = 'contract_detail_item_right'>{{ contractDetail.signTime || '--' }}</text>
+                    </view>
+                    <view class='contract_detail_item'>
+                        <text class = 'contract_detail_item_left'>合同类型：</text>
+                        <text class = 'contract_detail_item_right'>{{
+                                contractDetail.type && contractDetail.type == '1' ? '充值'
+                              : contractDetail.type && contractDetail.type == '2' ? '课时套餐'
+                              : contractDetail.type && contractDetail.type == '3' ? '托班套餐'
+                              : ''
+                            }}</text>
+                    </view>
+                    <view class='contract_detail_item'>
+                        <text class = 'contract_detail_item_left'>签约类型：</text>
+                        <text class = 'contract_detail_item_right'>{{
+                                contractDetail.signType && contractDetail.signType == '0' ? '新签约'
+                              : contractDetail.signType && contractDetail.signType == '1' ? '续约'
+                              : contractDetail.signType && contractDetail.signType == '2' ? '转介绍'
+                              : ''
+                            }}</text>
+                    </view>
+                </view>
+                <view class='contract_detail'>
+                    <view class='contract_detail_goods_title'>商品</view>
+                    <view hidden = "{{ classpkg.length == 0 }}">
+                        <repeat for = '{{ classpkg }}' item = 'item' >
+                            <view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>课时包：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.name}}</text>
+                                </view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>标准价格：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.price}}</text>
+                                </view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>数量：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.amount}}</text>
+                                </view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>合计价格：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.totalPrice}}</text>
+                                </view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>优惠：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.preferentialPrice}}</text>
+                                </view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>实收价格：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.money}}</text>
+                                </view>
+                            </view>
+                        </repeat>
+                    </view>
+                    <view hidden = "{{ teachTools.length == 0 }}">
+                        <repeat for = '{{ teachTools }}' item = 'item' >
+                            <view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>物资：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.name}}</text>
+                                </view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>标准价格：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.price}}</text>
+                                </view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>数量：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.amount}}</text>
+                                </view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>合计价格：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.totalPrice}}</text>
+                                </view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>优惠：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.preferentialPrice}}</text>
+                                </view>
+                                <view class='contract_detail_item'>
+                                    <text class = 'contract_detail_item_left'>实收价格：</text>
+                                    <text class = 'contract_detail_item_right'>{{item.money}}</text>
+                                </view>
+                            </view>
+                        </repeat>
+                    </view>
+                    <view class='contract_detail_item'>
+                        <view class='contract_detail_money'>
+                            <text class = 'contract_detail_item_left'>总合计：</text>
+                            <text class = 'contract_detail_item_right'>{{ !!contractDetail && contractDetail.totalOriMoney}}元</text>
+                        </view>
+                        <view class='contract_detail_real_money'>
+                            <text>总实收：</text>
+                            <text style='color:#5D9CEC'>{{ !!contractDetail && contractDetail.totalMoney}}元</text>
+                        </view>
+                    </view>
+                </view>
+                <view class='contract_detail'>
+                    <view class='contract_detail_goods_title'>关联销售</view>
+                    <repeat for='{{saleUser}}' item = 'item'>
+                        <view class='contract_detail_item'>
+                            <text class = 'contract_detail_item_left'>{{item.userName}}：</text>
+                            <text class = 'contract_detail_item_right'>{{item.rate}}%</text>
+                        </view>
+                    </repeat>
+                </view>
+                <view class='contract_detail' style='padding-bottom:180rpx;border-bottom:none;'>
+                    <view class='contract_detail_goods_title'>其他</view>
+
+                    <!-- 课时套餐显示 -->
+                    <view wx:if="{{ contractDetail && contractDetail.type === '2' }}">
+                      <view class='contract_detail_item'>
+                          <text class = 'contract_detail_item_left'>赠课类型：</text>
+                          <text class = 'contract_detail_item_right'>{{contractDetail && contractDetail.extType =='1' ?'通用课时':contractDetail && contractDetail.extType =='2' ?'专用课时':''}}</text>
+                      </view>
+                      <view class='contract_detail_item'>
+                          <text class = 'contract_detail_item_left'>赠送课时：</text>
+                          <text class = 'contract_detail_item_right'>{{contractDetail && contractDetail.extPeriod}}</text>
+                      </view>
+                      <view class='contract_detail_item'>
+                          <text class = 'contract_detail_item_left'>赠课成本：</text>
+                          <text class = 'contract_detail_item_right'>{{contractDetail && contractDetail.extPeriodMoney}}</text>
+                      </view>
+                      <view class='contract_detail_item'>
+                          <text class = 'contract_detail_item_left'>赠课原因：</text>
+                          <text class = 'contract_detail_item_right'>{{contractDetail && contractDetail.extPeriodReason}}</text>
+                      </view>
+                    </view>
+
+                    <!-- 托班套餐显示 -->
+                    <view wx:if="{{ contractDetail && contractDetail.type === '3' }}">
+                      <view class='contract_detail_item'>
+                          <text class = 'contract_detail_item_left'>赠课天数：</text>
+                          <text class = 'contract_detail_item_right'>{{contractDetail && contractDetail.extNursery || '0'}}</text>
+                      </view>
+                      <view class='contract_detail_item'>
+                          <text class = 'contract_detail_item_left'>赠课原因：</text>
+                          <text class = 'contract_detail_item_right'>{{contractDetail && contractDetail.extNurseryReason}}</text>
+                      </view>
+                    </view>
+
+                    <view class='contract_detail_item_img'>
+                        <view class = 'contract_detail_item_left_img'>合同附件：</view>
+                        <view class = 'contract_detail_item_right_img'>
+                            <repeat for='{{imgList}}' item='item'>
+                                <image src='{{item}}' @tap = 'openBigImg({{item}})'/>
+                            </repeat>
+
+                        </view>
+                    </view>
+                    <view class='contract_detail_item'>
+                        <text class = 'contract_detail_item_left'>备注：</text>
+                        <text class = 'contract_detail_item_right'>{{contractDetail && contractDetail.remark || '--'}}</text>
+                    </view>
+                </view>
+      </scroll-view>
+            <view class = 'contract_check_bottom' hidden = "{{ orderState != '1' }}">
+                <button class = 'contract_check' @tap = 'contractCheckEvent()' hidden="{{auditContract!='406000006'}}">审核</button>
+            </view>
+    </view>
+  </view>
+</template>
+
+<style lang = "less" src = 'contractDetails.less' ></style>
+<script>
+  import wepy from 'wepy';
+    import moment from 'moment';
+    import { serviceRequest } from '../../../utils/request';
+    import CommonSearch from '../../../components/commonSearch/commonSearch';           //常用搜索
+    import BlankDataPage from '../../../components/blankDataPage/blankDataPage';        //空数据页面
+
+    export default class LeadsList extends wepy.page {
+        config = {
+            navigationBarTitleText : '合同详情',
+        }
+    onShareAppMessage( res ) {
+          return {
+            title : '闪闪云校, 一站式早教管理云平台',
+            path : '/pages/initPage/initPage',
+            imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+            success : function( res ) {
+               wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+            },
+            fail : function( res ){}
+          }
+      }
+    data = {
+        auditContract       : '',      //审核合同
+            contractDetail : {},        //合同详情
+      stuInfo        : [],        //学员姓名
+      classpkg       : [],        //课时包
+      teachTools     : [],        //教具
+      saleUser       : [],        //销售人员
+      imgList        : [],
+      routerType     : undefined,
+      orderState     : ''  // 是否审核成功
+        }
+
+    //初始化进入页面
+      onLoad( params ) {
+        this.buttonHidden()
+        let id = params.contractId;
+        this.routerType = params.routerType;
+        this.orderState = params.orderState // 是否审核成功
+        let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/order/getOrderDetailById`;
+        serviceRequest( url, { id } ).then(( ret ) => {
+          if( ret && ret.errorCode === 0 ){
+            this.contractDetail = ret.data;
+            this.stuInfo = (ret.data).stuInfo;
+            this.classpkg = (ret.data).classpkg;
+            this.teachTools = (ret.data).teachTools;
+            this.saleUser = (ret.data).saleUser;
+            if(ret.data && (ret.data).imgUrl){
+              let imgList = (ret.data).imgUrl.split(',');
+              for(let i in imgList){
+                if(imgList[i].length>0){
+                  this.imgList.push(imgList[i])
+                }
+              }
+            }
+          this.$apply();
+          }else{
+            wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+          }
+        });
+      };
+    buttonHidden() {
+      const btnList = wx.getStorageSync('session').btnPermis.split(',');
+      btnList.filter(item => {
+        if(item === '406000006'){
+          this.auditContract = '406000006'        
+        }
+      })
+    };
+
+    methods = {
+      //点击审核
+      contractCheckEvent(){
+        let detail = this.contractDetail;
+        wx.navigateTo({
+          url : `./contractCheck/contractCheck?orderId=${detail.id}&routerType=${this.routerType}`
+        })
+      },
+
+      //图片放大
+      openBigImg(src){
+        var src = src;
+        var imgList = this.imgList;
+        wx.previewImage({
+          current : src,
+          urls : imgList,
+          success : function(){}
+        })
+      },
+
+        }
+
+    }
+</script>

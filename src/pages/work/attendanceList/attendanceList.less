@@ -1,0 +1,119 @@
+@import '../../../common.less';
+
+.attend_header{
+	display : flex;
+	justify-content : space-between;
+	align-items : center;
+	position : fixed;
+	top : 0;
+	width : calc( ~'100% - 40rpx' );
+	height : 88rpx;
+	padding : 0 20rpx;
+	font-size : @base_font_size;
+	color : @value_color;
+	background : @base_background;
+	z-index : 999;
+}
+.attend_header_center{
+	text-align : center;
+	font-size : @lg_font_size;
+	color : @base_color;
+}
+.arrow_down{
+	width : 0; height : 0;
+	display : inline-block;
+	vertical-align : middle;
+	margin-left : 10rpx;
+	border : 10rpx solid transparent;
+	border-top-color : @base_color;
+}
+.attend_header_label{
+	height : @mid_font_size;
+	line-height : @mid_font_size;
+	color : #666666;
+}
+.attend_header_label_disabled{
+	color : @light_color;
+	height : @mid_font_size;
+	line-height : @mid_font_size;
+}
+.attend_header_left_ba, .attend_header_right_ba{
+	display : inline-block;
+	width : 16rpx;
+	height : 26rpx;
+	background-repeat : no-repeat;
+	background-size : cover;
+}
+.attend_header_left_ba{
+	margin-right : 16rpx;
+	background-image : url('https://img.ishanshan.com/gimg/img/7b0055301eafdfffb73be31cb9db88b7');
+}
+.attend_header_right_ba{
+	margin-left : 16rpx;
+	background-image : url('https://img.ishanshan.com/gimg/img/7df347afadc9a46ca7763f05548e0781');
+}
+.attend_header_right_ba_disabled{
+	margin-left : 16rpx;
+	background-image : url('https://img.ishanshan.com/gimg/img/f3a2960f5803429dde0746306b2818ae');
+}
+.attend_header_left_value{
+	display : inline-block;
+	vertical-align : top;
+}
+
+/*考勤数据 区域*/
+.attend_content{
+	padding-top : 118rpx;
+	height : calc( ~'100% - 118rpx' );
+//	box-sizing : border-box;
+}
+.list_block{
+	height : 100%;
+}
+.attend_content_item{
+	position : relative;
+	margin : 30rpx 30rpx 0;
+	padding : 30rpx;
+	background : @base_background;
+	border-top : 10rpx solid @base_color;
+	border-radius : 6rpx;
+	font-size : 0;
+	color : @label_color;
+}
+.attend_content_item_hover{
+	background : #f6f6f8;
+}
+.attend_content_item:first-child{
+	margin-top : 0;
+}
+.attend_content_item_title{
+	margin-bottom : 30rpx;
+	font-size : @lg_font_size;
+	height : @lg_font_size;
+	line-height : @lg_font_size;
+}
+.attend_content_item_value{
+	display : inline-block;
+	vertical-align : top;
+	width : 50%;
+	color : @value_color;
+	font-size : @base_font_size;
+	height : 30rpx;
+	line-height : @base_font_size;
+	text-overflow :ellipsis;
+	overflow : hidden;
+	white-space : nowrap;
+}
+.attend_content_item_time{
+	position : absolute;
+	right : 30rpx;
+	top : 30rpx;
+	font-size : @base_font_size;
+	color : @dark_color;
+}
+/*考勤数据 区域*/
+
+.blank_data_page{
+	position : absolute;
+	width : 100%; height : calc( ~'100% - 118rpx' );
+}

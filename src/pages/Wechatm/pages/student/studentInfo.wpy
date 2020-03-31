@@ -1,0 +1,62 @@
+<style lang = 'less' src = 'less/studentInfo.less' ></style>
+
+<script>
+  import wepy from 'wepy'
+  import { serviceRequestJson } from '../../../../utils/request'
+  export default class StudentInfo extends wepy.page {
+    config = {
+      navigationBarTitleText: '基本信息'
+    }
+    data = {
+      stuId: '',
+      list: [],
+      girlImg: 'http://img.ishanshan.com/gimg/n/20191109/64389a4d212312f53b47d7ce9e5605d6',
+      boyImg: 'http://img.ishanshan.com/gimg/n/20191109/f71f2580eec47cb4025d4f2e528004b1',
+      unknownImg: 'http://img.ishanshan.com/gimg/n/20191109/81ae1a9b145c16f68ed168f1ab945539'
+    }
+    onLoad(query) {
+      this.stuId = query.id
+      this.stuParentInfo()
+    }
+    async stuParentInfo() {
+      const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/stuParentInfo`
+      const res = await serviceRequestJson(url, {stuId: this.stuId})
+      const {errorCode, parentList} = res
+      if (errorCode === 0) {
+        this.list = parentList
+        this.$apply()
+      }
+    }
+    methods = {
+      toPage(index) {
+        wx.navigateTo({
+          url: `./authority?id=${this.list[index].customerId}`
+        })
+      }
+    }
+  }
+</script>
+
+<template>
+  <view class="studentInfo">
+    <view class="student_container">
+      <view class="info">
+        <text>家长信息</text>
+      </view>
+      <view class="item" wx:for="{{list}}" wx:key="{{item.parentId}}" @tap="toPage('{{index}}')">
+        <view class="img">
+          <image class="head_portrait" wx:if="{{item.avatar !== null}}" src="{{item.avatar}}"/>
+          <image class="head_portrait" wx:if="{{item.avatar === null && item.sex === '1'}}" src="{{boyImg}}"/>
+          <image class="head_portrait" wx:if="{{item.avatar === null && item.sex === '2'}}" src="{{girlImg}}"/>
+          <image class="head_portrait" wx:if="{{item.avatar === null && item.sex === null || item.sex === ''}}" src="{{unknownImg}}"/>
+        </view>
+        <view class="name_phone">
+          <view class="name">{{item.name}}</view>
+          <view class="phone">{{item.mobile}}</view>
+        </view>
+        <view wx:if="{{item.regist === '1'}}" class="register complete">已注册</view>
+        <view wx:if="{{item.regist === '0'}}" class="register">未注册</view>
+      </view>
+    </view>
+  </view>
+</template>

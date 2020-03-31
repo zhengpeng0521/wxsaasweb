@@ -1,0 +1,208 @@
+<style lang = "less" src = 'parentNoticeItem.less'>
+</style>
+
+<script>
+import wepy from 'wepy'
+import moment from 'moment'
+import {
+  serviceRequest
+} from '../../../../utils/request'
+import UploadImg from '../../../../components/uploadImg/uploadImg'
+import Rate from '../../../../components/rate/rate'
+export default class ParentNoticeItem extends wepy.page {
+  config = {
+    navigationBarTitleText: '老师评价'
+  }
+  data = {
+    orgId: undefined,
+    orgName: undefined,
+    maxLength: 3, // 最大图片上传数
+    currentItem: {}, // 当前学员评价内容
+    imgList: [], // 图片列表
+    rateLevel: 0, // 学员综合评价
+    wodrdh: false,
+    systemInfo: {},
+    styeHidden: false,
+    teacherEvaluate: false // 老师评价按钮
+  }
+  onShareAppMessage(res) {
+    return {
+      title: '闪闪云校, 一站式早教管理云平台',
+      path: '/pages/initPage/initPage',
+      imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+      success: function (res) {
+        wx.showToast({
+          title: '转发成功',
+          icon: 'success',
+          duration: 1000
+        })
+      },
+      fail: function (res) { }
+    }
+  }
+  components = {
+    uploadImg: UploadImg,
+    rate: Rate
+  }
+  // 初始化进入页面
+  onLoad(query) {
+    this.orgId = this.$parent._init_data.orgId
+    this.orgName = this.$parent._init_data.orgName
+    let str = decodeURI(decodeURIComponent(query.str))
+    this.currentItem = (!!query.str && JSON.parse(str)) || {}
+    const newArr = (!!this.currentItem.pictures && JSON.parse(this.currentItem.pictures)) || []
+    let NEWa = []
+    for (var i = 0; i < newArr.length; i++) {
+      if (newArr[i] == null) {
+        NEWa.push({
+          img: ''
+        })
+      } else {
+        if (newArr[i].indexOf('mp4') != -1) {
+          NEWa.push({
+            video: newArr[i]
+          })
+        } else {
+          NEWa.push({
+            img: newArr[i]
+          })
+        }
+      }
+    }
+    this.imgList = NEWa
+    this.rateLevel = this.currentItem.score || 0
+  }
+  // 按钮隐藏
+  buttonHidden() {
+    const btnList = wx.getStorageSync('session').btnPermis.split(',')
+    btnList.filter(item => {
+      if (item === '508000001') {
+        this.teacherEvaluate = true
+      }
+    })
+  };
+  events = {
+    videDetail(src) {
+      // 视频播放
+      let str = JSON.stringify(src)
+      str = encodeURIComponent(encodeURI(str))
+      wx.navigateTo({
+        url: `../../../Homework/videoDetail/videoDetail?str=${str}`
+      })
+    }
+  }
+  // 页面 出现时调用
+  onShow() {
+    var that = this
+    this.buttonHidden()
+    wx.getSystemInfo({
+      success: function (res) {
+        that.systemInfo = res
+        if (res.platform == 'devtools') {
+          that.styeHidden = false
+        } else if (res.platform == 'ios') {
+          that.styeHidden = true
+        } else if (res.platform == 'android') {
+          that.styeHidden = false
+        }
+      }
+    })
+  }
+  methods = {
+    // 确认评价
+    confirmToComment(e) {
+      let values = e.detail.value
+      let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/teach/tcrCommUpdate`
+      let newArr = []
+      for (var i = 0; i < this.imgList.length; i++) {
+        if (this.imgList[i].img) {
+          newArr.push(this.imgList[i].img)
+        } else {
+          newArr.push(this.imgList[i].video)
+        }
+      }
+      let params = {
+        comment: values.comment,
+        pictures: newArr || undefined,
+        picNum: this.imgList.length || 0,
+        score: this.rateLevel,
+        cpdId: this.currentItem.cpdId,
+        cpmId: this.currentItem.cpmId,
+        cpStuId: this.currentItem.cpStuId,
+        type: this.currentItem.type
+      }
+      serviceRequest(url, params).then((ret) => {
+        if (!!ret && ret.errorCode == 0) {
+          // 数据埋点 若老师评价则数据增加
+          if (this.currentItem.isCommon === '0') {
+            wx.reportAnalytics('teacter_comment', {
+              org_name: this.orgName,
+              org_id: this.orgId
+            })
+          }
+          wx.navigateBack({
+            url: '../parentNoticeDetail/parentNoticeDetail',
+            success: function (res) {
+              setTimeout(() => {
+                wx.showToast({
+                  title: '提交成功',
+                  duration: 1000
+                })
+              }, 1000)
+            }
+          })
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          })
+        }
+      })
+    }
+  }
+}
+</script>
+
+<template>
+  <view class='container'>
+    <form bindsubmit='confirmToComment'>
+      <view class='comment_item'>
+        <view class='comment_item_name'>{{ currentItem.stuName || '' }}</view>
+        <view class='comment_item_content'>
+          <view class='form_item_rate'>
+            <view class='form_item_rate_label'>综合评价</view>
+            <view class='form_item_rate_value'>
+              <rate :rateLevel.sync='rateLevel' />
+            </view>
+          </view>
+          <view class='form_item_textarea'>
+            <view class='form_item_textarea_label'>老师评价</view>
+            <view class='form_item_textarea_value'>
+              <textarea
+                style="height:300rpx; z-index:-1;"
+                hidden={{wodrdh}}
+                value='{{ currentItem.comment }}'
+                name='comment'
+                class="{{ styeHidden == true ? 'styleMar' : 'styleAra' }}"
+                adjust-position
+                maxlength='1500'
+                placeholder-class='textarea_placeholder'
+                placeholder='请输入评价内容, 限1500字'
+              />
+              </view>
+          </view>
+        </view>
+        <view class='form_item_upload_img'>
+          <view class='form_item_upload_img_label' style="width:20%;padding-left: 30rpx">图片视频</view>
+          <view class='form_item_upload_img_value' style="width:75%">
+            <uploadImg :maxLength.sync='maxLength' :imgList.sync='imgList' :wodrdh.sync='wodrdh' @videDetail = "videDetail"/>
+          </view>
+        </view>
+      </view>
+      <view class='item_btn'>
+        <button wx:if="{{ teacherEvaluate }}" formType='submit' class='btn_save' hover-class='btn_save_hover'>提交</button>
+      </view>
+    </form>
+  </view>
+</template>

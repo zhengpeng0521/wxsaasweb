@@ -1,0 +1,123 @@
+<style lang = "less" src = 'batchOfTrainees.less' scoped></style>
+<script>
+import wepy from 'wepy'
+import CommonSearch from '../../../../../../components/commonSearch/commonSearch'
+import BlankDataPage from '../../../../../../components/blankDataPage/blankDataPage';
+import { serviceRequest } from '../../../../../../utils/request';
+export default class batchOfTrainees extends wepy.component {
+  components = {
+    CommonSearch,
+    blankDataPage:BlankDataPage
+  }
+  props = {
+    list :{
+      type : Array,
+      default : [],
+      twoway:true
+    },
+    cpmId: {
+      type: String,
+      default: ''
+    },
+    cpdId: {
+      type: String,
+      default: ''
+    },
+    courseId: {
+      type: String,
+      default: ''
+    }
+  }
+  data = {
+    show_list:[],
+    init: {
+      has_super_search: false,
+      placeholder_text_align: 'left'
+    },
+    placeholder: '搜索学员姓名',
+    all_list_id:'',
+    person_name:''
+  }
+  watch={
+    list(newvalue,oldvalue){
+      this.show_list = newvalue;
+      this.$apply();
+    }
+  }
+  methods={
+    init(){
+      this.show_list=this.list;
+      this.all_list_id='';
+      this.person_name='';
+    },
+    listChange(e){
+      this.all_list_id=e.detail.value.split(',')[0];
+      this.person_name=e.detail.value.split(',')[1];
+    },
+    nextBtn(){
+      if(!!this.all_list_id){
+        wx.navigateTo({
+          url : `nextStep/nextStep?courseId=${this.courseId}&cpmId=${this.cpmId}&stuId=${this.all_list_id}`
+        })
+      }else{
+        wx.showToast({
+          title:'请选择学员',
+          icon:'none'
+        })
+      }
+    }
+  }
+  events={
+    onSearch(value){
+      this.show_list=[];
+      this.list.map(res=>{
+        if(res.stuName.includes(value)){
+          this.show_list.push( res )
+        }
+      })
+    }
+  }
+}
+</script>
+<template>
+  <view style="height:100%;">
+    <CommonSearch
+      :init.sync="init"
+      :placeholder.sync="placeholder"
+    ></CommonSearch>
+    <view class="scroll_wrapper">
+      <scroll-view scroll-y class="scroll_box">
+        <block wx:if="{{show_list.length == 0}}">
+          <blankDataPage title = '暂无学员数据~' />
+        </block>
+        <block wx:else>
+          <radio-group bindchange="listChange">
+            <repeat for="{{show_list}}" key="index" index="index" item="item">
+              <label class="list_item">
+                <view style="display:flex;align-items:center;">
+                  <radio class="circel_radio" value="{{item.stuId + ',' +item.stuName}}" checked="{{item.checked}}" style="margin-right:70rpx;" />
+                  <view class="avatar_nick">
+                    <view class="avatar" style="background-image:url({{item.sex == '1' ? 'https://img.ishanshan.com/gimg/img/d75fdb312bbaca043a97d24c5453a337' : 'https://img.ishanshan.com/gimg/img/ad8cc625441146bdf8e373dec1cd600f'}})">
+                    </view>
+                    <view class="nick">{{item.stuName}}</view>
+                  </view>
+                </view>
+                <view class="rest_time">
+                  剩余课时：{{item.surplusHour != null ?item.surplusHour:''}}
+                </view>
+              </label>
+            </repeat>
+          </radio-group>
+        </block>
+      </scroll-view>
+    </view>
+    <view class="sure_wrapper">
+      <view class="choosed_num">
+        已选择：<text>{{person_name}}</text>
+      </view>
+      <view class="sure_btn_wrapper">
+        <view class="sure_btn" hover-class="btn_save_hover" hover-start-time="20" hover-stay-time="70" @tap="nextBtn">下一步</view>
+      </view>
+    </view>
+  </view>
+</template>

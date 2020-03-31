@@ -1,0 +1,677 @@
+<style lang = "less" src = 'leadsDetail.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import moment from 'moment';
+	import BlankDataPage from '../../../components/blankDataPage/blankDataPage';
+	import { serviceRequest } from '../../../utils/request';
+
+	export default class LeadsDetail extends wepy.page {
+		config = {
+			navigationBarTitleText : '名单详情'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+		  		title : '闪闪云校, 一站式早教管理云平台',
+		  		path : '/pages/initPage/initPage',
+				imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+		  		success : function( res ) {
+					wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+			  	},
+			  	fail : function( res ){
+			  	}
+			}
+	  	}
+
+		components = {
+			blankDataPage      : BlankDataPage,
+		}
+
+		data = {
+			closeVisit			: '',//关闭到访
+			determineVisiting   : '',//关闭到访
+			backRecycling		:'',//返回回收站
+			sendBack			:'',//退回公海
+			fishFor				:'',//捞取名单
+			addVisit      		:'',			//权限到访操作
+			addRecord			:'',          //权限增加操作
+			addBooking			:'',			//权限增加试听
+			routeType         : undefined,                   //全部我的名单 或 公海池
+			leadsItem         : {},                          //当前 名单信息
+			leadsId           : undefined,                   //名单id
+			imgUrl            : undefined,                   //名单头像
+			pageLoading       : false,                       //切换tab展示loading
+			tabKey            : '',           //tab页key值
+
+			followList        : [],           //跟进记录 数据
+			followListByDate  : [],           //封装后的 跟进记录
+			followResultCount : 0,
+			followPageIndex   : 0,
+			followLoadingEnd  : false,         //加载全部数据 后loading状态消失
+
+			visitList         : [],
+			visitListByDate   : [],
+			visitResultCount  : 0,
+			visitPageIndex    : 0,
+			visitLoadingEnd   : false,
+
+			orderList         : [],
+			orderListByDate   : [],
+			orderResultCount  : 0,
+			orderPageIndex    : 0,
+			orderLoadingEnd   : false,
+
+			blankTitle        : '暂无跟进记录~',
+             //查询我的名单是否显示操作按钮
+            wetherBackPool    : true,
+            wetherDelete      : true,
+		}
+
+		onLoad( params ){
+			this.buttonHidden()
+			this.leadsItem = JSON.parse( params.str );
+			this.leadsId = this.leadsItem.id;         //名单id
+			this.tabKey = params.tabKey;
+			this.routeType = params.routeType;        //值为sea则 从公海池进入
+
+      //查询我的名单是否显示操作按钮
+      let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/my/button/showList` ;
+			serviceRequest( url ).then(( ret ) => {
+				if( !!ret && ret.errorCode === 0 ){
+          let lists = ret.dataInfo;
+          for(let i in lists){
+	          if(lists[i].key == 'backPool'){
+              this.wetherBackPool = lists[i].show;
+	          }else if(lists[i].key == 'delete'){
+              this.wetherDelete = lists[i].show;
+	          }
+          }
+					this.$apply();
+				}else{
+					wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+			})
+		}
+
+		onShow(){
+			if( this.tabKey == 'follow' ){
+				this.followList = [];
+				this.getFollowList();
+			}else if( this.tabKey == 'visit' ){
+				this.visitList = [];
+				this.getVisitList();
+			}else if( this.tabKey == 'order' ){
+				this.orderList = [];
+				this.getOrderList();
+			}
+		};
+		buttonHidden() {
+      const btnList = wx.getStorageSync('session').btnPermis.split(',');
+      btnList.filter(item => {
+        if(item === '403000001'){
+          this.addRecord = '403000001'        
+		}
+		if(item === '404000001'){
+          this.addVisit = '404000001'        
+		}
+		if(item === '405000001'){
+          this.addBooking = '405000001'        
+		}
+		if(item === '402000009'){
+          this.backRecycling = '402000009'        
+		}
+		if(item === '402000010'){
+          this.sendBack = '402000010 '       
+		}
+		if(item === '402000012'){
+          this.fishFor = '402000012'       
+		}
+		if(item === '404000004'){
+          this.closeVisit = '404000004'       
+		}
+		if(item === '404000002'){
+          this.determineVisiting = '404000002'       
+        }
+      })
+    };
+
+		methods = {
+			//顶部操作栏
+			leadDetailOperation( key ){
+				let self = this;
+				if( key === 'baseInfo' ){
+					wx.navigateTo({
+						url : `./leadsDetailInfo/leadsDetailInfo?leadsId=${ this.leadsId }&routeType=${ this.routeType }`
+					})
+				}else if( key === 'backToGarbage' ){
+					//放入回收站
+					wx.showModal({
+						content: '确定要将名单放入回收站？',
+						confirmColor : '#5d9cec',
+						success: function( res ){
+							if ( res.confirm ){
+								let url = `${ self.$parent.service.base_url }/ss-crm-provider/wx/clue/recycle`;
+								const recycleParams = {
+									stuIds : self.leadsId,
+									stauts : '3'
+								};
+								serviceRequest( url, recycleParams).then(( ret ) => {
+									if( ret && ret.errorCode == 0 ){
+										wx.showToast({ title : '放入回收站成功', icon : 'success', duration : 1000 });
+										setTimeout(()=>{
+											wx.navigateBack({
+												url : `../leadsList/leadsList`
+											})
+										}, 1000);
+										wx.setStorageSync( 'currentLeadId', self.leadsId );
+									}else{
+										wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+									}
+								});
+							}
+						}
+					})
+				}else if( key === 'backToPublic' ){
+					//退回公海
+					wx.showModal({
+						content: '确定要将名单退回公海？',
+						confirmColor : '#5d9cec',
+						success: function( res ){
+							if ( res.confirm ){
+								const backPoolParams = {
+									stuIds: self.leadsId,
+									stauts: '1'    //1退回公海  3放入回收站 status=1和gain=1。还原
+								};
+								let url = `${ self.$parent.service.base_url }/ss-crm-provider/wx/clue/backPool`;
+								serviceRequest( url,  backPoolParams ).then(( ret ) => {
+									if( ret && ret.errorCode == 0 ){
+										wx.showToast({ title : '退回公海成功', icon : 'success', duration : 1000 });
+										setTimeout(()=>{
+											wx.navigateBack({
+												url : `../leadsList/leadsList`
+											})
+										}, 1000 );
+										wx.setStorageSync( 'currentLeadId', self.leadsId );
+										wx.setStorageSync( 'backToPublic', true );
+									}else{
+										wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+									}
+								});
+							}
+						}
+					})
+				}else if( key === 'getLeads' ){
+					//捞取 名单
+					wx.showModal({
+						content: '确定要捞取此名单？',
+						confirmColor : '#5d9cec',
+						success: function( res ){
+							if ( res.confirm ){
+
+								wx.showLoading({
+									title: '加载中',
+									mask: true
+								})
+
+								let url = `${ self.$parent.service.base_url }/ss-crm-provider/wx/clue/UpdateClue`;
+								serviceRequest( url, { stuIds : self.leadsId } ).then(( ret ) => {
+									if( ret && ret.errorCode == 0 ){
+										wx.hideLoading()
+										wx.showToast({ title : '捞取成功', icon : 'success', duration : 1000 });
+										setTimeout(()=>{
+											wx.navigateBack({
+												url : `../leadsList/leadsList`
+											})
+										}, 1000 );
+										wx.setStorageSync( 'currentLeadId', self.leadsId );
+									}else{
+										wx.hideLoading()
+										wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+									}
+								});
+							}
+						}
+					})
+				}
+			},
+
+			//点击切换到 跟进记录tab
+			getFollowListTab(){
+				if( this.tabKey !== 'follow' ){
+					this.tabKey = 'follow';
+					this.blankTitle = '暂无跟进记录~';
+					this.getFollowList()
+				}
+			},
+
+			//点击切换到 到访记录tab
+			getVisitListTab(){
+				if( this.tabKey !== 'visit' ){
+					this.tabKey = 'visit';
+					this.blankTitle = '暂无到访计划~';
+					this.getVisitList()
+				}
+			},
+
+			//点击切换到 预约试听tab
+			getOrderListTab(){
+				if( this.tabKey !== 'order' ){
+					this.tabKey = 'order';
+					this.blankTitle = '暂无预约试听~';
+					this.getOrderList()
+				}
+			},
+
+			//得到更多 跟进记录
+			getMoreFollowList(){
+				if( !this.pageLoading ){    //避免下拉 触发多次请求
+					this.pageLoading = true;               //设置为加载状态
+					let { leadsId, followResultCount, followList, followPageIndex } = this;
+					let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/commRecord/queryFollowRecordList`;
+					let params = {
+						pageIndex : ++followPageIndex,
+						pageSize  : 10,
+						id        : leadsId
+					}
+					if( followList.length >= followResultCount ){
+						this.followLoadingEnd = true;
+						this.pageLoading = false;
+					}else{
+						serviceRequest( url, params ).then(( ret ) => {
+							if( ret && ret.errorCode == 0 ){
+								let newList = [ ...followList, ...ret.results ];
+								let followListArr = this.listByDate( newList );
+								let followKeys = !!followListArr && Object.keys( followListArr ) || [];
+								this.followListByDate = this.listByDateObj( followListArr, followKeys );
+								this.followList = newList;
+								this.pageLoading = false;
+								this.followPageIndex = followPageIndex;
+								this.$apply();
+							}else{
+								wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+							}
+						});
+					}
+				}
+			},
+
+			//得到更多 到访记录
+			getMoreVisitList(){
+				if( !this.pageLoading ){    //避免下拉 触发多次请求
+					this.pageLoading = true;               //设置为加载状态
+					let { leadsId, visitResultCount, visitList, visitPageIndex } = this;
+					let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/queryVisitRecordList`;
+					let params = {
+						pageIndex : ++visitPageIndex,
+						pageSize  : 10,
+						id        : leadsId
+					}
+					if( visitList.length >= visitResultCount ){
+						this.visitLoadingEnd = true;
+						this.pageLoading = false;
+					}else{
+						serviceRequest( url, params ).then(( ret ) => {
+							if( ret && ret.errorCode == 0 ){
+								let newList = [ ...visitList, ...ret.results ];
+								let visitListArr = this.listByDate( newList );
+								let visitKeys = !!visitListArr && Object.keys( visitListArr ) || [];
+								this.visitListByDate = this.listByDateObj( visitListArr, visitKeys );
+								this.visitList = newList;
+								this.visitPageIndex = visitPageIndex;
+								this.pageLoading = false;
+								this.$apply();
+							}else{
+								wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+							}
+						});
+					}
+				}
+			},
+
+			//得到更多 预约试听
+			getMoreOrderList(){
+				if( !this.pageLoading ){    //避免下拉 触发多次请求
+					this.pageLoading = true;               //设置为加载状态
+					let { leadsId, orderResultCount, orderList, orderPageIndex } = this;
+					let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/querySubscribeAuditionList`;
+					let params = {
+						pageIndex : ++orderPageIndex,
+						pageSize  : 10,
+						id        : leadsId
+					}
+					if( orderList.length >= orderResultCount ){
+						this.orderLoadingEnd = true;
+						this.pageLoading = false;
+					}else{
+						serviceRequest( url, params ).then(( ret ) => {
+							if( ret && ret.errorCode == 0 ){
+								let newList = [ ...orderList, ...ret.results ];
+								let orderListArr = this.listByDate( newList );
+								let orderKeys = !!orderListArr && Object.keys( orderListArr ) || [];
+								this.orderListByDate = this.listByDateObj( orderListArr, orderKeys );
+								this.orderList = newList;
+								this.orderPageIndex = orderPageIndex;
+								this.pageLoading = false;
+								this.$apply();
+							}else{
+								wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+							}
+						});
+					}
+				}
+			},
+
+			//点击确认到访
+			clickToChangeVisit( id, status ){
+				let self = this;
+				wx.showModal({
+					content: status == '1' ? '确认已到访?' : '确认关闭到访计划?',
+					confirmColor : '#5d9cec',
+					success : function( res ){
+						if ( res.confirm ){
+							let url = `${ self.$parent.service.base_url }/ss-crm-provider/wx/clue/updateVisitStatus`;
+							serviceRequest( url, { status, id } ).then(( ret ) => {
+								if( ret && ret.errorCode == 0 ){
+									wx.showToast({ title : status == '1' ? '已确认到访' : '已关闭到访', icon : 'success', duration : 1000 });
+									self.visitList = [];
+									self.$apply();
+									self.getVisitList();
+								}else{
+									self.$apply();
+									wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+								}
+							});
+						}
+					}
+				})
+			},
+
+			//新增 记录
+			clickToAddRecord(){
+				let leadsItem = JSON.stringify( this.leadsItem );
+				// 新增跟进纪录
+				if( this.tabKey == 'follow' ){
+					wx.navigateTo({
+						url : `./addFollowRecord/addFollowRecord?str=${ leadsItem }`
+					})
+				}
+				// 新增到访记录
+				if( this.tabKey == 'visit' ){
+					wx.navigateTo({
+						url : `./addVisitRecord/addVisitRecord?str=${ leadsItem }`
+					})
+				}
+				// 新增预约试听
+				if( this.tabKey == 'order' ){
+					wx.navigateTo({
+						url : `./addOrderRecord/addOrderRecord?str=${ leadsItem }`
+					})
+				}
+			}
+		}
+
+		//得到跟进记录
+		getFollowList(){
+			if( this.followList.length == 0 ){  //当tab页没数据时才 初始化加载
+				this.pageLoading = true;
+				this.followLoadingEnd = false;
+				let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/commRecord/queryFollowRecordList`;
+				let params = {
+					pageIndex : 0,
+					pageSize  : 10,
+					id        : this.leadsId        //名单id
+				}
+				serviceRequest( url, params ).then(( ret ) => {
+					if( ret && ret.errorCode == 0 ){
+						let followListArr = this.listByDate( ret.results );      //key value 封装数据
+						let followKeys = !!followListArr && Object.keys( followListArr ) || [];
+						this.followListByDate = this.listByDateObj( followListArr, followKeys );
+						this.followList = ret.results;
+						this.followResultCount = ret.data.resultCount;
+						this.pageLoading = false;
+						this.$apply();
+					}else{
+						wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					}
+				});
+			}
+		}
+
+		//得到到访记录
+		getVisitList(){
+			if( this.visitList.length == 0 ){
+				this.pageLoading = true;
+				this.visitLoadingEnd = false;
+				let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/queryVisitRecordList`;
+				let params = {
+					pageIndex : 0,
+					pageSize  : 10,
+					id        : this.leadsId        //名单id
+				}
+				serviceRequest( url, params ).then(( ret ) => {
+					if( ret && ret.errorCode == 0 ){
+						let visitListArr = this.listByDate( ret.results );      //key value 封装数据
+						let visitKeys = !!visitListArr && Object.keys( visitListArr ) || [];
+						this.visitListByDate = this.listByDateObj( visitListArr, visitKeys );
+						this.visitList = ret.results;
+						this.visitResultCount = ret.data.resultCount;
+						this.visitPageIndex = 0;
+						this.pageLoading = false;
+						this.$apply();
+					}else{
+						wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					}
+				});
+			}
+		}
+
+		//得到预约试听 列表
+		getOrderList(){
+			if( this.orderList.length == 0 ){
+				this.pageLoading = true;
+				this.orderLoadingEnd = false;
+				let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/querySubscribeAuditionList`;
+				let params = {
+					pageIndex : 0,
+					pageSize  : 10,
+					id        : this.leadsId        //名单id
+				}
+				serviceRequest( url, params ).then(( ret ) => {
+					if( ret && ret.errorCode == 0 ){
+						let orderListArr = this.listByDate( ret.results );      //key value 封装数据
+						let orderKeys = !!orderListArr && Object.keys( orderListArr ) || [];
+						this.orderListByDate = this.listByDateObj( orderListArr, orderKeys );
+						this.orderList = ret.results;
+						this.orderResultCount = ret.data.resultCount;
+						this.pageLoading = false;
+						this.$apply();
+					}else{
+						wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					}
+				});
+			}
+		}
+
+		//整理数据
+		listByDateObj( list, keys ){
+			if( keys && keys.length > 0 ){
+				let obj = [];
+				for( let index in list ){
+					obj.push({
+						list : list[index],
+						date : index
+					})
+				}
+				return obj;
+			}
+		}
+		//根据日期整理 记录数据
+		listByDate( list ){
+			if( !!list && list.length > 0 ){
+				let arr = [];
+				let keys = [];
+				list.map( ( item, index ) => {
+					let label = item[ 'date' ];
+					if( keys.indexOf( label ) == -1 ){
+						keys.push( label );
+						arr[label] = [ item ];
+					}else{
+						arr[ label ] = [ ...arr[ label ], item ]
+					}
+				})
+				return arr;
+			}else{
+				return [];
+			}
+		}
+	}
+</script>
+
+<template>
+	<view class = 'container' >
+		<view class = 'leads_detail_header' >
+			<view class = 'header_img_block' >
+				<view class = 'header_img'
+					style = "background-image : url({{ leadsItem.sex == '1' ? 'https://img.ishanshan.com/gimg/img/f6b465ed2243957e23b7190d8258729f' : leadsItem.sex == '2' ? 'https://img.ishanshan.com/gimg/img/d47307f23c5cd3fb53035fc2e7ec0cc2' : 'https://img.ishanshan.com/gimg/img/9a3b0814104d9e4a2b807845f26a120f' }})" ></view>
+				<view class = 'header_leads_name' >{{ leadsItem.name }}</view>
+			</view>
+			<view class = 'header_opera_item' style = 'width : 180rpx' @tap = "leadDetailOperation( 'baseInfo' )" >
+				<view class = 'header_opera_item_icon' style = "background-image : url(https://img.ishanshan.com/gimg/img/cb052045e262e1b46562c8f47e9e950b)"></view>
+				<view class =  'header_opera_item_value'>基本信息</view>
+			</view>
+			 <view hidden="{{backRecycling != '402000009'}}">
+			<view hidden = "{{ routeType == 'my' && !wetherDelete }}" class = 'header_opera_item' style = 'width : 190rpx' @tap = "leadDetailOperation( 'backToGarbage' )" >
+				<view class = 'header_opera_item_icon' style = "background-image : url(https://img.ishanshan.com/gimg/img/30d3c32f72e2e9002d285485a6b76304)"></view>
+				<view class =  'header_opera_item_value'>放入回收站</view>
+			</view>
+			</view>
+			<view hidden="{{sendBack != '402000010'}}">
+			<view hidden = "{{ routeType === 'sea' || (routeType == 'my' && !wetherBackPool) }}" class = 'header_opera_item' style = 'width : 180rpx' @tap = "leadDetailOperation( 'backToPublic' )" >
+				<view class = 'header_opera_item_icon' style = "background-image : url(https://img.ishanshan.com/gimg/img/e434db530546200667f8a1e29bb8a8c0)"></view>
+				<view class =  'header_opera_item_value'>退回公海</view>
+			</view>
+			</view>
+			<view hidden="{{fishFor != '402000012'}}">
+			<view hidden = "{{ routeType !== 'sea' }}" class = 'header_opera_item' style = 'width : 180rpx' @tap = "leadDetailOperation( 'getLeads' )" >
+				<view class = 'header_opera_item_icon' style = "background-image : url(https://img.ishanshan.com/gimg/img/e434db530546200667f8a1e29bb8a8c0)"></view>
+				<view class =  'header_opera_item_value'>捞取名单</view>
+			</view>
+			</view>
+		</view>
+		<view class = 'leads_tab' >
+			<view
+				class = "{{ tabKey == 'follow' ? 'leads_tab_item leads_tab_item_selected' : 'leads_tab_item' }}"
+				@tap = 'getFollowListTab'
+			>跟进记录</view>
+			<view
+				class = "{{ tabKey == 'visit' ? 'leads_tab_item leads_tab_item_selected' : 'leads_tab_item' }}"
+				@tap = 'getVisitListTab'
+			>到访计划</view>
+			<view
+				class = "{{ tabKey == 'order' ? 'leads_tab_item leads_tab_item_selected' : 'leads_tab_item' }}"
+				@tap = 'getOrderListTab'
+			>预约试听</view>
+		</view>
+		<view class = 'leads_scroll_view' >
+			<view hidden = '{{ !pageLoading }}' class = 'loading_box' >
+				<view class = 'loading_content' >
+					<view class = 'loading_cicle loading1'></view>
+					<view class = 'loading_cicle loading2'></view>
+					<view class = 'loading_cicle'></view>
+				</view>
+			</view>
+			<scroll-view scroll-y lower-threshold = '50' bindscrolltolower = 'getMoreFollowList' class = 'leads_scroll_content' hidden = "{{ tabKey != 'follow' }}" >
+				<repeat for = '{{ followListByDate }}' item = 'item' >
+					<view class = 'leads_scroll_item' >
+						<view class = 'leads_scroll_item_block' >
+							<view class = 'leads_scroll_item_label' >{{ item.date }}</view>
+							<view class = 'leads_scroll_item_list' >
+								<repeat for = '{{ item.list }}' item = 'item' >
+									<view class = 'leads_scroll_list_item' >
+										<view class = 'leads_scroll_item_time' >{{ item.time }}</view>
+										<view class = 'list_item_value' >跟进销售 : {{ item.sellerName || '暂无' }} ( {{ item.typeName }} )</view>
+										<view class = 'list_item_value' style = 'margin-top : 10rpx' >跟进家长 : {{ item.parentName || '暂无' }}</view>
+										<view class = 'list_item_content' >{{ item.content }}</view>
+									</view>
+								</repeat>
+							</view>
+						</view>
+					</view>
+				</repeat>
+				<view hidden = "{{ followResultCount !== 0 }}" class = "blank_data_page"  >
+					<blankDataPage :title.sync = 'blankTitle' />
+				</view>
+				<view class = 'loading leads_loading' hidden = '{{ !followLoadingEnd || followResultCount == 0 }}' >已加载全部</view>
+			</scroll-view>
+			<scroll-view scroll-y lower-threshold = '50' bindscrolltolower = 'getMoreVisitList' class = 'leads_scroll_content' hidden = "{{ tabKey != 'visit' }}"  >
+				<repeat for = '{{ visitListByDate }}' item = 'item' >
+					<view class = 'leads_scroll_item' >
+						<view class = 'leads_scroll_item_block' >
+							<view class = 'leads_scroll_item_label' >{{ item.date }}</view>
+							<view class = 'leads_scroll_item_list' >
+								<repeat for = '{{ item.list }}' item = 'item' >
+									<view class = 'leads_scroll_list_item' >
+										<view class = 'leads_scroll_item_time' >{{ item.time }}</view>
+										<view class = 'list_item_value' >跟进销售 : {{ item.sellerName }}</view>
+										<view class = 'list_item_value' style = 'margin-top : 10rpx' >到访时间 : {{ item.visitTime }}</view>
+										<view class = 'list_item_content' >{{ item.content }}</view>
+										<view
+											hidden = "{{ item.status != '0' && item.status != '1' }}"
+											class = "{{ item.status == '0' ? 'list_item_status cancel_color' : item.status == '1' ? 'list_item_status confirm_color' : 'list_item_status' }}"
+										>
+											{{ item.status == '0' ? '已关闭' : item.status == '1' ? '已到访' : '' }}
+										</view>
+										<view class = 'list_item_operation' hidden = "{{ item.status == '0' || item.status == '1' }}" >
+											<view class = 'list_item_operation_cancel' @tap = "clickToChangeVisit({{ item.id }}, '0' )" hidden="{{closeVisit != '404000004'}}">关闭</view>
+											<view class = 'list_item_operation_confirm' @tap = "clickToChangeVisit({{ item.id }}, '1' )"  hidden="{{determineVisiting != '404000002'}}">到访</view>
+										</view>
+									</view>
+								</repeat>
+							</view>
+						</view>
+					</view>
+				</repeat>
+				<view hidden = "{{ visitResultCount !== 0 }}" class = "blank_data_page"  >
+					<blankDataPage :title.sync = 'blankTitle' />
+				</view>
+				<view class = 'loading leads_loading' hidden = '{{ !visitLoadingEnd || visitResultCount == 0 }}' >已加载全部</view>
+			</scroll-view>
+			<scroll-view scroll-y lower-threshold = '50' bindscrolltolower = 'getMoreOrderList' class = 'leads_scroll_content' hidden = "{{ tabKey != 'order' }}"  >
+				<repeat for = '{{ orderListByDate }}' item = 'item' >
+					<view class = 'leads_scroll_item' >
+						<view class = 'leads_scroll_item_block' >
+							<view class = 'leads_scroll_item_label' >{{ item.date }}</view>
+							<view class = 'leads_scroll_item_list' >
+								<repeat for = '{{ item.list }}' item = 'item' >
+									<view class = 'leads_scroll_list_item' >
+										<view class = 'leads_scroll_item_time' >{{ item.time }}</view>
+										<view class = 'list_item_value' >跟进销售 : {{ item.sellerName }}</view>
+										<view class = 'list_item_value' style = 'margin-top : 10rpx' >试听课程 : {{ item.courseName }}</view>
+										<view class = 'list_item_value' style = 'margin-top : 10rpx' >试听时间 : {{ item.auditionTime }}</view>
+										<view class = 'list_item_content' >{{ item.remark || '' }}</view>
+										<view
+											class = "{{ item.status == '0' ? 'list_item_status cancel_color' : item.status == '1' ? 'list_item_status process_color' : item.status == '2' ? 'list_item_status confirm_color' : 'list_item_status warn_color' }}"
+										>
+											{{ item.status == '0' ? '已取消' : item.status == '1' ? '已预约' : item.status == '2' ? '已试听' : item.status == '3' ? '旷课' : '' }}
+										</view>
+									</view>
+								</repeat>
+							</view>
+						</view>
+					</view>
+				</repeat>
+				<view hidden = "{{ orderResultCount !== 0 }}" class = "blank_data_page"  >
+					<blankDataPage :title.sync = 'blankTitle' />
+				</view>
+				<view class = 'loading leads_loading' hidden = '{{ !orderLoadingEnd || orderResultCount == 0 }}' >已加载全部</view>
+			</scroll-view>
+		</view>
+		<view class = 'leads_btn_area'>
+			<button class = 'btn_save' hover-class = 'btn_save_hover' @tap.stop = 'clickToAddRecord' hidden="{{ tabKey == 'follow' ? addRecord != '403000001' : tabKey == 'visit' ? addVisit != '404000001': tabKey == 'order' ? addBooking != '405000001':''}}">
+				{{ tabKey == 'follow' ? '新增跟进记录' : tabKey == 'visit' ? '新增到访计划' : tabKey == 'order' ? '新增预约试听' : '' }}
+			</button>
+		</view>
+	</view>
+</template>

@@ -1,0 +1,1038 @@
+<style lang="less" src="./classStudent.less"></style>
+
+<template>
+  <view class="classStudent">
+    <view class="class_more">
+      <view class="current_class">{{currentClass}}</view>
+      <view
+        class="more"
+        @tap="getMoreClass"
+      >更多班级</view>
+    </view>
+    <view
+      class="nav"
+      wx:if="{{toggleFlag === 'student' || navFlag === false || detailList.length === 0 || listtrue}}"
+    >
+      <view
+        class="{{toggleFlag === 'grade'? 'grade active': 'grade'}}"
+        @tap="toggle('grade')"
+      >
+        <text>班级圈</text>
+        <view
+          class="line"
+          hidden="{{ !(toggleFlag === 'grade') }}"
+        ></view>
+      </view>
+      <view
+        class="{{toggleFlag === 'student'? 'stu active': 'stu'}}"
+        @tap="toggle('student')"
+      >
+        <text>邀请学员</text>
+        <view
+          class="line"
+          hidden="{{ !(toggleFlag === 'student') }}"
+        ></view>
+      </view>
+    </view>
+
+    <view>
+      <view
+        hidden='{{ !superSearchVisible }}'
+        class='super_search_wrap'
+        @tap='closeSuperSearch'
+      ></view>
+      <view class="{{ superSearchVisible ? 'super_search_block open_superSearch' : 'super_search_block' }}">
+        <scroll-view
+          class="class_scroll"
+          scroll-y
+          @scrolltolower="classScroll"
+          scroll-top="{{classScrollTop}}"
+        >
+          <view
+            class="class_wrap"
+            @tap="toggleClass('{{item}}')"
+            wx:for="{{classList}}"
+            wx:key="{{item.clsId}}"
+          >
+            <image src="http://img.ishanshan.com/gimg/n/20191017/da2b428879b7d750480aaf88b07b8c16"></image>
+            <view class="class_name">{{item.className}}</view>
+            <view class="lined"></view>
+          </view>
+          <view
+            class='loadingb'
+            wx:if='{{ classLoading }}'
+          >
+            <image
+              class='weui-loading'
+              src='http://img.ishanshan.com/gimg/user/n///274031351005446145.png'
+            />拼命加载中...
+          </view>
+          <view
+            class='loadingb classLine'
+            wx:if='{{ classLoadingComplete }}'
+          >- 我是有底线的 -</view>
+        </scroll-view>
+      </view>
+    </view>
+
+    <student
+      hidden="{{ !(toggleFlag === 'student') }}"
+      :classData.sync="classId"
+    />
+
+    <view
+      class="class_ring"
+      style="height: {{detailList.length === 0? '' : '100%;'}}"
+      hidden="{{ !(toggleFlag === 'grade') }}"
+    >
+      <refresh
+        :refmove.sync="refmove"
+        class="refresh"
+      >
+        <scroll-view
+          class="list_wrap_open"
+          bindscroll="scroll"
+          scroll-y
+          scroll-top="{{scroll_top}}"
+          @scrolltolower="scrollToLower"
+          @touchstart="listStart"
+          @touchmove="listMove"
+          @touchend="listEnd"
+        >
+          <view
+            class="nav"
+            wx:if="{{navFlag && detailList.length !== 0}}"
+            catchtouchmove="catchtouchmove"
+          >
+            <view
+              class="{{toggleFlag === 'grade'? 'grade active': 'grade'}}"
+              @tap="toggle('grade')"
+            >
+              <text>班级圈</text>
+              <view
+                class="line"
+                hidden="{{ !(toggleFlag === 'grade') }}"
+              ></view>
+            </view>
+            <view
+              class="{{toggleFlag === 'student'? 'stu active': 'stu'}}"
+              @tap="toggle('student')"
+            >
+              <text>邀请学员</text>
+              <view
+                class="line"
+                hidden="{{ !(toggleFlag === 'student') }}"
+              ></view>
+            </view>
+          </view>
+
+          <repeat
+            for='{{ detailList }}'
+            item='item'
+            index="index"
+            wx:if="{{ detailList.length !== 0 }}"
+          >
+            <view
+              class="item"
+              @tap="goPage({{'dynamicDetails'}},{{item}},{{index}},{{'false'}})"
+            >
+              <view class="item_wrap">
+                <view class="title">
+                  <view class="img_wrap">
+                    <image mode="{{aspectFill}}" src="{{item.avatar}}"/>
+                  </view>
+                  <view class="name_time">
+                    <view class="name">{{item.custName}}</view>
+                    <view class="time">{{item.releaseTime}}</view>
+                  </view>
+                  <view class="title_img" catchtap="modeShow({{item.id}})" wx:if="{{item.custId === userId}}">
+                    <image src="http://img.ishanshan.com/gimg/user/n///279372271368273921.png"></image>
+                  </view>
+                </view>
+                <view
+                  wx:if="{{item.content === null}}"
+                  style="margin-top:20rpx"
+                ></view>
+                <view
+                  class="describe"
+                  wx:else
+                >
+                  <text>{{item.contentNow}}</text>
+                  <text wx:if="{{item.contentNow.length <= 120 && item.content.length >= 120}}">...</text>
+                  <text
+                    class="all"
+                    wx:if="{{item.contentNow.length <= 120 && item.content.length >= 120}}"
+                    catchtap="getAll({{index}},{{item}})"
+                  >全文</text>
+                  <text
+                    class="all"
+                    wx:if="{{item.contentNow.length > 120 && item.content.length >= 120}}"
+                    catchtap="getAll({{index}},{{item}})"
+                  >收起</text>
+                </view>
+                <view
+                  class="pic_wrap{{item.imgs.length >= 3? '3' : item.imgs.length}}"
+                  wx:if="{{item.imgs !== null}}"
+                >
+                  <view
+                    catchtap="goPage({{'contentDetails'}},{{item}},{{index}},{{imgsIndex}})"
+                    class="pic_item{{item.imgs.length >= 3? '3' : item.imgs.length}}"
+                    wx:for="{{item.imgs}}"
+                    wx:for-item="imgsItem"
+                    wx:for-index="imgsIndex"
+                    wx:key="imgsIndex"
+                  >
+                    <image
+                      class="dynamic_img"
+                      mode="aspectFill"
+                      src="{{imgsItem}}"
+                    ></image>
+                  </view>
+                </view>
+                <view class="bottom">
+                  <view class="evaluate_top">
+                    <view class="like_evaluate">
+                      <view
+                        class="fabulous"
+                        catchtap="getFabulous({{index}},{{item}})"
+                      >
+                        <image src="{{item.praise === '0'? noFabulousImg : fabulousImg}}"></image>
+                        <text class="like_text">喜欢</text>
+                      </view>
+                      <view
+                        class="evaluate"
+                        catchtap="toPage({{itemt}},{{item.id}},{{index}})"
+                      >
+                        <image src="http://img.ishanshan.com/gimg/n/20191120/b7de4cdc9eb7648ee1b46bd138b4557d"></image>
+                        <text class="eav_text">评价</text>
+                      </view>
+                    </view>
+                  </view>
+                  <view
+                    class="like"
+                    wx:if="{{item.praiseList.length > 0 && item.praiseList.length < 30}}"
+                  >
+                    <image src="http://img.ishanshan.com/gimg/n/20191121/320cc0587065776933cc538efc16cf74"></image>
+                    <repeat
+                      for='{{ item.praiseList}}'
+                      item='itemz'
+                      index="indexz"
+                    >
+                      <text>{{itemz.name}}</text>
+                      <text wx:if="{{item.praiseList.length-1 == indexz}}"></text>
+                      <text wx:else>、</text>
+                    </repeat>
+                  </view>
+
+                  <view
+                    wx:if="{{item.praiseList.length == 30 }}"
+                    class="like"
+                  >
+                    <image src="http://img.ishanshan.com/gimg/n/20191121/320cc0587065776933cc538efc16cf74"></image>
+                    <repeat
+                      for='{{ item.praiseList}}'
+                      item='itemz'
+                      index="indexz"
+                    >
+                      <text>{{itemz.name}}</text>
+                      <text wx:if="{{item.praiseList.length-1 == indexz}}"></text>
+                      <text wx:else>、</text>
+                    </repeat>
+                    <text>等30人都很喜欢。</text>
+                  </view>
+                  <view class="comment">
+                    <view
+                      @longpress="delComment({{item}}, {{commentItem}}, {{index}})"
+                      wx:for="{{item.feedbackList}}"
+                      wx:for-item="commentItem"
+                      wx:key="commentItem.id"
+                      wx:for-index="commentIndex"
+                      catchtap="toPage({{itemh}},{{commentItem}},{{item.id}},{{index}},{{item.custName}})"
+                    >
+                      <view class="comment_item" wx:if="{{commentItem.replyId === '0'}}">
+                        <text class="per">{{commentItem.customerName}} : </text>
+                        <text> {{commentItem.comment}}</text>
+                      </view>
+                      <view class="comment_item" wx:if="{{commentItem.replyId !== '0'}}">
+                        <text>
+                          <text class="per">{{commentItem.customerName}}</text>
+                          <text> 回复 </text>
+                          <text class="per">{{commentItem.replyCustName}}: </text>
+                        </text>
+                        <text>{{commentItem.comment}}</text>
+                      </view>
+                    </view>
+                  </view>
+                  <view class="input_wrap">
+                    <view catchtap="toPage({{itemt}},{{item.id}},{{index}})">有爱评论，说点好听的～</view>
+                  </view>
+                </view>
+              </view>
+              <view
+                class="item_box"
+                wx:if="{{index !== resultCount - 1}}"
+              ></view>
+            </view>
+          </repeat>
+          <view
+            wx:if="{{listtrue}}"
+            class='blank_data_page'
+          >
+            <blankDataPage title='暂无数据' />
+          </view>
+          <view
+            class='loadingb'
+            wx:if='{{ searchLoading }}'
+          >
+            <image
+              class='weui-loading'
+              src='http://img.ishanshan.com/gimg/user/n///274031351005446145.png'
+            />拼命加载中...
+          </view>
+          <view
+            class='loadingb baseline'
+            wx:if='{{ searchLoadingComplete }}'
+          >- 我是有底线的 -</view>
+        </scroll-view>
+      </refresh>
+    </view>
+    <view
+      class="msg_publish"
+      wx:if="{{Titlet}}"
+    >
+      <view
+        class="msg"
+        @tap="toPage({{messs}})"
+      >
+        <image
+          src="http://img.ishanshan.com/gimg/user/n///276354917474500609.png"
+          style="position:relative;padding:4rpx"
+        >
+          <view
+            class="messred"
+            wx:if="{{messred}}"
+          ></view>
+        </image>
+        <text>消息</text>
+      </view>
+      <view
+        class="publish"
+        @tap="toPage({{items}},{{getListparams.classId}})"
+      >
+        <image src="http://img.ishanshan.com/gimg/user/n///276353144407982081.png"></image>
+        <text>发布</text>
+      </view>
+    </view>
+    <view class="mask" wx:if="{{modelFlag}}">
+      <view class="model">
+        <view class="model_top">
+          <view class="del" catchtap="delDynamic({{index}}">
+            删除</view>
+        </view>
+        <view class="cancel" catchtap="cancel">取消</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import { serviceRequestJson } from '../../../../utils/request'
+import BlankDataPage from '../../../../components/blankDataPage/blankDataPage'
+import Refresh from '../../../../components/refresh/refresh'
+import student from '../student/student'
+
+export default class classStudent extends wepy.page {
+  config = {
+    'navigationBarTitleText': '班级圈'
+  }
+
+  onShareAppMessage(res) {
+    return {
+      title: '闪闪云校, 一站式早教管理云平台',
+      path: 'pages/work/dynamicDetails/dynamicDetails',
+      imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+      success: function (res) {
+        wx.showToast({ title: '转发成功', icon: 'success', duration: 1000 })
+      }
+    }
+  }
+
+  components = {
+    // classRing,
+    student,
+    blankDataPage: BlankDataPage,
+    refresh: Refresh
+  }
+
+  data = {
+    timer: null,
+    messred: false,
+    classScrollTop: -1,
+    Titlet: true,
+    status: '',
+    scrollTop: 0,
+    scroll_top: -1,
+    listtrue: false,
+    navFlag: true,
+    contentFlag: true,
+    toggle: false,
+    classData: {},
+    classList: [],
+    currentClass: '',
+    toggleFlag: 'grade',
+    superSearchVisible: false,
+    toggleData: 'grade',
+    progress: true,
+    // shown: false,
+    classId: '',
+    getListparams: {
+      pageIndex: 0,
+      pageSize: 20,
+      classId: ''
+    },
+    classListparams: {
+      pageIndex: 0,
+      pageSize: 20
+    },
+    userId: '',
+    noFabulousImg: 'http://img.ishanshan.com/gimg/n/20191120/a272d42602fed3d0df024c4a6c4f16bb',
+    fabulousImg: 'http://img.ishanshan.com/gimg/n/20191120/dda3d7add85c47bfee52fd091e5bc715',
+    detailList: [],
+    resultCount: 0, // 列表数据总数
+    classCount: 0,
+    pageIndex: 0, // 数据页面
+    pageSize: 5, // 每页数据数量
+    searchLoading: false, // 下拉记载更多
+    searchLoadingComplete: false,  // 加载完毕
+    classLoading: false,
+    classLoadingComplete: false,
+    itemt: {
+      type: 'comment' // 评论
+    },
+    itemh: {
+      type: 'reply'
+    }, // 回复
+    items: {
+      type: 'release' // 发布
+    },
+    messs: {
+      type: 'messages' // 消息
+    },
+    refmove: {
+      isRefreshing: false,
+      hei: 0,
+      con: '',
+      succee: false
+    },
+    praise: false,
+    addFlag: false,
+    getListFlag: false,
+    org_id: null,
+    tenant_id: null,
+    user_id: null,
+    modelFlag: false,
+    dynamicId: ''
+  }
+
+  onLoad(query) {
+    wx.showLoading({
+      title: '加载中'
+    })
+    this.userId = wx.getStorageSync('tea_uid')
+    if (query.data) {
+      const classData = decodeURI(decodeURIComponent(query.data))
+      this.classData = JSON.parse(classData)
+      this.currentClass = this.classData.className
+      this.classId = this.classData.clsId
+      this.getListparams.classId = this.classData.clsId
+      this.getList(this.getListparams)
+    }
+  }
+  onHide() {
+    clearInterval(this.timer)
+    let pages = getCurrentPages() //eslint-disable-line
+    let prevPage = pages[pages.length - 1]
+    if (prevPage.data.pagetop) {
+      prevPage.data.pagetop = undefined
+    }
+    if (prevPage.data.pagetype) {
+      prevPage.data.pagetype = undefined
+    }
+    this.$parent._init_data.showList = null
+  }
+  onUnload() {
+    clearInterval(this.timer)
+  }
+  onShow() {
+    const delDynamic = wx.getStorageSync('delDynamic')
+    if (delDynamic) {
+      wx.removeStorageSync('delDynamic')
+      this.list = []
+      this.getListparams.pageIndex = 0
+      this.getList(this.getListparams)
+    }
+
+    this.org_id = wx.getStorageSync('tea_orgId')
+    this.tenant_id = wx.getStorageSync('tea_tenantId')
+    this.user_id = wx.getStorageSync('tea_uid')
+    const pages = getCurrentPages() //eslint-disable-line
+    const currPage = pages[pages.length - 1]  // 当前页
+    if (currPage.data.pagetype !== undefined) {
+      // 请求列表接口
+      let dynamicId
+      dynamicId = currPage.data.pagetype.id
+      this.dynamicInfo({ dynamicId }, currPage.data.pagetype.index)
+    }
+    if (currPage.data.pagetop !== undefined) {
+      this.addFlag = true
+      this.getListparams.pageIndex = 0
+      this.scroll_top = 0
+      this.getList(this.getListparams)
+    }
+    if (this.$parent._init_data.showList === true) {
+      this.addFlag = true
+      this.getListparams.pageIndex = 0
+      this.scroll_top = 0
+      this.getList(this.getListparams)
+    }
+    this.getMessageRemindNum()
+  }
+  scroll(e) {
+    this.scrollTop = e.detail.scrollTop
+  }
+  async getMessageRemindNum() {
+    clearInterval(this.timer)
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/getMessageRemindNum`
+    const res = await serviceRequestJson(url)
+    if (res.errorCode === 0) {
+      this.timer = setInterval(() => {
+        this.getMessageRemindNum()
+      }, 25000)
+      if (Number(res.messageNum) > 0) {
+        this.messred = true
+      } else {
+        this.messred = false
+      }
+      this.$apply()
+    }
+  }
+  async dynamicInfo(parmes, index, resolve = () => { }) {
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/dynamicInfo`
+    const res = await serviceRequestJson(url, parmes)
+    if (res.errorMessage === '成功') {
+      this.status = res.status
+      resolve()
+      if (index === '') return
+      this.detailList[index].feedbackList = res.feedbackList
+      this.detailList[index].praise = res.praise
+      this.detailList[index].praiseId = res.praiseId
+      let list = res.praiseList || []
+      if (list.length >= 30) {
+        this.detailList[index].praiseList = list.slice(0, 30)
+      }
+      if (list.length > 0 && list.length < 30) {
+        this.detailList[index].praiseList = list
+      }
+      if (list.length === 0) {
+        this.detailList[index].praiseList = list
+      }
+      this.$apply()
+    }
+  }
+  async getList(params, refress) {
+    this.searchLoadingComplete = false
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/classDynamicList`
+    const res = await serviceRequestJson(url, params)
+    const { errorCode, results, data } = res
+    if (errorCode === 0) {
+      setTimeout(() => {
+        wx.hideLoading()
+      }, 100)
+      if (this.addFlag === true || this.toggle === true) {
+        this.addFlag = false
+        this.toggle = false
+      }
+      const resultlist = results || []
+      const arr = []
+      resultlist && resultlist.forEach((e, i) => {
+        if (e.imgs && e.imgs !== null) {
+          e.imgs = JSON.parse(e.imgs)
+        }
+        if (e.content && e.content !== null) {
+          if (e.content.length >= 120) {
+            e.contentNow = e.content.slice(0, 120)
+            e.contentSlice = e.content.slice(0, 120)
+          } else {
+            e.contentNow = e.content
+            e.contentSlice = e.content
+          }
+        }
+        arr.push(e)
+        let listp = arr[i].praiseList || []
+        // 初始化点赞的人数
+        if (listp.length >= 30) {
+          arr[i].praiseList = listp.slice(0, 30)
+        }
+        if (listp.length === 0) {
+          arr[i].praiseList = listp
+        }
+        if (listp.length < 30 && listp.length > 0) {
+          arr[i].praiseList = listp
+        }
+      })
+      this.detailList = arr
+      this.resultCount = data.resultCount
+      if (this.detailList.length === 0) {
+        this.listtrue = true
+      } else {
+        this.listtrue = false
+      }
+      if (refress) {
+        this.refmove.con = '刷新成功'
+        this.refmove.succee = true
+        this.getMessageRemindNum()
+        setTimeout(() => {
+          this.refmove.isRefreshing = false
+          this.refmove.succee = false
+          this.refmove.hei = 0
+          this.navFlag = true
+          this.$apply()
+        }, 1200)
+      }
+      this.$apply()
+    }
+  }
+  async classScroll() {
+    if (!this.classLoading) {
+      this.classLoading = true
+      this.superSearchVisible = true
+      if (this.classList.length >= this.classCount) {
+        this.classLoadingComplete = true
+        this.classLoading = false
+      } else {
+        let url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/classesList`
+        this.classListparams.pageIndex = ++this.classListparams.pageIndex
+        const res = await serviceRequestJson(url, this.classListparams)
+        const { errorCode, results } = res
+        if (res && errorCode === 0) {
+          this.classList = [...this.classList, ...results]
+          this.classLoading = false
+          this.$apply()
+        }
+      }
+    }
+  }
+  async scrollToLower() {
+    if (!this.searchLoading) {
+      this.searchLoading = true
+      if (this.detailList.length >= this.resultCount) {
+        this.searchLoadingComplete = true
+        this.searchLoading = false          // 设置为加载状态
+      } else {
+        const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/classDynamicList`
+        this.getListparams.pageIndex = ++this.getListparams.pageIndex
+        const res = await serviceRequestJson(url, this.getListparams)
+        const { errorCode, data, results } = res
+        if (errorCode === 0) {
+          results.forEach((e, i) => {
+            if (e.imgs && e.imgs !== null) {
+              e.imgs = JSON.parse(e.imgs)
+            }
+            if (e.content && e.content !== null && e.content.length >= 120) {
+              e.contentSlice = e.content.slice(0, 120)
+            }
+            this.detailList.push(e)
+
+            let listp = this.detailList[i].praiseList || []
+            // 初始化点赞的人数
+            if (listp.length >= 30) {
+              this.detailList[i].praiseList = listp.slice(0, 30)
+            }
+            if (listp.length < 30 && listp.length > 0) {
+              this.detailList[i].praiseList = listp
+            }
+            if (listp.length === 0) {
+              this.detailList[i].praiseList = []
+            }
+          })
+          this.searchLoading = false
+          this.getListparams.pageIndex = data.pageIndex
+          this.$apply()
+        }
+      }
+    }
+  }
+  async updatePraise(params, item, index) {
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/updatePraise`
+    const res = await serviceRequestJson(url, params)
+    if (res && res.errorCode === 0) {
+      // let dynamicId
+      // dynamicId = item.id
+      // this.dynamicInfo({ dynamicId }, index)
+      if (item.praise === '0') {
+        // 订阅授权
+        let url1 = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/getTeacherWechatTemplate`
+        const res1 = await serviceRequestJson(url1)
+        const { errorCode, teacherDynamicPraiseNotice } = res1
+        if (res1 && errorCode === 0) {
+          wx.requestSubscribeMessage({
+            tmplIds: [teacherDynamicPraiseNotice],
+            success: (e) => {
+              console.log('成功1', e)
+            },
+            fail: (e) => {
+              console.log('失败1', e)
+            }
+          })
+        }
+        this.detailList[index].praise = '1'
+        this.detailList[index].praiseList.push({
+          id: res.praiseId,
+          name: res.praiseName
+        })
+        this.detailList[index].praiseId = res.praiseId
+        // 埋点
+        wx.reportAnalytics('class_like', {
+          org_id: this.org_id,
+          tenant_id: this.tenant_id,
+          user_id: this.user_id
+        })
+      } else if (item.praise === '1') {
+        this.detailList[index].praise = '0'
+        let indexs = this.detailList[index].praiseList.findIndex(item => item.id === res.praiseId)
+        this.detailList[index].praiseList.splice(indexs, 1)
+        // this.detailList[index].praiseId = null
+
+        wx.reportAnalytics('class_cancel_like', {
+          org_id: this.org_id,
+          tenant_id: this.tenant_id,
+          user_id: this.user_id
+        })
+      }
+      this.$apply()
+    }
+  }
+  methods = {
+    modeShow(id) {
+      this.dynamicId = id
+      this.modelFlag = true
+    },
+    cancel() {
+      this.modelFlag = false
+    },
+    async getMoreClass() {
+      wx.reportAnalytics('more_class', {
+        org_id: this.org_id,
+        tenant_id: this.tenant_id,
+        user_id: this.user_id
+      })
+      this.classScrollTop = 0
+      this.classLoadingComplete = false
+      this.superSearchVisible = true
+      let url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/classesList`
+      this.classListparams.pageIndex = 0
+      const res = await serviceRequestJson(url, this.classListparams)
+      const { errorCode, results, data } = res
+      if (res && errorCode === 0) {
+        this.classCount = data.resultCount
+        this.classList = results
+        this.$apply()
+      }
+    },
+    toggle(e) {
+      this.toggleFlag = e
+      if (this.toggleFlag === 'grade') {
+        this.Titlet = true
+        wx.setNavigationBarTitle({
+          title: '班级圈'
+        })
+      } else if (this.toggleFlag === 'student') {
+        this.Titlet = false
+        wx.setNavigationBarTitle({
+          title: '邀请学员'
+        })
+      }
+    },
+    toggleClass(e) {
+      this.classScrollTop = -1
+      this.superSearchVisible = false
+      this.currentClass = e.className
+      this.getListparams.classId = e.clsId
+      this.classId = e.clsId
+      this.getListparams.pageIndex = 0
+      this.toggle = true
+      this.getList(this.getListparams)
+    },
+    closeSuperSearch() {
+      this.classScrollTop = -1
+      this.superSearchVisible = false
+    },
+    goPage(page, item, index, imgIndex) {
+      const dynamicId = {
+        dynamicId: item.id
+      }
+      var promise = new Promise((resolve, reject) => {
+        this.dynamicInfo(dynamicId, '', resolve)
+        this.$apply()
+      })
+      promise.then(() => {
+        if (this.status === 0) {
+          const that = this
+          wx.showModal(
+            {
+              content: '该动态已经删除',
+              showCancel: false,
+              confirmColor: '#5d9cec',
+              complete: function () {
+                that.getListparams.pageIndex = 0
+                that.getList(that.getListparams)
+              }
+            }
+          )
+        } else if (this.status === 1) {
+          item.index = index
+          if (imgIndex !== 'false') {
+            item.imgIndex = imgIndex
+          }
+          let str = JSON.stringify(item)
+          str = encodeURIComponent(encodeURI(str))
+          wx.navigateTo({
+            url: `../dynamicDetails/${page}?data=${str}`
+          })
+        }
+      })
+    },
+
+    async toPage(item, items, id, index, name) {
+      // 消息
+      if (item.type === 'messages') {
+        let url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/getTeacherWechatTemplate`
+        const res = await serviceRequestJson(url)
+        const { errorCode, teacherDynamicHomeworkFeedbackNotice } = res
+        if (res && errorCode === 0) {
+          wx.requestSubscribeMessage({
+            tmplIds: [teacherDynamicHomeworkFeedbackNotice],
+            success: (e) => {
+              console.log('成功', e)
+              wx.navigateTo({
+                url: '../../../component/pages/MessageList/messages'
+              })
+            },
+            fail: (e) => {
+              console.log('失败', e)
+            }
+          })
+        }
+        // wx.navigateTo({
+        //   url: '../../../component/pages/MessageList/messages'
+        // })
+        return
+      }
+      // 评论
+      if (item.type === 'comment') {
+        const dynamicId = {
+          dynamicId: items
+        }
+        var promise = new Promise((resolve, reject) => {
+          this.dynamicInfo(dynamicId, '', resolve)
+        })
+        promise.then(() => {
+          if (this.status === 0) {
+            const that = this
+            wx.showModal({
+              content: '该动态已经删除',
+              showCancel: false,
+              confirmColor: '#5d9cec',
+              complete: function () {
+                that.getListparams.pageIndex = 0
+                that.getList(that.getListparams)
+              }
+            })
+          } else if (this.status === 1) {
+            item.tid = items
+            item.index = id
+            item.typehome = 'typehome'
+            let str = JSON.stringify(item)
+            str = encodeURIComponent(encodeURI(str))
+            wx.navigateTo({
+              url: `../../../component/pages/Replytocomments/replaycomment?str=${str}`
+            })
+            wx.reportAnalytics('class_comment', {
+              org_id: this.org_id,
+              tenant_id: this.tenant_id,
+              user_id: this.user_id
+            })
+          }
+        })
+        return
+      }
+      // 回复
+      if (item.type === 'reply') {
+        if (items.customerId === this.userId) {
+          wx.showToast({
+            icon: 'none',
+            title: '自己不能回复自己',
+            duration: 1000
+          })
+        } else {
+          items.type = item.type
+          items.tid = id
+          items.index = index
+          items.typehome = 'typehome'
+          let str = JSON.stringify(items)
+          str = encodeURIComponent(encodeURI(str))
+          wx.navigateTo({
+            url: `../../../component/pages/Replytocomments/replaycomment?str=${str}`
+          })
+        }
+        return
+      }
+      // 发布
+      if (item.type === 'release') {
+        this.scroll_top = this.scrollTop
+        // this.scroll_top = -1
+        item.custId = items
+        let str = JSON.stringify(item)
+        str = encodeURIComponent(encodeURI(str))
+        wx.navigateTo({
+          url: `../../../component/pages/Replytocomments/replaycomment?str=${str}`
+        })
+      }
+    },
+    getAll(index, item) {
+      if (item.contentNow.length <= 120) {
+        this.detailList[index].contentNow = this.detailList[index].content
+        // console.log(618, this.detailList[index].contentNow)
+      } else if (item.contentNow.length > 120) {
+        this.detailList[index].contentNow = this.detailList[index].contentSlice
+      }
+    },
+    async getFabulous(index, item) {
+      if (this.praise === false) {
+        this.praise = true
+        const params = {
+          dynamicId: item.id,
+          praise: item.praise
+        }
+        if (item.praiseId && item.praiseId !== null) {
+          params.praiseId = item.praiseId
+        }
+        this.updatePraise(params, item, index)
+        setTimeout(() => {
+          this.praise = false
+        }, 1200)
+      } else {
+        wx.showToast({
+          icon: 'none',
+          title: '不要点太快噢',
+          duration: 500
+        })
+      }
+    },
+    delComment(item, commentItem, index) {
+      if (commentItem.customerId !== this.userId) {
+        return
+      }
+      const _this = this
+      wx.showModal({
+        title: '提示',
+        content: '确定要删除此条评论吗?',
+        success: async function (res) {
+          if (res.confirm) {
+            const url = `${_this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/deleteFeedback`
+            const res = await serviceRequestJson(url, { feedbackId: commentItem.id })
+            if (res.errorCode === 0) {
+              wx.showToast({ title: '成功', icon: 'success', duration: 1000 })
+              const url = `${_this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/getFeedbackList`
+              const res = await serviceRequestJson(url, { dynamicId: item.id })
+              const { errorCode, results } = res
+              if (errorCode === 0) {
+                _this.detailList[index].feedbackList = results
+              }
+              // 埋点
+              wx.reportAnalytics('class_del_comment', {
+                org_id: _this.org_id,
+                tenant_id: _this.tenant_id,
+                user_id: _this.user_id
+              })
+              _this.$apply()
+            }
+          } else if (res.cancel) {
+            // console.log('取消')
+          }
+        }
+      })
+    },
+    delDynamic(index) {
+      this.modelFlag = false
+      const _this = this
+      wx.showModal({
+        title: '提示',
+        content: '确定要删除此条动态吗?',
+        success: async function (res) {
+          if (res.confirm) {
+            const params = {
+              dynamicId: _this.dynamicId
+            }
+            const url = `${_this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/deleteDynamic`
+            const res = await serviceRequestJson(url, params)
+            if (res.errorCode === 0) {
+              _this.modelFlag = false
+              _this.detailList.splice(index, 1)
+
+              _this.$apply()
+
+              wx.showToast({
+                title: '删除成功',
+                duration: 1000
+              })
+            }
+          } else if (res.cancel) {
+            // console.log('取消')
+          }
+        }
+      })
+    },
+    listStart(e) {
+      this.heistart = e.touches[0].clientY
+    },
+    listMove: function (e) {
+      if (this.scrollTop > 0) return
+      this.heimove = e.touches[0].clientY
+      let heis = Math.round(this.heimove - this.heistart)
+      if (heis > 0) {
+        this.navFlag = false
+        this.refmove.isRefreshing = true
+        if (heis > 75) {
+          this.refmove.hei = 75 * 2
+        } else if (heis < 15) {
+          this.refmove.hei = 15 * 2
+        } else {
+          this.refmove.hei = heis * 2
+        }
+        this.refmove.con = '松开刷新'
+      }
+    },
+    listEnd(e) {
+      if (this.refmove.isRefreshing === true) {
+        if (this.getListFlag === false) {
+          this.getListFlag = true
+          this.getListparams.pageIndex = 0
+          this.getList(this.getListparams, 'r')
+          setTimeout(() => {
+            this.getListFlag = false
+          }, 1000)
+        } else {
+          wx.showToast({
+            icon: 'none',
+            title: '不要刷新太快噢',
+            duration: 500
+          })
+        }
+      }
+    },
+    catchtouchmove() { } // 阻止tap触发刷新事件
+  }
+}
+</script>

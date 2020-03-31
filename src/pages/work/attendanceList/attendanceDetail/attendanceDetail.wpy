@@ -1,0 +1,349 @@
+<template>
+  <view class = 'form_container'>
+    <form bindsubmit = 'attendConfirm' >
+      <view hidden = "{{ stuList.length !== 0 || tryStuList.length !== 0 }}" class = "blank_data_page"  >
+        <blankDataPage title = '暂无可考勤学员~' />
+      </view>
+      <view class = 'attend_block' >
+        <view class = 'attend_block_title' >
+          课时消耗：出勤{{ costConf[0] == '1' ? attendDetail.cost : '0' }}, 请假{{ costConf[1] == '1' ? attendDetail.cost : '0' }}, 旷课{{costConf[2] == '1' ? attendDetail.cost : '0' }} ( 试听不消耗课时 )
+        </view>
+        
+        <!-- 上课学员 -->
+        <repeat for = '{{ stuList }}' item = 'item' >
+          <view class = 'attend_item' >
+            <view class = 'attend_item_top' >
+              <view class = 'attend_item_top_name' >{{ item.name }}</view>
+              <view class = "{{ item.stu_type == '1' ? 'attend_item_top_status stu_color' : 'attend_item_top_status mul_color' }}" >{{ item.stu_type == '1' ? '上课' : '补课' }}</view>
+            </view>
+            <view class = "{{ (item.sign_type !== '1' && !item.disabled) ? 'attend_item_bottom attend_item_bottom_disabled' : 'attend_item_bottom' }}" >
+              <radio-group name = "{{ 'attendStu_' + item.id }}" bindchange = 'changeRadio' >
+                <repeat for = '{{ attendTypeList }}' item = 'item1' >
+                  <label class = 'addType_radio_label' >
+                    <radio
+                      disabled = "{{ timeBoolean == false || item.sign_type !== '1' && !item.disabled }}"
+                      class = 'addType_radio'
+                      color = "{{ (item.sign_type !== '1' && !item.disabled) ? '#E1E1E1' : '#5d9cec' }}"
+                      value = "{{ (item.sign_type !== '1' && !item.disabled) ? '' : item1.sign_type }}"
+                      checked = "{{ item.sign_type == item1.sign_type ? true : false }}"
+                      />
+                      <span class="{{ (timeBoolean == false || item.sign_type !== '1' && !item.disabled) ? 'radioRed' : 'radioBlue' }}">
+                        {{ item1.value }}
+                      </span>
+                  </label>
+                </repeat>
+              </radio-group>
+            </view>
+          </view>
+        </repeat>
+
+        <!-- 试听学员 -->
+        <repeat for = '{{ tryStuList }}' item = 'item' >
+          <view class = 'attend_item' >
+            <view class = 'attend_item_top' >
+              <view class = 'attend_item_top_name' >{{ item.name }}</view>
+              <view class = 'attend_item_top_status try_color' >试听</view>
+            </view>
+            <view class = "{{ (item.sign_type !== '1' && !item.disabled) ? 'attend_item_bottom attend_item_bottom_disabled' : 'attend_item_bottom' }}" >
+              <radio-group name = "{{ 'tryStu_' + item.audition_id }}" bindchange = 'changeRadio' >
+                <repeat for = '{{ tryTypeList }}' item = 'item1' >
+                  <label class = 'addType_radio_label' >
+                    <radio disabled = "{{ item.sign_type !== '1' && !item.disabled }}"  class = 'addType_radio' color = "{{ (item.sign_type !== '1' && !item.disabled) ? '#E1E1E1' : '#5d9cec' }}" value = "{{ (item.sign_type !== '1' && !item.disabled) ? '' : item1.sign_type }}" checked = "{{ item.sign_type == item1.sign_type ? true : false }}" />
+                      {{ item1.value }}
+                  </label>
+                </repeat>
+              </radio-group>
+            </view>
+          </view>
+        </repeat>
+
+      </view>
+      <view class = 'attend_detail_btn' >
+
+        <view class = 'attend_all_select' @tap = "{{ timeBoolean == true ? 'clickToAllSelect' : 'clickToDisabled' }}" >
+          <view class = "{{ selectedStatus ? 'attend_all_checked' : 'attend_all_not_checked' }}" ></view>
+          <view class = "{{ timeBoolean == false || selectedDisabled ? 'all_select_text_disabled' : 'all_select_text' }}">全选出勤</view>
+        </view>
+
+        <button disabled = '{{ btnDisabled }}' class = "{{ btnDisabled ? 'attend_disabled_btn attend_reset_btn' : 'attend_reset_btn' }}" form-type = 'submit' data-key = 'both' hidden="{{assessmentCenter  != '506000001'}}">考勤并评价</button>
+        <button disabled = '{{ btnDisabled }}' class = "{{ btnDisabled ? 'attend_disabled_btn attend_confirm_btn' : 'attend_confirm_btn' }}" hover-class = 'btn_save_hover' form-type = 'submit' data-key = 'just'  hidden="{{attendanceSheet != '506000001'}}">考勤</button>
+      </view>
+    </form>
+  </view>
+</template>
+
+<style lang = "less" src = 'attendanceDetail.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import moment from 'moment';
+	import { serviceRequest } from '../../../../utils/request';
+	import BlankDataPage from '../../../../components/blankDataPage/blankDataPage';
+
+	export default class AttendanceDetail extends wepy.page {
+		config = {
+			navigationBarTitleText : '考勤详情'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+		  		title : '闪闪云校, 一站式早教管理云平台',
+		  		path : '/pages/initPage/initPage',
+				imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+		  		success : function( res ) {
+					wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+			  	},
+			  	fail : function( res ){
+			  	}
+			}
+	  	}
+
+		components = {
+			blankDataPage : BlankDataPage
+		}
+
+		data = {
+			assessmentCenter :'', //考勤评价
+			attendanceSheet  :'',//考勤
+			orgId           : undefined,
+			orgName         : undefined,
+			attendItem      : {},              //当钱选中的课程
+			attendTypeList  : [
+				{ sign_type : '3', value : '出勤' },
+				{ sign_type : '4', value : '请假' },
+				{ sign_type : '5', value : '旷课' }
+			],
+			tryTypeList     : [
+				{ sign_type : '2', value : '试听' },
+				{ sign_type : '3', value : '旷课'}
+			],
+			attendDetail    : {},              //考勤 详情
+			costConf        : [],       //考勤消耗
+			stuList         : [],              //补课 上课学员
+			tryStuList      : [],              //试听 学员
+
+			btnDisabled     : true,
+			selectedStatus  : false,
+      selectedDisabled : true,
+      nowTime: null, // 现在的时间
+      timeBoolean: false, // 今天可以操作今天的数据，其他时间不能操作
+		}
+
+		//初始化进入页面
+		onLoad( query ) {
+			this.buttonHidden();
+			this.orgId = this.$parent._init_data.orgId;
+			this.orgName = this.$parent._init_data.orgName;
+			this.attendItem = !!query.str && JSON.parse( decodeURIComponent(query.str) );
+			wx.setNavigationBarTitle({
+				title : this.attendItem.courseName
+			})
+		}
+		// 考勤隐藏
+    buttonHidden() {
+      const btnList = wx.getStorageSync('session').btnPermis.split(',');
+      btnList.filter(item => {
+        if(item === '506000001'){
+          this.assessmentCenter  = '506000001'        
+		}
+		 if(item === '506000001'){
+          this.attendanceSheet  = '506000001'        
+        }
+      })
+    };
+		//页面 出现时调用
+		onShow(){
+			//得到考勤 数据
+			this.getAttendList();
+			this.getTime()
+		}
+
+		getTime(){
+      let now = new Date();
+			let year = now.getFullYear();
+			let month = now.getMonth() + 1;//获取当前月份的日期 
+      let day = now.getDate();
+      if (month < 10) {
+        month = '0' + month;
+      };
+      if (day < 10) {
+        day = '0' + day;
+      };
+      this.nowTime = year + '-' + month + '-' + day;
+		}
+
+		getAttendList(){
+			let params = { cpdId : this.attendItem.cpdId, cpmId : this.attendItem.cpmId };
+			let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/signQuery`;
+			serviceRequest( url, params ).then(( ret ) => {
+				if( ret && ret.errorCode === 0 ){
+					this.attendDetail = ret;
+					this.costConf = !!ret.costConf && ret.costConf.split(',');
+					this.stuList = ret.stuList;
+          this.tryStuList = ret.tryStuList;
+
+          // 判断是不是今天的时间
+          if(ret.studyDate == this.nowTime) {
+            this.timeBoolean = true
+          } else {
+            this.timeBoolean = false
+          }
+
+					for( let i = 0; i < this.stuList.length; i++ ){
+						let item = this.stuList[i];
+						if( item.sign_type === '1' ){
+							this.selectedDisabled = false; break
+						}
+					}
+					for( let i = 0; i < this.tryStuList.length; i++ ){
+						let item = this.tryStuList[i];
+						if( item.sign_type === '1' ){
+							this.selectedDisabled = false; break
+						}
+					}
+					this.$apply();
+				}else{
+					wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+				}
+			})
+		}
+
+		methods = {
+			changeRadio(e){
+				if( !!this.btnDisabled ){
+					this.btnDisabled = false;
+				}
+      },
+
+      // 不是今天的日期没有操作权限
+      clickToDisabled() {
+        wx.showModal({ content : '请操作当天数据', showCancel : false, confirmColor : '#5d9cec' });
+        return;
+      },
+
+			//点击全选
+			clickToAllSelect(){
+				let stuList = this.stuList;
+				let tryStuList = this.tryStuList;
+				if( !!this.selectedDisabled ){
+					wx.showModal({ content : '暂无可考勤学员', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( this.selectedStatus ){ // 取消全选
+					this.selectedStatus = false;
+					this.btnDisabled = true;
+					!!stuList && stuList.length > 0 && stuList.map(( item ) => {
+						if( item.sign_type === '3' && item.disabled ){
+							item.sign_type = '1';
+							item.disabled = false;
+						}
+					})
+					!!tryStuList && tryStuList.length > 0 && tryStuList.map(( item ) => {
+						if( item.sign_type === '2' && item.disabled ){
+							item.sign_type = '1';
+							item.disabled = false;
+						}
+					})
+				}else{ // 全选
+					this.selectedStatus = true;
+					this.btnDisabled = false;
+					!!stuList && stuList.length > 0 && stuList.map(( item ) => {
+						if( item.sign_type === '1' ){
+							item.sign_type = '3';
+							item.disabled = true;
+						}
+					})
+					!!tryStuList && tryStuList.length > 0 && tryStuList.map(( item ) => {
+						if( item.sign_type === '1' ){
+							item.sign_type = '2';
+							item.disabled = true;
+						}
+					})
+				}
+			},
+
+			//确认 考勤
+			attendConfirm( e ){
+				let self = this;
+				let key = e.detail.target.dataset.key;
+				let values = e.detail.value;
+				let signStuList = [];
+				let tryList = [];
+				console.log(values, '1111111111')
+				//封装考勤数据
+				for( let index in values ){
+					let key = index.split('_')[0];
+					let id = index.split('_')[1];
+					if( !!values[index] && values[index] != '' && values[index] != undefined ){
+						if( key === 'attendStu' ){
+							signStuList.push({
+								cpStuId  : id,
+								signType : values[index],
+								checkStatus: "1"
+							})
+						}else if( key === 'tryStu' ){
+							tryList.push({
+								id     : id,
+								status : values[index],
+								checkStatus: "1"
+							})
+						}
+					}
+				}
+				signStuList.map(a => {
+					this.stuList.map(b => {
+						if(a.cpStuId === b.id) {
+							a.checkStatus = b.status
+						}
+					})
+				})
+				if( signStuList.length == 0 && tryList.length == 0 ){
+					wx.showModal({ content : '请选择考勤学员', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				let params = {
+					cpmId       : this.attendItem.cpmId,
+					cpdId       : this.attendItem.cpdId,
+					signStuList : signStuList,
+					tryList     : tryList
+				}
+				let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/batchStuSign`;
+				serviceRequest( url, params ).then((ret) => {
+					if( !!ret && ret.errorCode === 0 ){
+						wx.showToast({ title : '已考勤', icon : 'success', duration : 1000 });
+						!!signStuList && signStuList.map(function( item, index ){
+							wx.reportAnalytics('stu_attend', {
+								org_name : self.orgName,
+								org_id   : self.orgId
+							});
+						})
+						!!tryList && tryList.map(function( item, index ){
+							wx.reportAnalytics('stu_attend', {
+								org_name : self.orgName,
+								org_id   : self.orgId
+							});
+						})
+						setTimeout(() => {
+							if( key == 'just' ){ // 考勤
+								wx.navigateBack({
+									url : '../attendanceList'
+								})
+							}else if( key === 'both' ){ // 考勤并评价
+								let str = JSON.stringify( self.attendItem );
+								wx.navigateTo({
+									url : `../../parentNotice/parentNoticeDetail/parentNoticeDetail?str=${ str }`
+								})
+							}
+						}, 1000)
+					}else{
+						wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					}
+				})
+			},
+		}
+
+		events = {
+		}
+	}
+
+</script>

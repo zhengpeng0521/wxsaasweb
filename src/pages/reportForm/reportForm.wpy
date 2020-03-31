@@ -1,0 +1,619 @@
+<template>
+  <view class="container">
+    <!-- tab切换 -->
+    <view class="leads_tab">
+      <view class="{{ tabKey === 'sellDataTab' ? 'leads_tab_item_Tab' : 'leads_tab_item' }}" @tap='getSellDataTab'>
+        销售数据
+        <view class="{{ tabKey === 'sellDataTab' ? 'leads_tab_item_selected' : ''}}"></view>
+      </view>
+      <view class="{{ tabKey === 'teachDataTab' ? 'leads_tab_item_Tab' : 'leads_tab_item' }}" @tap='getTeachDataTab'>
+        教务数据
+        <view class="{{ tabKey === 'teachDataTab' ? 'leads_tab_item_selected' : ''}}"></view>
+      </view>
+    </view>
+    <view class="mask" wx:if="{{ maskHidden }}">
+      <view class="maskTop">
+        <repeat for="{{selectArray}}" key="index" index="index" item="item">
+          <view class="{{index === selectDataIndex ? 'selectDateActive' : 'selectDate'}}" @tap="selectTime({{index}}, {{item.key}}, {{item.value}})">{{ item.value }}</view>
+        </repeat>
+      </view>
+      <!--根据设定的时间选择 -->
+      <view class="maskBottom" wx:if="{{disabledPicker}}">
+        <view class='form_item'>
+          <view class='form_item_label' style="color: #CFCFCF">开始时间</view>
+          <view class='form_item_value'>
+            <view class='picker' style='height : 42rpx'>
+              <!-- {{ nextFollowTime }} -->
+            </view>
+            <view class='picker_placeholder'>
+              {{ startDateMoment }}
+            </view>
+          </view>
+        </view>
+        <view class='form_item'>
+          <view class='form_item_label' style="color: #CFCFCF">结束时间</view>
+          <view class='form_item_value'>
+            <view class='picker' style='height : 42rpx'>
+              <!-- {{ nextFollowTime }} -->
+            </view>
+            <view class='picker_placeholder'>
+              {{ endDateMoment }}
+            </view>
+          </view>
+        </view>
+      </view>
+      <!-- 根据年月选择日期 -->
+      <view class="maskBottom" wx:if="{{yearPicker}}">
+        <view class='form_item'>
+          <view class='form_item_label'>年份</view>
+          <view class='form_item_value'>
+            <picker bindchange="selectYearTime" value="{{index}}" range="{{yearArray}}" class='picker' style='height : 42rpx'>
+              <view class='picker_placeholder' style="color: #666">
+                {{ startYearMoment || '请选择' }}
+              </view>
+            </picker>
+          </view>
+        </view>
+        <view class='form_item'>
+          <view class='form_item_label'>月份</view>
+          <view class='form_item_value'>
+            <picker bindchange="selectMonthTime" value="{{index}}" range="{{monthArray}}" class='picker' style='height : 42rpx'>
+              <view class='picker_placeholder' style="color: #666">
+                {{ startMonthMoment || '请选择' }}
+              </view>
+            </picker>
+          </view>
+        </view>
+      </view>
+      <!-- 自定义选择日期 -->
+      <view class="maskBottom" wx:if="{{definedPicker}}">
+        <view class='form_item'>
+          <view class='form_item_label'>开始时间</view>
+          <view class='form_item_value'>
+            <picker mode="date" value="{{date}}" start="2010-10-01" end="{{ endTime }}" bindchange="selecDefineStartTime" class='picker' style='height : 42rpx'>
+              <view class='picker_placeholder' style="color: #666">
+                {{ startDateMoment || '请选择' }}
+              </view>
+            </picker>
+          </view>
+        </view>
+        <view class='form_item'>
+          <view class='form_item_label'>结束时间</view>
+          <view class='form_item_value'>
+            <picker mode="date" value="{{date}}" start="2010-10-01" end="{{ endTime }}" bindchange="selecDefineEndTime" class='picker' style='height : 42rpx'>
+              <view class='picker_placeholder' style="color: #666">
+                {{ endDateMoment || '请选择' }}
+              </view>
+            </picker>
+          </view>
+        </view>
+      </view>
+      <view class="bottonStyle">
+        <button class="btn_cancel" @tap.stop='clickToCancel'>取消</button>
+        <button class="btn_confirm" @tap.stop='clickToSearch'>确定</button>
+      </view>
+    </view>
+    <!-- 数据展示 -->
+    <!-- 销售数据展示 -->
+    <view class="sellDataShow" hidden="{{ tabKey != 'sellDataTab' }}">
+      <!-- 跟进记录 -->
+      <view class="dataAll dataAllTop">
+        <view class="dataTitle">
+          跟进情况
+          <span class="dataTitleDay" @tap="clickToSelect">
+                <span class="todayClick">{{ timeSelectText }}</span>
+          <span class="triangle"></span>
+          </span>
+        </view>
+        <repeat for='{{ jobDataList }}' key="index" index="index" item='item'>
+          <view class="dataRepeat" @tap="clickToReportDetail({{item}})">
+            <view class="dataItem">{{ item.name }}</view>
+            <view class="itemNumStyle">{{ item.num }}</view>
+            <view class="dataNum">
+              <span class="{{ item.plus == true ? 'upItemRate' : 'downItemRate'}}" wx:if="{{ item.rate === null ? false : true }}">{{ item.rate }}</span>
+              <image wx:if="{{ item.rate != null && item.plus == true ? true : false }}" mode="{{scaleToFill}}" src="{{'http://img.ishanshan.com/gimg/n/20191120/91291e878194e1cea0bd0352ea3dbc53'}}"></image>
+              <image wx:if="{{ item.rate != null && item.plus == false ? true : false }}" mode="{{scaleToFill}}" src="{{'http://img.ishanshan.com/gimg/n/20191120/db61a7a9d50931e39ce11ce62095d101'}}"></image>
+            </view>
+          </view>
+        </repeat>
+      </view>
+      <!-- 合同列表 -->
+      <view class="dataAll dataAllMargin">
+        <view class="dataTitle">合同数据</view>
+        <repeat for='{{ contractDataList }}' key="index" index="index" item='item'>
+          <view class="dataRepeat" @tap="clickToReportDetail({{item}})">
+            <view class="dataItem">{{ item.name }}</view>
+            <view class="itemNumStyle">{{ item.num }}</view>
+            <view class="dataNum">
+              <span class="{{ item.plus == true ? 'upItemRate' : 'downItemRate'}}" wx:if="{{ item.rate === null ? false : true }}">{{ item.rate }}</span>
+              <image wx:if="{{ item.rate != null && item.plus == true ? true : false }}" mode="{{scaleToFill}}" src="{{'http://img.ishanshan.com/gimg/n/20191120/91291e878194e1cea0bd0352ea3dbc53'}}"></image>
+              <image wx:if="{{ item.rate != null && item.plus == false ? true : false }}" mode="{{scaleToFill}}" src="{{'http://img.ishanshan.com/gimg/n/20191120/db61a7a9d50931e39ce11ce62095d101'}}"></image>
+            </view>
+          </view>
+        </repeat>
+      </view>
+    </view>
+    <!-- 教务数据展示 -->
+    <view class="sellDataShow" hidden="{{ tabKey != 'teachDataTab' }}">
+      <!-- 出勤数据 -->
+      <view class="dataAll dataAllTop">
+        <view class="dataTitle">
+          出勤数据
+          <span class="dataTitleDay" @tap="clickToSelect">
+                <span class="todayClick">{{ timeSelectText }}</span>
+          <span class="triangle"></span>
+          </span>
+        </view>
+        <repeat for='{{ turnWorkList }}' key="index" index="index" item='item'>
+          <view class="dataRepeat" @tap="clickToReportDetail({{item}})">
+            <view class="dataItem">{{ item.name }}</view>
+            <view class="itemNumStyle">{{ item.num }}</view>
+            <view class="dataNum">
+              <span class="{{ item.plus == true ? 'upItemRate' : 'downItemRate'}}" wx:if="{{ item.rate === null ? false : true }}">{{ item.rate }}</span>
+              <image wx:if="{{ item.rate != null && item.plus == true ? true : false }}" mode="{{scaleToFill}}" src="{{'http://img.ishanshan.com/gimg/n/20191120/91291e878194e1cea0bd0352ea3dbc53'}}"></image>
+              <image wx:if="{{ item.rate != null && item.plus == false ? true : false }}" mode="{{scaleToFill}}" src="{{'http://img.ishanshan.com/gimg/n/20191120/db61a7a9d50931e39ce11ce62095d101'}}"></image>
+            </view>
+          </view>
+        </repeat>
+      </view>
+      <!-- 消课数据 -->
+      <view class="dataAll dataAllMargin">
+        <view class="dataTitle">消课数据</view>
+        <repeat for='{{ courseList }}' key="index" index="index" item='item'>
+          <view class="dataRepeat" @tap="clickToReportDetail({{item}})">
+            <view class="dataItem">{{ item.name }}</view>
+            <view class="itemNumStyle">{{ item.num }}</view>
+            <view class="dataNum">
+              <span class="{{ item.plus == true ? 'upItemRate' : 'downItemRate'}}" wx:if="{{ item.rate === null ? false : true }}">{{ item.rate }}</span>
+              <image wx:if="{{ item.rate != null && item.plus == true ? true : false }}" mode="{{scaleToFill}}" src="{{'http://img.ishanshan.com/gimg/n/20191120/91291e878194e1cea0bd0352ea3dbc53'}}"></image>
+              <image wx:if="{{ item.rate != null && item.plus == false ? true : false }}" mode="{{scaleToFill}}" src="{{'http://img.ishanshan.com/gimg/n/20191120/db61a7a9d50931e39ce11ce62095d101'}}"></image>
+            </view>
+          </view>
+        </repeat>
+      </view>
+    </view>
+  </view>
+</template>
+
+<style lang = 'less' src = 'reportForm.less'>
+
+</style>
+
+<script>
+  import wepy from 'wepy';
+  import moment from 'moment';
+  import {
+    serviceRequest
+  } from '../../utils/request.js';
+  export default class ReportForm extends wepy.page {
+    //配置文件 拆解为page.json
+    config = {
+      navigationBarTitleText: '报表'
+    }
+    data = {
+      disabled: false, // 是否可选之前的时间
+      pickerVisible: false, // 时间选择器显隐
+      selYear: true, // 选择年
+      selMonths: true, // 选择月份
+      selDays: true, // 选择日子
+      selHoursMinutes: false, // 是否有时和分钟选项
+      tabKey: 'sellDataTab', // tab切换页值
+      maskHidden: false, // 遮罩层显示
+      selectDataIndex: 0, // 选择的时间间隔index
+      selectDataIndexBefore: 0, // 选择的时间间隔前一个
+      timeSelectText: '今日',
+      timeSelectTextBefore: '今日',
+      timeSelectKey: 'today',
+      timeSelectKeyBefore: 'today',
+      getDataListParams: {}, // 选择的日期周期入参
+      startDateMoment: null, // 开始时间moment
+      endDateMoment: null, //结束时间moment
+      startDate: null, // 开始时间YYYY-MM-DD
+      endDate: null, //结束时间YYYY-MM-DD
+      startYear: null, // 选择年
+      startMonth: null, // 选择月
+      startYearMoment: null, // 选择年
+      startMonthMoment: null, // 选择月
+      disabledPicker: true, // 不是自定义选择时间的时候
+      yearPicker: false, // 选择年月的时间
+      definedPicker: false, // 自定义年月的时间
+      jobDataList: [], // 跟进情况
+      contractDataList: [], // 合同数据
+      courseList: [], // 消课数据
+      turnWorkList: [], // 出勤数据
+      selectArray: [{
+          key: 'today',
+          value: '今日'
+        },
+        {
+          key: 'yesterday',
+          value: '昨日'
+        },
+        {
+          key: 'lastSeven',
+          value: '近7日'
+        },
+        {
+          key: 'lastThirty',
+          value: '近30日'
+        },
+        {
+          key: 'currentWeek',
+          value: '本周'
+        },
+        {
+          key: 'lastWeek',
+          value: '上周'
+        },
+        {
+          key: 'currentMonth',
+          value: '本月'
+        },
+        {
+          key: 'lastMonth',
+          value: '上月'
+        },
+        {
+          key: 'yearAndMonth',
+          value: '年月'
+        },
+        {
+          key: 'userDefined',
+          value: '自定义'
+        },
+      ],
+      endTime: moment().format('YYYY-MM-DD'),
+      endYear: moment().format('YYYYY'),
+      monthArray: [
+        '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'
+      ],
+      yearArray: []
+    };
+    components = {};
+    methods = {
+      //点击打开筛选框
+      clickToSelect() {
+        this.maskHidden = !this.maskHidden;
+      },
+      //点击进入报表详情
+      clickToReportDetail(item) {
+        let params = {
+          clickItem: item,
+          disabledPicker: this.disabledPicker,
+          yearPicker: this.yearPicker,
+          definedPicker: this.definedPicker,
+          selectDataIndex: this.selectDataIndex,
+          timeSelectKey: this.timeSelectKey,
+          timeSelectText: this.timeSelectText,
+          startDate: this.startDate,
+          endDate: this.endDate,
+          startDateMoment: this.startDateMoment,
+          endDateMoment: this.endDateMoment,
+          startYear: this.startYear,
+          startMonth: this.startMonth,
+          startYearMoment: this.startYearMoment,
+          startMonthMoment: this.startMonthMoment
+        }
+        let str = JSON.stringify(params);
+        wx.navigateTo({
+          url: `./reportFormDetail/reportFormDetail?str=${ str }`
+        });
+      },
+      // 选择年份的开始时间
+      selectYearTime(e) {
+        this.startYear = parseFloat(this.yearArray[e.detail.value]);
+        this.startYearMoment = this.yearArray[e.detail.value];
+      },
+      // 选择月份的开始时间
+      selectMonthTime(e) {
+        this.startMonth = parseFloat(this.monthArray[e.detail.value]);
+        this.startMonthMoment = this.monthArray[e.detail.value];
+      },
+      //点击选择自定义时间开始时间
+      selecDefineStartTime(e) {
+        this.startDateMoment = e.detail.value;
+        this.startDate = e.detail.value.split('-').join('');
+      },
+      //点击选择自定义时间结束时间
+      selecDefineEndTime(e) {
+        this.endDateMoment = e.detail.value;
+        this.endDate = e.detail.value.split('-').join('');
+      },
+      //更新销售数据tab值
+      getSellDataTab() {
+        this.tabKey = 'sellDataTab';
+      },
+      // 更新教务数据tab值
+      getTeachDataTab() {
+        this.tabKey = 'teachDataTab';
+      },
+      // 确定搜索
+      clickToSearch() {
+        this.maskHidden = false;
+        this.selectDataIndexBefore = this.selectDataIndex;
+        this.timeSelectTextBefore = this.timeSelectText;
+        this.timeSelectKeyBefore = this.timeSelectKey;
+        if (this.yearPicker === true) {
+          this.getYearMonthList() // 更新年月的数据
+        } else {
+          this.getDataList() // 更新开始结束的数据
+        };
+      },
+      //取消搜索
+      clickToCancel() {
+        this.maskHidden = false;
+        this.selectDataIndex = this.selectDataIndexBefore;
+        this.timeSelectText = this.timeSelectTextBefore;
+        this.timeSelectKey = this.timeSelectKeyBefore;
+        this.judgeTime()
+      },
+      // 选择时间间隔
+      selectTime(index, key, value) {
+        this.selectDataIndex = index; // 选择第几个
+        this.timeSelectKey = key; //所选key值
+        this.timeSelectText = value; //所选value值
+        this.judgeTime()
+      }
+    };
+    judgeTime() {
+      let currentDate = moment();
+      this.disabledPicker = true; // 不是自定义选择时间的时候
+      this.yearPicker = false; // 选择年月的时间
+      this.definedPicker = false;
+      if (this.timeSelectKey === 'today') { //今日
+        this.startDate = currentDate;
+        this.endDate = currentDate;
+        this.startDateMoment = currentDate.format('YYYY-MM-DD');
+        this.endDateMoment = currentDate.format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'yesterday') { //昨日
+        this.startDate = moment().subtract(1, 'd');
+        this.endDate = moment().subtract(1, 'd');
+        this.startDateMoment = moment().subtract(1, 'd').format('YYYY-MM-DD');
+        this.endDateMoment = moment().subtract(1, 'd').format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'lastSeven') { //近7日
+        this.startDate = moment().subtract(7, 'd');
+        this.endDate = currentDate;
+        this.startDateMoment = moment().subtract(7, 'd').format('YYYY-MM-DD');
+        this.endDateMoment = currentDate.format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'lastThirty') { //近30日
+        this.startDate = moment().subtract(30, 'd');
+        this.endDate = currentDate;
+        this.startDateMoment = moment().subtract(30, 'd').format('YYYY-MM-DD');
+        this.endDateMoment = currentDate.format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'currentWeek') { //本周
+        this.startDate = moment().startOf('week').add(1, 'days');
+        this.endDate = moment().endOf('week').add(1, 'days');
+        this.startDateMoment = moment().startOf('week').add(1, 'days').format('YYYY-MM-DD');
+        this.endDateMoment = moment().endOf('week').add(1, 'days').format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'lastWeek') { //上周
+        let lastDay = moment().subtract(7, 'd');
+        this.startDate = moment(lastDay).startOf('week').add(1, 'days');
+        this.endDate = moment(lastDay).endOf('week').add(1, 'days');
+        this.startDateMoment = moment(lastDay).startOf('week').add(1, 'days').format('YYYY-MM-DD');
+        this.endDateMoment = moment(lastDay).endOf('week').add(1, 'days').format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'currentMonth') { //本月
+        this.startDate = moment().startOf('month');
+        this.endDate = moment().endOf('month');
+        this.startDateMoment = moment().startOf('month').format('YYYY-MM-DD');
+        this.endDateMoment = moment().endOf('month').format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'lastMonth') { //上月
+        let lastDay = moment().subtract(1, 'M');
+        this.startDate = moment(lastDay).startOf('month');
+        this.endDate = moment(lastDay).endOf('month');
+        this.startDateMoment = moment(lastDay).startOf('month').format('YYYY-MM-DD');
+        this.endDateMoment = moment(lastDay).endOf('month').format('YYYY-MM-DD');
+      } else if (this.timeSelectKey === 'yearAndMonth') { // 年月
+        this.disabledPicker = false; // 不是自定义选择时间的时候
+        this.yearPicker = true; // 选择年月的时间
+        this.definedPicker = false;
+        this.startYearMoment = null;
+        this.startMonthMoment = null;
+      } else if (this.timeSelectKey === 'userDefined') { //自定义
+        this.disabledPicker = false; // 不是自定义选择时间的时候
+        this.yearPicker = false; // 选择年月的时间
+        this.definedPicker = true;
+        this.startDate = null;
+        this.endDate = null;
+        this.startDateMoment = null;
+        this.endDateMoment = null;
+      }
+    };
+    events = {};
+    // 更新年月数据
+    getYearMonthList() {
+      const params = {
+        uid: wx.getStorageSync('session').uid || this.$parent._init_data.session.uid,
+        year: this.startYear,
+        month: this.startMonth
+      };
+      // 跟进记录
+      serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/seller/sellerJobDataOverviewYe`, params).then(ret => {
+        wx.showLoading({
+          title: '加载中...'
+        });
+        if (ret.errorCode === 0) {
+          wx.hideLoading();
+          this.jobDataList = ret.results; // 跟进记录
+          this.$apply();
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          return;
+        }
+      });
+      //合同列表
+      serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/seller/sellerPerforDataOverviewYe`, params).then(ret => {
+        wx.showLoading({
+          title: '加载中...'
+        });
+        if (ret.errorCode === 0) {
+          wx.hideLoading();
+          this.contractDataList = ret.results;
+          this.$apply();
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          return;
+        }
+      });
+      // 出勤数据
+      serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/course/stuCheckDataOverviewByCourseYe`, params).then(ret => {
+        wx.showLoading({
+          title: '加载中...'
+        });
+        if (ret.errorCode === 0) {
+          wx.hideLoading();
+          this.turnWorkList = ret.results;
+          this.$apply();
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          return;
+        }
+      });
+      // 消课数据
+      serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/course/stuPeriodDataOverviewByCourseYe`, params).then(ret => {
+        wx.showLoading({
+          title: '加载中...'
+        });
+        if (ret.errorCode === 0) {
+          wx.hideLoading();
+          this.courseList = ret.results;
+          this.$apply();
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          return;
+        }
+      })
+    };
+
+    //更新开始时间结束时间数据
+    getDataList() {
+      if (this.disabledPicker === true) {
+        this.getDataListParams = {
+          uid: wx.getStorageSync('session').uid || this.$parent._init_data.session.uid,
+          startDate: this.startDate.format('YYYYMMDD'),
+          endDate: this.endDate.format('YYYYMMDD')
+        }
+      } else if (this.definedPicker === true) {
+        this.getDataListParams = {
+          uid: wx.getStorageSync('session').uid || this.$parent._init_data.session.uid,
+          startDate: this.startDate,
+          endDate: this.endDate
+        }
+      };
+      const params = this.getDataListParams;
+      // 请求session
+      serviceRequest(`${ this.$parent.service.base_url }/ss-crm-provider/wx/auth/session`).then((ret) => {
+        if (ret.errorCode === 0) {
+          this.$parent._init_data.session = ret.data.session;
+          wx.setStorageSync('session', ret.data.session);
+        } else if (ret.errorCode === 990105 || ret.errorCode === 100033) {
+          wx.hideLoading();
+          this.$parent._init_data = {};
+          wx.clearStorageSync();
+          wx.showModal({
+            content: '网络异常，请重新登录',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+          wx.reLaunch({
+            url: '../mime/login/login'
+          });
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+        }
+      });
+      // 跟进记录
+      serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/seller/sellerJobDataOverviewSe`, params).then(ret => {
+        wx.showLoading({
+          title: '加载中...'
+        });
+        if (ret.errorCode === 0) {
+          wx.hideLoading();
+          this.jobDataList = ret.results; // 跟进记录
+          this.$apply();
+        } else {
+          wx.hideLoading();
+        }
+      });
+      //合同列表
+      serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/seller/sellerPerforDataOverviewSe`, params).then(ret => {
+        wx.showLoading({
+          title: '加载中...'
+        });
+        if (ret.errorCode === 0) {
+          wx.hideLoading();
+          this.contractDataList = ret.results;
+          this.$apply();
+        } else {
+          wx.hideLoading();
+        }
+      });
+      // 出勤数据
+      serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/course/stuCheckDataOverviewByCourseSe`, params).then(ret => {
+        wx.showLoading({
+          title: '加载中...'
+        });
+        if (ret.errorCode === 0) {
+          wx.hideLoading();
+          this.turnWorkList = ret.results;
+          this.$apply();
+        } else {
+          wx.hideLoading();
+        }
+      });
+      // 消课数据
+      serviceRequest(`${ this.$parent.service.base_url }/ss-stat-provider/wx/report/course/stuPeriodDataOverviewByCourseSe`, params).then(ret => {
+        wx.showLoading({
+          title: '加载中...'
+        });
+        if (ret.errorCode === 0) {
+          wx.hideLoading();
+          this.courseList = ret.results;
+          this.$apply();
+        } else {
+          wx.hideLoading();
+        }
+      })
+    };
+    onLoad(params) {
+      for (let i = 2010; i <= this.endYear; i++) {
+        this.yearArray.push(i + '年');
+      };
+      wx.showLoading({
+        title: '加载中...'
+      });
+    };
+    onShow() {
+      let currentDate = moment();
+      this.tabKey = 'sellDataTab';
+      this.startDate = currentDate;
+      this.endDate = currentDate;
+      this.timeSelectText = '今日';
+      this.selectDataIndex = 0;
+      this.startDateMoment = currentDate.format('YYYY-MM-DD');
+      this.endDateMoment = currentDate.format('YYYY-MM-DD');
+      if (this.tabKey === 'sellDataTab') {
+        this.getDataList();
+      }
+    }
+  }
+</script>

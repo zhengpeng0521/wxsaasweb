@@ -1,0 +1,54 @@
+<style lang = "less" src = 'about.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import { serviceRequest } from '../../../utils/request';
+
+	export default class About extends wepy.page {
+		config = {
+			navigationBarTitleText : '关于'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+		  		title : '闪闪云校, 一站式早教管理云平台',
+		  		path : '/pages/initPage/initPage',
+				imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+		  		success : function( res ) {
+					wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+			  	},
+			  	fail : function( res ){
+			  	}
+			}
+	  	}
+
+		data = {
+		}
+
+		methods = {
+			clickToZoom(){
+				wx.previewImage({
+					current : 'https://img.ishanshan.com/gimg/img/4a83600660e0a082c1e23a57e6c54856',
+					urls : ['https://img.ishanshan.com/gimg/img/4a83600660e0a082c1e23a57e6c54856'],
+					success : function(){}
+				})
+			}
+		}
+
+		onLoad( params ){
+
+		}
+	}
+</script>
+
+<template>
+	<view class = 'container' >
+		<view class = 'about_img' ></view>
+		<view class = 'about_title' >闪闪云校</view>
+		<view class = 'about_version' >v1.0.1</view>
+		<view class = 'about_share' @tap = 'clickToZoom' >
+			<image style = 'width : 308rpx; height : 308rpx' src = 'https://img.ishanshan.com/gimg/img/4a83600660e0a082c1e23a57e6c54856!s300' />
+		</view>
+		<view class = 'about_tips' >关注二维码获取更多资讯</view>
+	</view>
+</template>

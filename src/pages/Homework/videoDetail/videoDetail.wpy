@@ -1,0 +1,39 @@
+
+<script>
+import wepy from 'wepy'
+
+export default class videoDetail extends wepy.page {
+  config = {
+    navigationBarTitleText: ''
+  }
+
+  data = {
+    controls: false,
+    videosrc: '',
+    videoContext: ''
+  }
+
+  methods = {
+
+  }
+
+  onLoad(query) {
+    let str = decodeURI(decodeURIComponent(query.str))
+    let types = (!!query.str && JSON.parse(str)) || {}
+    this.videosrc = types
+    this.videoContext = wx.createVideoContext('myVideo')
+    this.videoContext.requestFullScreen()
+    this.$apply()
+  }
+}
+</script>
+
+<template>
+  <video
+    id="myVideo"
+    src="{{videosrc}}"
+    custom-cache="{{controls}}"
+    autoplay="true"
+    style="width: 100%;height: 100%;"
+  ></video>
+</template>

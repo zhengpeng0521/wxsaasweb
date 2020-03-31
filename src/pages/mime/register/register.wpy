@@ -1,0 +1,236 @@
+<style lang = "less" src = 'register.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import { registerRequest } from '../../../utils/request';
+	export default class Register extends wepy.page {
+		config = {
+			navigationBarTitleText : '申请试用'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+		  		title : '闪闪云校, 一站式早教管理云平台',
+		  		path : '/pages/initPage/initPage',
+				imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+		  		success : function( res ) {
+					wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+			  	},
+			  	fail : function( res ){
+			  	}
+			}
+	  	}
+
+		data = {
+			orgTypeIndex    : 0,
+			orgTypeVisible  : true,
+			orgTypeList     : [],              //校区类型下拉列表
+
+			region          : ['浙江省','杭州市','滨江区'],
+			orgPlaceVisible : true,
+
+			mobile          : undefined,       //所输入的手机号
+			isGetCode       : false,           //是否获取验证码
+
+			seconds         : 60,
+			loading         : false,
+			timer           : undefined
+		}
+
+		secondsChange(){
+			let self = this;
+			this.timer = setInterval(()=>{
+				--self.seconds;
+				if( self.seconds == 0 ){
+					clearInterval( self.timer );
+					self.seconds = 60;
+					self.isGetCode = false;
+				}
+				self.$apply();
+			}, 1000)
+		}
+
+		methods = {
+			//联系方式 失去焦点
+			blurGetPhoneNumber( e ){
+				this.mobile = e.detail.value;
+			},
+
+			//获取验证码
+			getCode(){
+				if( !this.isGetCode ){  //未获取验证码
+					if( !this.mobile ){
+						wx.showModal({ content : '请输入手机号', showCancel : false, confirmColor : '#5d9cec' });
+						return;
+					}
+					if( this.mobile.length !== 11 || !(/[0-9]{11}/.test( this.mobile )) ){
+						wx.showModal({ content : '手机号格式错误', showCancel : false, confirmColor : '#5d9cec' });
+						return;
+					}
+					let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/regist/sendVerifyCode`;
+					let mobile = this.mobile;
+					if( !!mobile ){
+						registerRequest( url, { mobile } ).then(( ret ) => {
+							if( !!ret && ret.errorCode === 0 ){
+								wx.showToast({ title : '发送成功', duration : 1000, icon : 'success' });
+								this.isGetCode = true;
+								this.secondsChange();
+								this.$apply();
+							}else{
+								wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' })
+							}
+						})
+					}else{
+						wx.showModal({ content : '请先输入联系方式', showCancel : false, confirmColor : '#5d9cec' });
+						return;
+					}
+				}
+			},
+
+			//选择机构类型
+			orgTypeSelect( e ){
+				if( !!this.orgTypeVisible ){
+					this.orgTypeVisible = false
+				}
+				this.orgTypeIndex = e.detail.value;
+			},
+
+			//选择机构地址
+			orgPlaceSelect( e ){
+				if( !!this.orgPlaceVisible ){
+					this.orgPlaceVisible = false;
+				}
+				this.region = e.detail.value;
+			},
+
+			//确认 申请
+			confirmApplyForTry( e ){
+				let values = e.detail.value;
+				if( !!values && !values.userName ){
+					wx.showModal({ content : '请输入联系人', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !!values && !values.tel ){
+					wx.showModal({ content : '请输入联系方式', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !!values && !values.verifyCode ){
+					wx.showModal({ content : '请输入验证码', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !!values && !values.orgName ){
+					wx.showModal({ content : '请输入机构名称', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !!this.orgTypeVisible ){
+					wx.showModal({ content : '请选择机构类型', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !!this.orgPlaceVisible ){
+					wx.showModal({ content : '请选择机构地址', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				this.loading = true;
+				this.timer = undefined;
+				let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/regist/freeRegist`;
+				let params = {
+					userName   : values.userName,
+					tel        : values.tel,
+					verifyCode : values.verifyCode,
+					orgName    : values.orgName,
+					orgType    : this.orgTypeList[values.orgType].value,
+					city       : values.city.join(' ')
+				}
+				registerRequest( url, params ).then(( ret ) => {
+					if( !!ret && ret.errorCode === 0 ){
+						this.loading = false;
+						this.$apply();
+						wx.redirectTo({
+							url : './registerResult/registerResult'
+						})
+					}else{
+						this.loading = false;
+						this.$apply();
+						wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					}
+				})
+			}
+		}
+
+		onLoad( params ){
+			//获取校区类型
+			registerRequest( `${ this.$parent.service.base_url }/ss-crm-provider/wx/regist/getSchoolType`, {} ).then( ( ret ) => {
+				if( !!ret && ret.errorCode === 0 ){
+					this.orgTypeList = ret.results;
+					this.$apply();
+				}
+			})
+		}
+	}
+</script>
+
+<template>
+	<view class = 'form_container' >
+		<form bindsubmit = 'confirmApplyForTry' >
+			<view class = 'form_box' >
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >联系人<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_value' >
+						<input name = 'userName' placeholder-class = 'placeholder_input' placeholder = '请输入联系人' />
+					</view>
+				</view>
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >联系电话<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_value' >
+						<input name = 'tel' type = 'number' placeholder-class = 'placeholder_input' placeholder = '请输入联系电话' bindinput = 'blurGetPhoneNumber'/>
+					</view>
+				</view>
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >验证码<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_value' >
+						<input name = 'verifyCode' type = 'number' placeholder-class = 'placeholder_input' />
+					</view>
+					<view hidden = '{{ isGetCode }}' class = 'form_item_code' @tap = 'getCode' >获取验证码</view>
+					<view hidden = '{{ !isGetCode }}' class = 'form_item_code form_item_code_get'>{{ seconds }}s后重试</view>
+				</view>
+			</view>
+			<view class = 'form_box' style = 'margin-top : 30rpx' >
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >机构名称<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_value' >
+						<input name = 'orgName' placeholder-class = 'placeholder_input' placeholder = '请输入机构名称' />
+					</view>
+				</view>
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >机构类型<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_value' >
+						<picker name = 'orgType' bindchange = 'orgTypeSelect' range = '{{ orgTypeList }}' range-key = 'name' >
+							<view class = 'picker' >
+								{{ orgTypeList[orgTypeIndex].name }}
+							</view>
+							<view hidden = '{{ !orgTypeVisible }}' class = 'picker_placeholder' >
+								请选择
+							</view>
+						</picker>
+					</view>
+				</view>
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >机构地址<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_value' >
+						<picker name = 'city' mode = 'region' bindchange = 'orgPlaceSelect' value = '{{ region }}' >
+							<view class = 'picker' >
+								{{ region[0] }}, {{ region[1] }}, {{ region[2] }}
+							</view>
+							<view hidden = '{{ !orgPlaceVisible }}' class = 'picker_placeholder' >
+								请选择
+							</view>
+						</picker>
+					</view>
+				</view>
+			</view>
+			<view class = 'register_btn' >
+				<button disabled = '{{ !!loading }}' loading = '{{ !!loading }}' formType = 'submit' class = 'btn_save' hover-class = 'btn_save_hover' >提交</button>
+			</view>
+		</form>
+	</view>
+</template>

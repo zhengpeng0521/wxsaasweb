@@ -1,0 +1,126 @@
+.txt-1{
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+.contentDetails{
+  height: 100%;
+  background-color: #000;
+
+  .nav-bar{
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 99;
+    background-color: rgba(0,0,0,.5);
+    color: #fff;
+
+    .bar-box{
+      width: 100%;
+      position: relative;
+    }
+    .bar-top{
+      width: 100%;
+    }
+
+    .back_wrap{
+      position: absolute;
+      top: 50%;
+      width: 100rpx;
+      height: 100%;
+      transform: translateY(-50%);
+    }
+
+    .back{
+      position: absolute;
+      top: 50%;
+      left: 20rpx;
+      width: 36rpx;
+      height: 36rpx;
+      transform: translateY(-50%);
+      z-index: 9999;
+    }
+
+    .center-cell{
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  .swiper{
+    height: 100%;
+
+    .swiper_item{
+      overflow:scroll;
+    }
+    image{
+      width: 100%;
+      height: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+    }
+  }
+
+  .bottom{
+    width: 100%;
+    box-sizing:border-box;
+    position: fixed;
+    bottom: 0;
+    background: rgba(0,0,0,.5);
+    color: #fff;
+    padding: 20rpx 20rpx 0 20rpx;
+    // height: 180rpx;
+
+    .describe{
+      margin-bottom: 20rpx;
+      font-size: 24rpx;
+    }
+
+    .like_download{
+      border-top: 1px solid #333;
+      // padding-top: 22rpx;
+      display: flex;
+      font-size: 26rpx;
+      justify-content: space-around;
+      align-items: center;
+
+      .like,.download_box{
+        padding: 25rpx 0 40rpx 0;
+      }
+
+      image{
+        width: 40rpx;
+        height: 40rpx;
+        vertical-align: middle;
+        margin-right: 15rpx;
+        vertical-align: middle;
+      }
+
+      text{
+        vertical-align: middle;
+      }
+
+      .download_box{
+        position: relative;
+      }
+
+      .setting{
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+      }
+    }
+
+  }
+  .dis{
+    padding-bottom: 68rpx;
+  }
+}

@@ -1,0 +1,252 @@
+@import '../../../../common.less';
+
+/*tab 样式*/
+.leads_tab{
+	position : fixed;
+	top : 0;
+	display : flex;
+	align-items : center;
+	justify-content : space-around;
+	height : 94rpx;
+	width : 100%;
+	background : @base_background;
+}
+.picV{
+	display: flex;
+	align-items: center;
+	padding: 10px 0;
+	border-bottom: 1rpx solid #E5E5E5
+
+	}
+.wrap{
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background: #000;
+	z-index: 99;
+	top: 0;
+	left: 0;
+}
+.idVideo{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    transform: translate(-50%, -50%);
+}
+.picV .imgA{
+	position: absolute;
+	width: 30px;
+	height: 30px;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%)
+}
+.picV .conts:nth-child(2){
+	margin: 0 2%
+}
+.picV .conts{
+	width: 31%;
+	height: 111.6px;
+	position: relative;
+}
+.imgAs{
+    position: absolute;
+    top: 35%;
+    left: 2%;
+    width: 25px;
+    height: 25px;
+    transform: translate(-2%, -35%);
+    background: rgba(0,0,0,.5);
+}
+.leads_tab_item{
+	width : 170rpx;
+	height : 94rpx;
+	line-height : 88rpx;
+	text-align : center;
+	font-size : @mid_font_size;
+	color : @label_color;
+	box-sizing : border-box;
+}
+.leads_tab_item_selected{
+	color : @base_color;
+	border-bottom : 6rpx solid @base_color;
+}
+.loading_box{
+	position : absolute;
+	bottom : 0;
+	width : 100%;
+	height : calc( ~'100% - 94rpx');
+	z-index : 1001;
+}
+.blank_data_page{
+	position :absolute;
+	top : 124rpx;
+	width : 100%;
+	height : calc( ~'100% - 124rpx' );
+	background : @light_background;
+	z-index : 1000;
+}
+//tab内容 样式
+.tab_content_block{
+	width : 100%;
+	height : calc( ~'100% - 124rpx' );
+	padding-top : 124rpx;
+	overflow : auto;
+}
+
+//老师评价 学员列表
+.stu_list{
+	height : 100%;
+	background : @base_background;
+	padding-left : 30rpx;
+	overflow : auto;
+}
+.stu_list_item{
+	display : flex;
+	align-items : center;
+	height : 88rpx;
+	padding-right : 30rpx;
+	border-bottom : 1rpx solid @border_color;
+	box-sizing : border-box;
+}
+.stu_list_item_name{
+	font-size : @lg_font_size;
+	color : @label_color;
+}
+.stu_list_item_gray{
+	font-size : @lg_font_size;
+	color: #B2B2B2;
+}
+.stu_list_item_comment{
+	position : relative;
+	flex : 1;
+	padding-right : 28rpx;
+	font-size : @mid_font_size;
+	text-align : right;
+}
+.stu_list_item_comment::after{
+	content : '';
+	display : inline-block;
+	height : 14rpx;
+	width : 14rpx;
+	border-width : 2rpx 2rpx 0 0;
+	border-color : @value_color;
+	border-style : solid;
+	transform : matrix(0.71, 0.71, -0.71, 0.71, 0, 0);
+	position : absolute;
+	top : 50%;
+	margin-top : -6rpx;
+	right : 4rpx;
+}
+
+//家长评价列表
+.parent_block{
+	width : 100%;
+	height : calc( ~'100% - 94rpx' );
+	padding-top : 94rpx;
+}
+.parent_list{
+	height : 100%;
+	overflow : auto;
+}
+.parent_list_item_name{
+	height : 74rpx;
+	line-height : 74rpx;
+	padding-left : 30rpx;
+	font-size : @mid_font_size;
+	color : @value_color;
+}
+.parent_list_item_comment{
+	padding-left : 30rpx;
+	background : @base_background;
+}
+.parent_list_item_rate{
+	height : 88rpx;
+	display : flex;
+	align-items : center;
+	border-bottom : 1rpx solid @border_color;
+}
+.rate_level{
+	width : 40rpx;
+	height : 40rpx;
+	margin-right : 16rpx;
+	background : url('https://img.ishanshan.com/gimg/img/11b8b2e76fcee4e2160f59908c812499') no-repeat;
+	background-size : cover;
+}
+
+.parent_list_item_label{
+	font-size : @lg_font_size;
+	color : @label_color;
+	margin-right : 50rpx;
+}
+.parent_list_item_value{
+	display : flex;
+	align-items : center;
+	flex : 1;
+	font-size : @lg_font_size;
+	color : @dark_color;
+}
+.parent_list_item_comment_content{
+	display : flex;
+	align-items : flex-start;
+	padding : 28rpx 30rpx 28rpx 0;
+}
+
+//上课内容
+.course_info{
+	padding-left : 30rpx;
+	box-sizing : border-box;
+	background : @base_background;
+}
+.course_info_item{
+	display : flex;
+	align-items : center;
+	height : 88rpx;
+	padding-right : 30rpx;
+	font-size : @lg_font_size;
+	color : @label_color;
+	box-sizing : border-box;
+	border-bottom : 1rpx solid @border_color;
+}
+.course_info_item_label{
+
+}
+.course_info_item_value{
+	flex : 1;
+	text-align : right;
+	overflow : hidden;
+	text-overflow : ellipsis;
+	white-space : nowrap;
+}
+
+/*上传图片*/
+.form_item_upload_img{
+	display : flex;
+	align-items: flex-start;
+	padding : 30rpx;
+	padding-left : 0;
+	font-size : 0;
+	color : @label_color;
+}
+.form_item_upload_img_label{
+	font-size : @lg_font_size;
+}
+.form_item_upload_img_value{
+	margin-left : 30rpx;
+}
+
+.parent_notice_btn{
+	width : 100%;
+	margin-top : 15rpx;
+	padding : 0 40rpx;
+	box-sizing : border-box;
+}
+
+.styleMar{
+	margin-top: -18rpx;
+	margin-left: -10rpx
+}
+.styleAra{
+	margin-top: -6rpx;
+}

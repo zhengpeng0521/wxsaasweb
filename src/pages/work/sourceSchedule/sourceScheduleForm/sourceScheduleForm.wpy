@@ -1,0 +1,1593 @@
+<template>
+  <view>
+    <scroll-view class='form_container form_srcoll'>
+      <form>
+        <view class="form_box">
+          <view class='form_item'>
+            <view class='form_item_label'>排课标题<text class='is_required'>*</text></view>
+            <view class='form_item_value'>
+              <input bindinput="courseTitle" value='{{ formData.courseTitle }}' placeholder-class="{{ (isclickBtn && !(!!formData.courseTitle)) ? 'placeholder_input_empty' : 'placeholder_input' }}" placeholder='请输入' maxlength="10" />
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label'>展示颜色</view>
+            <view class='form_item_value'>
+              <view class="form_item_chooseColor" @tap="openShade('color')" style="background:{{formData.color}}">请选择</view>
+            </view>
+          </view>
+        </view>
+        <view class="form_box">
+          <view class='form_item' hidden="{{ type == 1 }}">
+            <view class='form_item_label'>课程名称<text class='is_required'>*</text></view>
+            <view class='form_item_value' @tap="chooseType('courseName')">
+              <view class='picker'></view>
+              <view class="picker_placeholder{{!!formData.courseName.id ? ' item_choosed_style' : (isclickBtn?' form_choosed_empty':'')}}">{{!!formData.courseName.id ? formData.courseName.name : '请选择'}}</view>
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label'>上课教室<text class='is_required'>*</text></view>
+            <view class='form_item_value' @tap="chooseType('classroom')">
+              <view class='picker'></view>
+              <view class="picker_placeholder{{!!formData.classroom.id ? ' item_choosed_style' : (isclickBtn?' form_choosed_empty':'')}}">{{!!formData.classroom.id ? formData.classroom.name : '请选择'}}</view>
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label'>最大人数<text class='is_required'>*</text></view>
+            <view class='form_item_value'>
+              <input bindinput="maxNum" value="{{formData.maxNum}}" name='name' placeholder-class="{{ (isclickBtn && !(!!formData.maxNum)) ? 'placeholder_input_empty' : 'placeholder_input' }}" placeholder='请输入' type="number" />
+            </view>
+          </view>
+        </view>
+        <view class="form_box">
+          <view class='form_item'>
+            <view class='form_item_label'>主教姓名<text class='is_required'>*</text></view>
+            <view class='form_item_value' @tap="chooseType('tenantUser')">
+              <view class='picker'></view>
+              <view class="picker_placeholder{{formData.tenantUser.length > 0 ? ' item_choosed_style' : (isclickBtn?' form_choosed_empty':'')}}">{{!!formData.tenantUserShowName ? formData.tenantUserShowName : '请选择'}}</view>
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label'>助教姓名</view>
+            <view class='form_item_value' @tap="chooseType('tenantUser_f')">
+              <view class='picker'></view>
+              <view class="picker_placeholder{{formData.tenantUser_f.length > 0 ? ' item_choosed_style' : ''}}">{{!!formData.tenantUser_fShowName ? formData.tenantUser_fShowName : '请选择'}}</view>
+            </view>
+          </view>
+        </view>
+        <view class="form_box">
+          <view class='form_item'>
+            <view class='form_item_label'>排课方式<text class='is_required'>*</text></view>
+            <view class='form_item_value'>
+              <radio-group class="circel_radio has_border" @change="repeatableRadio">
+                <label class="radio">
+                      <radio value="0" checked="{{formData.repeatable == 0}}" disabled="{{type == 1}}" /> 单次
+                    </label>
+                <label class="radio">
+                      <radio value="1" checked="{{formData.repeatable == 1}}" disabled="{{type == 1}}" /> 循环
+                    </label>
+              </radio-group>
+            </view>
+          </view>
+          <!-- <view class = 'form_item' hidden="{{ formData.repeatable == 1 || (type == 1 && formData.repeatable == 1)}}"> -->
+          <view class='form_item' hidden="{{ formData.repeatable == 1 || type == 1}}">
+            <view class='form_item_label'>上课日期<text class='is_required'>*</text></view>
+            <view class='form_item_value'>
+              <picker mode="date" start="{{todayDate}}" bindchange="changeDate" value="{{currentDate}}">
+                <view class='picker'></view>
+                <view class="picker_placeholder{{!!formData.choosedDate ? ' item_choosed_style' : (( isclickBtn && type != 1)?' form_choosed_empty':'')}}">{{!!formData.choosedDate ? formData.choosedDate : '请选择'}}</view>
+              </picker>
+            </view>
+          </view>
+          <!-- <view class = 'form_item' hidden="{{ !(type == 1 && formData.repeatable == 1) }}"> -->
+          <view class='form_item' hidden="{{ type != 1  }}">
+            <view class='form_item_label'>星期选择</view>
+            <view class='form_item_value'>
+              <picker mode="selector" range="{{weekRange}}" bindchange="changeWeek">
+                <view class='picker'></view>
+                <view class="picker_placeholder{{formData.week.key != '0' ? ' item_choosed_style' : ''}}">{{formData.week.key != '0' ? formData.week.name : '请选择'}}</view>
+              </picker>
+            </view>
+          </view>
+          <view class='form_item form_lastChild' hidden="{{ formData.repeatable == 1 && type != 1}}">
+            <view class='form_item_label'>上课时间<text class='is_required'>*</text></view>
+            <view class='form_item_value'>
+              <picker mode="multiSelector" range="{{range}}" bindchange="changeTime">
+                <view class='picker'></view>
+                <view class="picker_placeholder{{!!formData.choosedTime ? ' item_choosed_style' : ((isclickBtn && type != 1)?' form_choosed_empty':'')}}">{{!!formData.choosedTime ? formData.choosedTime : '请选择'}}</view>
+              </picker>
+            </view>
+          </view>
+          <view hidden="{{ formData.repeatable == 0 || (type == 1 && formData.repeatable == 1)}}">
+            <view class='form_item'>
+              <view class='form_item_label'>上课周期<text class='is_required'>*</text></view>
+              <view class='form_item_value'>
+                <picker mode="date" start="{{todayDate}}" bindchange="cycleStartChange">
+                  <view class='picker'></view>
+                  <view class="picker_placeholder{{!!formData.cycle.start ? ' item_choosed_style' : (isclickBtn?' form_choosed_empty':'')}}">{{!!formData.cycle.start ? formData.cycle.start : '开始时间'}}</view>
+                </picker>
+              </view>
+              <view class='form_item_value'>
+                <picker mode="date" start="{{formData.cycle.start}}" bindchange="cycleEndChange">
+                  <view class='picker'></view>
+                  <view class="picker_placeholder{{!!formData.cycle.end ? ' item_choosed_style' : (isclickBtn?' form_choosed_empty':'')}}">{{!!formData.cycle.end ? formData.cycle.end : '结束时间'}}</view>
+                </picker>
+              </view>
+            </view>
+            <view class="form_item space_betwwen">
+              <checkbox-group bindchange="skipHoliday">
+                <label style="margin-right:10rpx;">
+                    <checkbox value="1" checked="" name="" color="#5D9CEC" /> 跳过节假日
+                  </label>
+              </checkbox-group>
+            </view>
+          </view>
+        </view>
+        <view class="form_box" hidden="{{ formData.repeatable == 0 || (type == 1 && formData.repeatable == 1)}}">
+          <repeat for="{{formData.cycleTime}}">
+            <view class='form_item'>
+              <view class='form_item_label'>上课时间<text class='is_required'>*</text></view>
+              <view class='form_item_value'>
+                <picker mode="multiSelector" range="{{cycleRange}}" bindchange="changeCycleTime({{index}})">
+                  <view class='picker'></view>
+                  <view class="picker_placeholder{{!!item.week ? ' item_choosed_style' : (isclickBtn?' form_choosed_empty':'')}}">{{!!item.week ? item.showWeek + ' ' +item.startTime+'-'+item.endTime : '请选择'}}</view>
+                </picker>
+              </view>
+              <view hidden="{{!item.week || formData.cycleTime.length == 1}}" class="form_item_delete" @tap="deleteCycleTime({{index}})"></view>
+            </view>
+          </repeat>
+          <view class="form_item">
+            <view class="form_item_addBtn" @tap="addCycleTime">添加</view>
+          </view>
+        </view>
+        <view class="form_box" hidden="{{ formData.repeatable == 0 ||(type == 1 && formData.repeatable == 1)}}">
+          <view class='form_item'>
+            <view class='form_item_label'>上课次数<text class='is_required'>*</text></view>
+            <view class='form_item_value'>
+              <input bindinput="courseNum" value='{{ formData.courseNum }}' placeholder-class="{{ (isclickBtn && !(!!formData.courseNum)) ? 'placeholder_input_empty' : 'placeholder_input' }}" placeholder='请输入' type="number" />
+            </view>
+          </view>
+        </view>
+        <view class="form_box">
+          <view class='form_item' @tap="turnMoreFn">
+            <view class='form_item_label writeMore'>{{turnMore ? '收起' : '填写更多（非必填）'}}</view>
+            <view class='form_item_value'></view>
+          </view>
+        </view>
+        <view class="form_box" hidden="{{!turnMore}}">
+          <view class='form_item'>
+            <view class='form_item_label'>上课主题</view>
+            <view class='form_item_value' @tap="chooseType('coursetheme')">
+              <view class='picker'></view>
+              <view class='picker_placeholder'>{{!!formData.coursetheme.id ? formData.coursetheme.name : '请选择'}}</view>
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label'>上课人数</view>
+            <view class='form_item_value'>
+              <input bindinput="maxAttNum" value="{{formData.maxAttNum}}" placeholder-class='placeholder_input' placeholder='不输入则不限制' type="number" />
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label'>补课人数</view>
+            <view class='form_item_value'>
+              <input bindinput="maxMulNum" value="{{formData.maxMulNum}}" placeholder-class='placeholder_input' placeholder='不输入则不限制' type="number" />
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label'>试听人数</view>
+            <view class='form_item_value'>
+              <input bindinput="maxTryNum" value="{{formData.maxTryNum}}" placeholder-class='placeholder_input' placeholder='不输入则不限制' type="number" />
+            </view>
+          </view>
+          <view class='form_item'>
+            <view class='form_item_label'>课程进度</view>
+            <view class='form_item_value' @tap="chooseType('process')">
+              <view class='picker'></view>
+              <view class='picker_placeholder'>{{!!formData.process.processPre ? formData.process.processPre+' '+formData.process.processSuf:'请选择'}}</view>
+            </view>
+          </view>
+        </view>
+        <view class="form_box">
+          <view class="form_item space_betwwen">
+            <checkbox-group bindchange="changeL">
+              <label style="margin-right:10rpx;">
+                  <checkbox value="bookCls" checked="{{formData.change_bookCls}}" name="" color="#5D9CEC" /> 允许家长自主约课
+                </label>
+              <label>
+                  <checkbox value="checkConflict" checked="checked" name="" color="#5D9CEC" /> 检查上课冲突
+                </label>
+            </checkbox-group>
+          </view>
+        </view>
+      </form>
+    </scroll-view>
+    <view>
+      <view hidden='{{ !shadeVisible }}' class='super_search_wrap' @tap="closeShade"></view>
+      <view class="{{ shadeVisible ? 'super_search_block open_superSearch' : 'super_search_block' }}">
+        <view class="choose_wrapper" hidden="{{ !isColorItem }}">
+          <view class="super_search_block_header">课表颜色</view>
+          <view style="padding:40rpx;">选择颜色：</view>
+          <view class="colorbox">
+            <repeat for="{{colorArr}}">
+              <view class="colorlist" style="background:{{item}}" @tap="chooseColorFn({{item}})"></view>
+            </repeat>
+          </view>
+          <view style="padding:40rpx;display:flex;">已选：
+            <view class="colorlist" style="background:{{formData.color}}"></view>
+          </view>
+        </view>
+        <view class="choose_wrapper" hidden="{{ isColorItem }}">
+          <view class="super_search_block_header">{{preparationType.name_CH}}</view>
+          <view hidden="{{ preparation.length !== 0 }}">
+            <blankDataPage title='暂无数据~' />
+          </view>
+          <scroll-view scroll-y class="{{(preparationType.name == 'tenantUser' || preparationType.name == 'tenantUser_f') ? 'super_search_scroll_hasBtn' : 'super_search_scroll' }}">
+            <view class="form_container height_auto noPadding noMargin" style="border-bottom:1px solid #e5e5e5;">
+              <view class="form_box noMargin">
+                <block wx:if="{{preparationType.name == 'courseName' || preparationType.name == 'classroom' || preparationType.name == 'coursetheme' }}">
+                  <radio-group bindchange="clickChooseTypeItemFn">
+                    <repeat for="{{preparation}}">
+                      <label class="form_item" @tap="tapradio({{item.id}})">
+                          <view class="form_item_label">{{preparationType.name == 'courseName' || preparationType.name == 'coursetheme'? item.title : item.name}}</view>
+                          <view class = 'form_item_value'>
+                            <radio class="radio" value="{{ item.id + ',' + ((preparationType.name == 'courseName'||preparationType.name == 'coursetheme') ? 	item.title : item.name)}}" checked="{{item.checked}}" color="#5D9CEC"/>
+                          </view>
+                        </label>
+                    </repeat>
+                  </radio-group>
+                </block>
+                <block wx:elif="{{preparationType.name == 'tenantUser' || preparationType.name == 'tenantUser_f'}}">
+                  <checkbox-group bindchange="clickChooseTypeItemFn">
+                    <repeat for="{{preparation}}">
+                      <label class="form_item">
+                          <view class="form_item_label">{{item.name}}</view>
+                          <view class = 'form_item_value'>
+                            <checkbox class="checkbox" value="{{ item.id + ',' + item.name}}" checked="{{item.checked}}" color="#5D9CEC"/>
+                          </view>
+                        </label>
+                    </repeat>
+                  </checkbox-group>
+                </block>
+                <block wx:elif="{{preparationType.name == 'process'}}">
+                  <view class="form_item">
+                    <view class="form_item_label">进度前缀</view>
+                    <view class='form_item_value'>
+                      <input bindinput="bindinputFn('processPre')" value="{{formData.process.processPre}}" name='name' placeholder-class='placeholder_input' placeholder='请输入' type="text" />
+                    </view>
+                  </view>
+                  <view class="form_item">
+                    <view class="form_item_label">当前进度</view>
+                    <view class='form_item_value'>
+                      <input bindinput="bindinputFn('processSuf')" value="{{formData.process.processSuf}}" name='name' placeholder-class='placeholder_input' placeholder='请输入' type="number" />
+                    </view>
+                  </view>
+                </block>
+              </view>
+            </view>
+          </scroll-view>
+          <view class='super_search_btn_group' hidden="{{!(preparationType.name == 'tenantUser' || preparationType.name == 'tenantUser_f' || preparationType.name == 'process')}}">
+            <button class='super_reset_btn' hover-class='btn_reset_hover' @tap="cancelFn">取消</button>
+            <button class='super_confirm_btn' hover-class='btn_save_hover' @tap="sureFn">确定</button>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="button_wrapper">
+      <button @tap="sourceScheduleBtnFn()">确定</button>
+    </view>
+    <arrange wx:if="{{ arrangeShow }}" :conflictinfo.sync="arrange" @showFn.user="changeShowFn"></arrange>
+  </view>
+</template>
+
+<style lang = "less" src = 'sourceScheduleForm.less' scoped>
+
+</style>
+<script>
+  import wepy from 'wepy'
+  import moment from 'moment'
+  import BlankDataPage from '../../../../components/blankDataPage/blankDataPage'
+  import createArrangeCourseConflict from './createArrangeCourseConflict'
+  import {
+    serviceRequest
+  } from '../../../../utils/request'
+  export default class SourceScheduleForm extends wepy.page {
+    config = {
+      navigationBarTitleText: '排课'
+    }
+    onShareAppMessage(res) {
+      return {
+        title: '闪闪云校, 一站式早教管理云平台',
+        path: '/pages/initPage/initPage',
+        imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+        success: function(res) {
+          wx.showToast({
+            title: '转发成功',
+            icon: 'success',
+            duration: 1000
+          })
+        },
+        fail: function(res) {}
+      }
+    }
+    data = {
+      click_radio: false,
+      calendarType: '',
+      currentDate: '',
+      weekRange: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
+      type: 0, //0 新建  1 编辑  2 复制
+      //检测冲突传递的数据
+      arrange: {},
+      arrangeShow: false,
+      todayDate: moment().format('YYYY-MM-DD'),
+      range: [],
+      cycleRange: [],
+      checkBox: [],
+      processData: {
+        processPre: '',
+        processSuf: ''
+      },
+      isclickBtn: false,
+      //表单信息
+      formData: {
+        cpmId: '',
+        courseTitle: '', //排课标题
+        color: '#1dafe4', //展示颜色
+        courseName: { //课程名称以及id
+          name: '',
+          id: ''
+        },
+        classroom: { //教室名称以及id
+          name: '',
+          id: ''
+        },
+        maxNum: '',
+        tenantUser: [],
+        tenantUserShowName: '',
+        tenantUser_f: [],
+        tenantUser_fShowName: '',
+        repeatable: 0, //0单次 1循环
+        choosedDate: '',
+        choosedTime: '',
+        cycle: {
+          start: '',
+          end: ''
+        },
+        skipHoliday: '1',
+        cycleTime: [{
+          week: '',
+          startTime: '',
+          endTime: '',
+          showWeek: ''
+        }],
+        courseNum: '',
+        coursetheme: {
+          name: '',
+          id: ''
+        },
+        maxAttNum: '',
+        maxMulNum: '',
+        maxTryNum: '',
+        process: {
+          processPre: '',
+          processSuf: ''
+        },
+        //changeL 自主约课和检查冲突
+        changeL: ['checkConflict'],
+        change_bookCls: false,
+        changeLC: false, //是否点击过
+        week: {
+          name: '',
+          key: '0'
+        },
+        holidayTimeList: []
+      },
+      //提交的信息
+      submitData: {
+        atids: "", //助教编号
+        bookCls: "", //是否允许自主约课 * 1:允许 2:不允许
+        checkConflict: "1", //是否检查冲突,0 不校验 1 校验
+        color: "", //颜色
+        courseId: "", //	课程编号
+        endDate: "", //结束日期
+        endTime: "", //结束时间
+        list: [], //周上课信息列表
+        maxAttNum: "", //最大人数
+        maxCreateNum: "0", //最大生成节数
+        maxMulNum: "", //最大补课人数
+        maxNum: "", //最大上课人数
+        maxTryNum: "", //最大试听人数
+        mtids: "", //主教编号
+        processPre: "", //进度前缀
+        processSuf: "", //进度后缀
+        repeatable: "", //是否重复, 0否,1是
+        roomId: "", //教室编号
+        skipHoliday: "", //跳过节假日
+        startCourseThemeId: "", //起始课程主题编号
+        startDate: "", //开始日期
+        startTime: "", //开始时间
+        title: "", //标题
+        cpmId: '',
+        cpdIds: ''
+      },
+      //遮罩开关
+      shadeVisible: false,
+      colorArr: [
+        '#523d87',
+        '#8e4090',
+        '#db3387',
+        '#e776c8',
+        '#7976e7',
+        '#1dafe4',
+        '#0b7a3b',
+        '#169f4e',
+        '#97c24a',
+        '#fbbc3c',
+        '#e76d39',
+        '#d62436',
+        '#d9c585',
+        '#9e612f',
+        '#772c1d'
+      ],
+      isColorItem: false,
+      preparation: [],
+      preparationType: {
+        name: '',
+        name_CH: ''
+      },
+      typeApi: [{
+          name: 'courseName',
+          name_CH: '课程名称',
+          url: '/ss-crm-provider/wx/cerp/course/summaryQuery',
+          data: {}
+        },
+        {
+          name: 'tenantUser',
+          name_CH: '主教姓名',
+          url: '/ss-crm-provider/wx/sysBase/tenantUser/summaryQuery',
+          data: {}
+        },
+        {
+          name: 'tenantUser_f',
+          name_CH: '助教姓名',
+          url: '/ss-crm-provider/wx/sysBase/tenantUser/summaryQuery',
+          data: {}
+        },
+        {
+          name: 'classroom',
+          name_CH: '教室',
+          url: '/ss-crm-provider/wx/sysBase/cerp/classroom/summaryQuery',
+          data: {}
+        },
+        {
+          name: 'coursetheme',
+          name_CH: '上课主题',
+          url: '/ss-crm-provider/wx/cerp/coursetheme/summayQuery',
+          data: {}
+        },
+        {
+          name: 'process',
+          name_CH: '课程进度',
+          url: ''
+        },
+        {
+          name: 'chooseWeek',
+          name_CH: '选择星期',
+          url: ''
+        }
+      ],
+      // 控制展开
+      turnMore: false
+    }
+    components = {
+      blankDataPage: BlankDataPage,
+      arrange: createArrangeCourseConflict
+    }
+    onLoad(option) {
+      //this.getWeekDays()
+      this.calendarType = option.calendarType;
+      this.currentDate = option.currentDate;
+      let hour = [];
+      let min = [];
+      for (let i = 0; i < 24; i++) {
+        hour.push(i.toString().length == 1 ? '0' + i + '时' : i + '时')
+      }
+      for (let i = 0; i < 60; i++) {
+        min.push(i.toString().length == 1 ? '0' + i + '分' : i + '分')
+      }
+      this.range.push(' ', hour, ':', min, '—', hour, ':', min, ' ')
+      this.cycleRange.push(['周日', '周一', '周二', '周三', '周四', '周五', '周六'], hour, ':', min, '—', hour, ':', min)
+      if (option.type == 1) { //编辑
+        this.type = 1;
+        wx.showLoading({
+          title: '加载中',
+          mask: true
+        })
+        this.submitData.week = '0'
+        let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cp/mainQueryBack`;
+        serviceRequest(url, {
+          cpdId: option.cpdId
+        }).then((ret) => {
+          wx.hideLoading()
+          if (ret && (ret.errorCode == 0)) {
+            this.submitData.cpmId = ret.cpmId;
+            this.submitData.cpdIds = option.cpdId;
+            //助教
+            if (!!ret.atids && ret.atids.length > 0) {
+              ret.atids.split(',').map((item, index) => {
+                this.formData.tenantUser_f.push({
+                  name: ret.atNames.split(',')[index],
+                  id: item
+                })
+              })
+              if (ret.atNames.split(',').length > 2) {
+                this.formData.tenantUser_fShowName = `${ret.atNames.split(',')[0]},${ret.atNames.split(',')[1]}...等${ret.atNames.split(',').length}人`
+              } else {
+                this.formData.tenantUser_fShowName = ret.atNames
+              }
+            }
+            //排课方式
+            this.formData.repeatable = ret.repeatable;
+            //颜色
+            this.formData.color = ret.color;
+            //课程名称
+            this.formData.courseName = {
+              name: ret.courseName,
+              id: ret.courseId
+            }
+            //上课人数
+            this.formData.maxAttNum = ret.maxAttNum == -1 ? '' : ret.maxAttNum;
+            //补课人数
+            this.formData.maxMulNum = ret.maxAttNum == -1 ? '' : ret.maxMulNum;
+            //试听人数
+            this.formData.maxTryNum = ret.maxTryNum == -1 ? '' : ret.maxTryNum;
+            //最大人数
+            this.formData.maxNum = ret.maxNum;
+            //主教
+            ret.mtids.split(',').map((item, index) => {
+              this.formData.tenantUser.push({
+                name: ret.mtNames.split(',')[index],
+                id: item
+              })
+            })
+            if (ret.mtNames.split(',').length > 2) {
+              this.formData.tenantUserShowName = `${ret.mtNames.split(',')[0]},${ret.mtNames.split(',')[1]}...等${ret.mtNames.split(',').length}人`
+            } else {
+              this.formData.tenantUserShowName = ret.mtNames
+            }
+            //教室名称
+            this.formData.classroom = {
+              name: ret.clsName,
+              id: ret.roomId
+            }
+            //课程标题
+            this.formData.courseTitle = ret.title;
+            //上课日期和时间
+            // switch(ret.list[0].week){
+            // 	case '7':
+            // 		this.formData.week={
+            // 			name:'周日',
+            // 			key:'7'
+            // 		}
+            // 		break;
+            // 	case '1':
+            // 		this.formData.week={
+            // 			name:'周一',
+            // 			key:'1'
+            // 		}
+            // 		break;
+            // 	case '2':
+            // 		this.formData.week={
+            // 			name:'周二',
+            // 			key:'2'
+            // 		}
+            // 		break;
+            // 	case '3':
+            // 		this.formData.week={
+            // 			name:'周三',
+            // 			key:'3'
+            // 		}
+            // 		break;
+            // 	case '4':
+            // 		this.formData.week={
+            // 			name:'周四',
+            // 			key:'4'
+            // 		}
+            // 		break;
+            // 	case '5':
+            // 		this.formData.week={
+            // 			name:'周五',
+            // 			key:'5'
+            // 		}
+            // 		break;
+            // 	case '6':
+            // 		this.formData.week={
+            // 			name:'周六',
+            // 			key:'6'
+            // 		}
+            // 		break;
+            // }
+            this.formData.choosedTime = ret.list[0].startTime + '-' + ret.list[0].endTime
+            // if(ret.repeatable == '0'){
+            // 	this.formData.choosedDate = ret.startDate
+            // 	this.formData.choosedTime=ret.startTime + '-' + ret.endTime
+            // }else{
+            // 	//星期
+            // 	switch(ret.list[0].week){
+            // 		case '7':
+            // 			this.formData.week={
+            // 				name:'周日',
+            // 				key:'7'
+            // 			}
+            // 			break;
+            // 		case '1':
+            // 			this.formData.week={
+            // 				name:'周一',
+            // 				key:'1'
+            // 			}
+            // 			break;
+            // 		case '2':
+            // 			this.formData.week={
+            // 				name:'周二',
+            // 				key:'2'
+            // 			}
+            // 			break;
+            // 		case '3':
+            // 			this.formData.week={
+            // 				name:'周三',
+            // 				key:'3'
+            // 			}
+            // 			break;
+            // 		case '4':
+            // 			this.formData.week={
+            // 				name:'周四',
+            // 				key:'4'
+            // 			}
+            // 			break;
+            // 		case '5':
+            // 			this.formData.week={
+            // 				name:'周五',
+            // 				key:'5'
+            // 			}
+            // 			break;
+            // 		case '6':
+            // 			this.formData.week={
+            // 				name:'周六',
+            // 				key:'6'
+            // 			}
+            // 			break;
+            // 	}
+            // 	this.formData.choosedTime=ret.list[0].startTime + '-' + ret.list[0].endTime
+            // }
+            this.formData.coursetheme = {
+              name: ret.courseTheme,
+              id: ret.courseThemeId == -1 ? '' : ret.courseThemeId
+            }
+            if (ret.bookCls == 1) {
+              this.formData.changeL.push('bookCls');
+              this.formData.change_bookCls = true;
+            }
+            if (this.formData.maxAttNum || this.formData.maxMulNum || this.formData.maxTryNum || this.formData.coursetheme.id) {
+              this.turnMore = true;
+            }
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+          }
+        })
+      } else if (option.type == 2) { //复制
+        this.type = 2;
+        wx.showLoading({
+          title: '加载中',
+          mask: true
+        })
+        this.submitData.week = '0'
+        let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cp/mainQueryBack`;
+        serviceRequest(url, {
+          cpdId: option.cpdId
+        }).then((ret) => {
+          wx.hideLoading()
+          if (ret && (ret.errorCode == 0)) {
+            //this.submitData.cpmId=ret.cpmId;
+            //this.submitData.cpdIds=option.cpdId;
+            if (!!ret.atids && ret.atids.length > 0) {
+              ret.atids.split(',').map((item, index) => {
+                this.formData.tenantUser_f.push({
+                  name: ret.atNames.split(',')[index],
+                  id: item
+                })
+              })
+              if (ret.atNames.length > 7) {
+                this.formData.tenantUser_fShowName = `${ret.atNames.substring(0,7)}...等${ret.atNames.split(',').length}人`
+              } else {
+                this.formData.tenantUser_fShowName = ret.atNames
+              }
+            }
+            this.formData.courseNum = ret.num
+            this.formData.color = ret.color;
+            this.formData.courseName = {
+              name: ret.courseName,
+              id: ret.courseId
+            }
+            if (ret.repeatable == 0) { //单次
+              this.formData.choosedDate = ret.endDate;
+              this.formData.choosedTime = ret.startTime + '-' + ret.endTime;
+            } else { //循环
+              this.formData.cycle = {
+                start: ret.startDate,
+                end: ret.endDate
+              }
+            }
+            if (ret.list.length > 0) {
+              this.formData.cycleTime = ret.list.map(res => {
+                let showWeek = ''
+                switch (res.week) {
+                  case '7':
+                    showWeek = '周日'
+                    break;
+                  case '1':
+                    showWeek = '周一'
+                    break;
+                  case '2':
+                    showWeek = '周二'
+                    break;
+                  case '3':
+                    showWeek = '周三'
+                    break;
+                  case '4':
+                    showWeek = '周四'
+                    break;
+                  case '5':
+                    showWeek = '周五'
+                    break;
+                  case '6':
+                    showWeek = '周六'
+                    break;
+                }
+                return {
+                  week: res.week == '7' ? '0' : res.week,
+                  startTime: res.startTime,
+                  endTime: res.endTime,
+                  showWeek: showWeek
+                }
+              });
+            }
+            this.formData.maxAttNum = ret.maxAttNum == -1 ? '' : ret.maxAttNum;
+            this.formData.maxMulNum = ret.maxAttNum == -1 ? '' : ret.maxMulNum;
+            this.formData.maxMulNum = ret.maxTryNum == -1 ? '' : ret.maxTryNum;
+            this.formData.maxNum = ret.maxNum;
+            ret.mtids.split(',').map((item, index) => {
+              this.formData.tenantUser.push({
+                name: ret.mtNames.split(',')[index],
+                id: item
+              })
+            })
+            if (ret.mtNames.length > 7) {
+              this.formData.tenantUserShowName = `${ret.mtNames.substring(0,7)}...等${ret.mtNames.split(',').length}人`
+            } else {
+              this.formData.tenantUserShowName = ret.mtNames
+            }
+            this.formData.repeatable = ret.repeatable
+            this.formData.classroom = {
+              name: ret.clsName,
+              id: ret.roomId
+            }
+            this.formData.courseTitle = ret.title;
+            if (this.formData.maxAttNum || this.formData.maxMulNum || this.formData.maxTryNum || this.formData.coursetheme.id) {
+              this.turnMore = true;
+            }
+            this.$apply();
+          } else {
+            wx.showModal({
+              content: ret.errorMessage || '网络异常',
+              showCancel: false,
+              confirmColor: '#5d9cec'
+            });
+          }
+        })
+      }
+    }
+    show() {}
+    methods = {
+      openShade(type) {
+        if (type === 'color') {
+          this.isColorItem = true;
+        } else {
+          this.isColorItem = false;
+        }
+        this.shadeVisible = true;
+      },
+      closeShade() {
+        let that = this;
+        this.shadeVisible = false;
+        setTimeout(() => {
+          that.preparation = [];
+          that.preparationType = {
+            name: '',
+            name_CH: ''
+          }
+        }, 500);
+      },
+      chooseColorFn(color) {
+        this.formData.color = color;
+        this.shadeVisible = false;
+      },
+      chooseType(e) {
+        this.preparationType.name = e;
+        this.typeApi.map(res => {
+          if (res.name === e) {
+            this.preparationType.name_CH = res.name_CH;
+            if (res.url != '') {
+              let url = `${ this.$parent.service.base_url }${res.url}`;
+              let param = {}
+              if (e == 'coursetheme') {
+                if (this.formData.courseName.id == '') {
+                  return;
+                }
+                param = {
+                  courseId: this.formData.courseName.id
+                }
+              }
+              if (Object.keys(res.data).length > 0 && e != 'coursetheme') {
+                let ret = res.data;
+                if (ret && (ret.errorCode == 0)) {
+                  this.preparation = [...ret.results.map(item => {
+                    if (e == 'courseName' || e == 'classroom' || e == 'coursetheme') {
+                      item['checked'] = item.id == this.formData[e].id
+                    } else if (e == 'tenantUser' || e == 'tenantUser_f') {
+                      for (let items of this.formData[e]) {
+                        if (item.id == items.id) {
+                          item['checked'] = true;
+                          break;
+                        } else {
+                          item['checked'] = false;
+                        }
+                      }
+                    }
+                    return item;
+                  })]
+                  this.$apply()
+                } else {
+                  wx.showModal({
+                    content: ret.errorMessage || '网络异常',
+                    showCancel: false,
+                    confirmColor: '#5d9cec'
+                  });
+                }
+              } else {
+                wx.showLoading({
+                  title: '加载中',
+                  mask: true
+                });
+                serviceRequest(url, param).then((ret) => {
+                  res.data = ret;
+                  wx.hideLoading();
+                  if (ret && (ret.errorCode == 0)) {
+                    this.preparation = [...ret.results.map(item => {
+                      if (e == 'courseName' || e == 'classroom' || e == 'coursetheme') {
+                        item['checked'] = item.id == this.formData[e].id
+                      } else if (e == 'tenantUser' || e == 'tenantUser_f') {
+                        for (let items of this.formData[e]) {
+                          if (item.id == items.id) {
+                            item['checked'] = true;
+                            break;
+                          } else {
+                            item['checked'] = false;
+                          }
+                        }
+                      }
+                      return item;
+                    })]
+                    this.$apply()
+                  } else {
+                    wx.showModal({
+                      content: ret.errorMessage || '网络异常',
+                      showCancel: false,
+                      confirmColor: '#5d9cec'
+                    });
+                  }
+                })
+              }
+            } else {
+              if (res.name == 'process') {
+                this.preparation = {
+                  processPre: this.formData.process.processPre,
+                  processSuf: this.formData.process.processSuf
+                }
+              }
+            }
+          }
+        })
+        this.shadeVisible = true;
+        this.isColorItem = false;
+      },
+      clickChooseTypeItemFn(e) {
+        let that = this;
+        let type = this.preparationType.name;
+        let value = e.detail.value;
+        if (type == 'courseName' || type == 'classroom' || type == 'coursetheme') {
+          if (type == 'coursetheme') {
+            this.click_radio = true;
+          }
+          if (type == 'courseName') {
+            this.formData.coursetheme = {
+              name: '',
+              id: ''
+            }
+          }
+          this.formData[type].name = value.split(',')[1];
+          this.formData[type].id = value.split(',')[0];
+          this.shadeVisible = false;
+          setTimeout(() => {
+            that.preparation = [];
+            that.preparationType = {
+              name: '',
+              name_CH: ''
+            }
+          }, 500);
+        } else {
+          this.checkBox = value
+        }
+      },
+      cancelFn() {
+        let that = this;
+        this.shadeVisible = false;
+        setTimeout(() => {
+          that.preparation = [];
+          that.preparationType = {
+            name: '',
+            name_CH: ''
+          }
+        }, 500);
+      },
+      sureFn() {
+        let that = this;
+        if (this.preparationType.name == 'process') {
+          this.formData.process = this.processData
+        } else {
+          this.formData[this.preparationType.name] = [];
+          let showName = '';
+          this.checkBox.map(res => {
+            this.formData[this.preparationType.name].push({
+              name: res.split(',')[1],
+              id: res.split(',')[0]
+            })
+            showName += `${res.split(',')[1]},`
+          })
+          if (showName.length > 7) {
+            showName = `${showName.substring(0,7)}...等${this.formData[this.preparationType.name].length}人`
+          } else if (showName.length <= 7 && showName.charAt(showName.length - 1) == ',') {
+            showName = showName.substring(0, showName.length - 1)
+          }
+          this.formData[`${this.preparationType.name}ShowName`] = showName;
+        }
+        this.shadeVisible = false;
+        setTimeout(() => {
+          that.preparation = [];
+          that.preparationType = {
+            name: '',
+            name_CH: ''
+          }
+        }, 500);
+      },
+      // 选择日期
+      changeDate(e) {
+        this.formData.choosedDate = e.detail.value
+      },
+      changeTime(e) {
+        this.formData.choosedTime = (e.detail.value[1] >= 10 ? e.detail.value[1] : '0' + e.detail.value[1]) + ':' + (e.detail.value[3] >= 10 ? e.detail.value[3] : '0' + e.detail.value[3]) + '-' + (e.detail.value[5] >= 10 ? e.detail.value[5] : '0' + e.detail.value[5]) + ':' + (e.detail.value[7] >= 10 ? e.detail.value[7] : '0' + e.detail.value[7])
+      },
+      turnMoreFn() {
+        this.turnMore = !this.turnMore
+      },
+      cycleStartChange(e) {
+        this.formData.cycle.start = e.detail.value
+        if (this.formData.cycle.end) {
+          let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/sysBase/holiday/listByTime`;
+          let params = {
+            beginTime: this.formData.cycle.start,
+            endTime: this.formData.cycle.end
+          }
+          serviceRequest(url, params).then((ret) => {
+            if (ret && (ret.errorCode == 0)) {
+              this.formData.holidayTimeList = ret.list;
+              let num = 0;
+              this.formData.cycleTime.map(ret => {
+                if (ret.week) {
+                  num += this.getWeekDays(this.formData.cycle.start, this.formData.cycle.end, ret.week, this.formData.holidayTimeList)
+                }
+              })
+              this.formData.courseNum = num;
+              this.$apply()
+            } else {
+              wx.showModal({
+                content: ret.errorMessage || '网络异常',
+                showCancel: false,
+                confirmColor: '#5d9cec'
+              });
+            }
+          })
+        }
+      },
+      cycleEndChange(e) {
+        this.formData.cycle.end = e.detail.value
+        if (this.formData.cycle.start) {
+          let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/sysBase/holiday/listByTime`;
+          let params = {
+            beginTime: this.formData.cycle.start,
+            endTime: this.formData.cycle.end
+          }
+          serviceRequest(url, params).then((ret) => {
+            if (ret && (ret.errorCode == 0)) {
+              this.formData.holidayTimeList = ret.list;
+              let num = 0;
+              this.formData.cycleTime.map(ret => {
+                if (ret.week) {
+                  num += this.getWeekDays(this.formData.cycle.start, this.formData.cycle.end, ret.week, this.formData.holidayTimeList)
+                }
+              })
+              this.formData.courseNum = num;
+              this.$apply()
+            } else {
+              wx.showModal({
+                content: ret.errorMessage || '网络异常',
+                showCancel: false,
+                confirmColor: '#5d9cec'
+              });
+            }
+          })
+        }
+      },
+      changeCycleTime(index, e) {
+        let value = e.detail.value
+        this.formData.cycleTime[index].week = value[0] == 0 ? "7" : value[0].toString()
+        this.formData.cycleTime[index].startTime = `${value[1]>9?value[1]:'0'+value[1]}:${value[3]>9?value[3]:'0'+value[3]}`
+        this.formData.cycleTime[index].endTime = `${value[5]>9?value[5]:'0'+value[5]}:${value[7]>9?value[7]:'0'+value[7]}`
+        switch (value[0]) {
+          case 0:
+            this.formData.cycleTime[index].showWeek = '周日'
+            break;
+          case 1:
+            this.formData.cycleTime[index].showWeek = '周一'
+            break;
+          case 2:
+            this.formData.cycleTime[index].showWeek = '周二'
+            break;
+          case 3:
+            this.formData.cycleTime[index].showWeek = '周三'
+            break;
+          case 4:
+            this.formData.cycleTime[index].showWeek = '周四'
+            break;
+          case 5:
+            this.formData.cycleTime[index].showWeek = '周五'
+            break;
+          case 6:
+            this.formData.cycleTime[index].showWeek = '周六'
+            break;
+        }
+        let num = 0;
+        this.formData.cycleTime.map(ret => {
+          if (ret.week) {
+            num += this.getWeekDays(this.formData.cycle.start, this.formData.cycle.end, ret.week, this.formData.holidayTimeList)
+          }
+        })
+        this.formData.courseNum = num;
+      },
+      addCycleTime() {
+        this.formData.cycleTime.push({
+          week: '',
+          startTime: '',
+          endTime: '',
+          showWeek: ''
+        })
+      },
+      deleteCycleTime(index) {
+        let that = this;
+        wx.showModal({
+          title: '确定要删除吗？',
+          content: '',
+          confirmColor: '#000000',
+          success(res) {
+            if (res.confirm) {
+              that.formData.cycleTime.splice(index, 1)
+              let num = 0;
+              that.formData.cycleTime.map(ret => {
+                if (ret.week) {
+                  num += that.getWeekDays(that.formData.cycle.start, that.formData.cycle.end, ret.week, that.formData.holidayTimeList)
+                }
+              })
+              that.formData.courseNum = num;
+              that.$apply();
+            }
+          },
+          fail() {
+          }
+        })
+      },
+      bindinputFn(e, val) {
+        this.processData[e] = val.detail.value
+      },
+      changeWeek(e) {
+        switch (e.detail.value) {
+          case '0':
+            this.formData.week = {
+              name: '周日',
+              key: '7'
+            }
+            break;
+          case '1':
+            this.formData.week = {
+              name: '周一',
+              key: '1'
+            }
+            break;
+          case '2':
+            this.formData.week = {
+              name: '周二',
+              key: '2'
+            }
+            break;
+          case '3':
+            this.formData.week = {
+              name: '周三',
+              key: '3'
+            }
+            break;
+          case '4':
+            this.formData.week = {
+              name: '周四',
+              key: '4'
+            }
+            break;
+          case '5':
+            this.formData.week = {
+              name: '周五',
+              key: '5'
+            }
+            break;
+          case '6':
+            this.formData.week = {
+              name: '周六',
+              key: '6'
+            }
+            break;
+        }
+      },
+      sourceScheduleBtnFn() {
+        let that = this;
+        this.isclickBtn = true;
+        if (!(!!this.formData.courseTitle)) {
+          wx.showToast({
+            title: '请填写排课标题',
+            icon: 'none'
+          })
+          return;
+        }
+        if (!(!!this.formData.courseName.id)) {
+          wx.showToast({
+            title: '请选择课程名称',
+            icon: 'none'
+          })
+          return;
+        }
+        if (!(!!this.formData.classroom.id)) {
+          wx.showToast({
+            title: '请选择上课教室',
+            icon: 'none'
+          })
+          return;
+        }
+        if (!(!!this.formData.maxNum)) {
+          wx.showToast({
+            title: '请填写最大人数',
+            icon: 'none'
+          })
+          return;
+        }
+        if (this.formData.tenantUser.length === 0) {
+          wx.showToast({
+            title: '请选择主教姓名',
+            icon: 'none'
+          })
+          return;
+        }
+        if (this.formData.repeatable == '0' && !(!!this.formData.choosedDate) && this.type != 1) {
+          wx.showToast({
+            title: '请选择上课日期',
+            icon: 'none'
+          })
+          return;
+        }
+        if (this.formData.repeatable == '0' && !(!!this.formData.choosedTime) && this.type != 1) {
+          wx.showToast({
+            title: '请选择上课时间',
+            icon: 'none'
+          })
+          return;
+        }
+        if (this.formData.repeatable == '1' && this.type != 1 && !(!!this.formData.cycle.start && !!this.formData.cycle.end)) {
+          wx.showToast({
+            title: '请选择上课周期',
+            icon: 'none'
+          })
+          return;
+        }
+        if (this.formData.repeatable == '1' && this.type != 1) {
+          let turn = false;
+          this.formData.cycleTime.map(res => {
+            if (!(!!res.startTime)) {
+              turn = true;
+            }
+          })
+          if (turn) {
+            wx.showToast({
+              title: '请选择上课时间',
+              icon: 'none'
+            })
+            return;
+          }
+        }
+        if (this.formData.repeatable == '1' && this.type != 1 && !(!!this.formData.courseNum)) {
+          wx.showToast({
+            title: '请填写上课次数',
+            icon: 'none'
+          })
+          return;
+        }
+        //判断上课补课试听总人数和最大人数比
+        if (parseInt(this.formData.maxAttNum ? this.formData.maxAttNum : 0) + parseInt(this.formData.maxMulNum ? this.formData.maxMulNum : 0) + parseInt(this.formData.maxTryNum ? this.formData.maxTryNum : 0) > parseInt(this.formData.maxNum ? this.formData.maxNum : 0)) {
+          wx.showToast({
+            title: '上课、补课、试听总人数不能超过最大人数',
+            icon: 'none'
+          })
+          return;
+        }
+        //判断结束时间和开始时间
+        let startT = this.formData.choosedDate + ' ' + this.formData.choosedTime.split('-')[0];
+        let endT = this.formData.choosedDate + ' ' + this.formData.choosedTime.split('-')[1];
+        let timeT = false;
+        if (this.formData.repeatable == '0') {
+          if (moment(endT).isBefore(startT) || moment(endT).isSame(startT)) {
+            timeT = true;
+            wx.showToast({
+              title: '结束时间不能小于或等于开始时间',
+              icon: 'none'
+            })
+            return;
+          }
+        } else if (this.formData.repeatable == '1' && this.type != 1) {
+          this.formData.cycleTime.map(res => {
+            if (moment(this.formData.cycle.start + ' ' + res.endTime).isBefore(this.formData.cycle.start + ' ' + res.startTime) || moment(this.formData.cycle.start + ' ' + res.endTime).isSame(this.formData.cycle.start + ' ' + res.startTime)) {
+              timeT = true;
+              wx.showToast({
+                title: '结束时间不能小于或等于开始时间',
+                icon: 'none'
+              })
+              return;
+            }
+          })
+        }
+        if (timeT) {
+          return;
+        }
+        //判断主教和助教是否包含同一个人
+        let arr1 = new Set(this.formData.tenantUser.map(res => res.id));
+        let arr2 = new Set(this.formData.tenantUser_f.map(res => res.id));
+        let intersect = [...new Set([...arr1].filter(n => arr2.has(n)))]
+        if (intersect.length > 0) {
+          wx.showToast({
+            title: '主教和助教不能包含同一人',
+            icon: 'none'
+          })
+          return;
+        }
+        this.submitData.atids = this.formData.tenantUser_f.length == 0 ? "" : [...this.formData.tenantUser_f.map(res => {
+          return res.id
+        })].toString()
+        if (this.formData.changeL.length == 0) {
+          this.submitData.bookCls = '2'
+          this.submitData.checkConflict = '0'
+        } else if (this.formData.changeL.length == 2) {
+          this.submitData.bookCls = '1'
+          this.submitData.checkConflict = '1'
+        } else if (this.formData.changeL.length == 1) {
+          this.formData.changeL.map(res => {
+            if (res == 'bookCls') {
+              this.submitData.bookCls = '1'
+              this.submitData.checkConflict = '0'
+            }
+            if (res == 'checkConflict') {
+              this.submitData.bookCls = '2'
+              this.submitData.checkConflict = '1'
+            }
+          })
+        }
+        // if(!this.changeLC && this.type == 1){
+        // 	this.submitData.bookCls=''
+        // 	this.submitData.checkConflict=''
+        // }
+        this.submitData.color = this.formData.color;
+        this.submitData.courseId = this.formData.courseName.id;
+        if (this.type != 1) { //新建 复制
+          if (this.formData.repeatable == 0) {
+            this.submitData.endDate = this.formData.choosedDate;
+            this.submitData.endTime = this.formData.choosedTime.split('-')[1];
+            this.submitData.startDate = this.formData.choosedDate;
+            this.submitData.startTime = this.formData.choosedTime.split('-')[0];
+          } else {
+            this.submitData.endDate = this.formData.cycle.end;
+            this.submitData.endTime = '00:00';
+            this.submitData.startDate = this.formData.cycle.start;
+            this.submitData.startTime = '00:00';
+          }
+        } else { //编辑
+          if (this.formData.repeatable == 0) { //编辑单次排课需要提交日期
+            this.submitData.startDate = this.formData.choosedDate;
+            this.submitData.endDate = this.formData.choosedDate;
+          }
+          this.submitData.startTime = this.formData.choosedTime.split('-')[0];
+          this.submitData.endTime = this.formData.choosedTime.split('-')[1];
+        }
+        if (!!this.formData.cycleTime[0].week) {
+          this.submitData.list = [...this.formData.cycleTime.map(res => {
+            if (!!res.week) {
+              return {
+                week: res.week,
+                startTime: res.startTime,
+                endTime: res.endTime
+              };
+            }
+          })];
+        } else {
+          this.submitData.list = [];
+        }
+        this.submitData.maxAttNum = !!this.formData.maxAttNum ? this.formData.maxAttNum : '-1';
+        this.submitData.maxCreateNum = !!this.formData.courseNum ? this.formData.courseNum : '0';
+        this.submitData.maxMulNum = !!this.formData.maxMulNum ? this.formData.maxMulNum : '-1';
+        this.submitData.maxNum = this.formData.maxNum;
+        this.submitData.maxTryNum = !!this.formData.maxTryNum ? this.formData.maxTryNum : '-1';
+        this.submitData.mtids = [...this.formData.tenantUser.map(res => {
+          return res.id
+        })].toString()
+        this.submitData.processPre = this.formData.process.processPre;
+        this.submitData.processSuf = this.formData.process.processSuf;
+        this.submitData.repeatable = this.formData.repeatable;
+        this.submitData.roomId = this.formData.classroom.id;
+        this.submitData.skipHoliday = this.formData.skipHoliday;
+        this.submitData.startCourseThemeId = this.formData.coursetheme.id;
+        this.submitData.title = this.formData.courseTitle;
+        if (this.type == 0 || this.type == 2) {
+          let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cp/create`
+          wx.showLoading({
+            title: '数据提交中',
+            mask: true
+          });
+          serviceRequest(url, this.submitData).then((ret) => {
+            wx.hideLoading();
+            if (ret && (ret.errorCode == 0)) {
+              wx.showToast({
+                title: '排课成功',
+                icon: 'success',
+                duration: 1000
+              })
+              setTimeout(() => {
+                // 获取当前的页面栈
+                let pages = getCurrentPages();
+                // 获取上一级页面，即pageA的page对象
+                let prevPage = pages[pages.length - 2];
+                prevPage.onLoad({
+                  currentDate: this.currentDate,
+                  calendarType: this.calendarType
+                });
+                wx.navigateBack({
+                  delta: 1
+                })
+              }, 1000)
+            } else if (ret.errorCode == 110212) { //冲突展示
+              this.arrange = ret;
+              //this.arrange = ret;
+              that.arrangeShow = true;
+              this.$apply();
+            } else {
+              wx.showModal({
+                content: ret.errorMessage || '网络异常',
+                showCancel: false,
+                confirmColor: '#5d9cec'
+              });
+            }
+          })
+        } else if (this.type == 1) { //编辑
+          // if(this.formData.repeatable == '1'){
+          // 	this.submitData.week=this.formData.week.key;
+          // }
+          this.submitData.week = this.formData.week.key;
+          let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cp/update`
+          wx.showLoading({
+            title: '数据提交中'
+          });
+          serviceRequest(url, this.submitData).then((ret) => {
+            wx.hideLoading();
+            if (ret && (ret.errorCode == 0)) {
+              wx.showToast({
+                title: '编辑成功',
+                icon: 'success',
+                duration: 1000
+              })
+              setTimeout(() => {
+                // 获取当前的页面栈
+                let pages = getCurrentPages();
+                // 获取上一级页面，即pageA的page对象
+                let prevPage = pages[pages.length - 2];
+                prevPage.onLoad({
+                  currentDate: this.currentDate,
+                  calendarType: this.calendarType
+                });
+                wx.navigateBack({
+                  delta: 1
+                })
+              }, 1000)
+            } else if (ret.errorCode == 110212) { //冲突展示
+              this.arrange = ret;
+              //this.arrange = ret;
+              that.arrangeShow = true;
+              this.$apply();
+            } else {
+              wx.showModal({
+                content: ret.errorMessage || '网络异常',
+                showCancel: false,
+                confirmColor: '#5d9cec'
+              });
+            }
+          })
+        }
+      },
+      maxNum(e) {
+        this.formData.maxNum = e.detail.value;
+      },
+      maxAttNum(e) {
+        this.formData.maxAttNum = e.detail.value
+      },
+      maxMulNum(e) {
+        this.formData.maxMulNum = e.detail.value
+      },
+      maxTryNum(e) {
+        this.formData.maxTryNum = e.detail.value
+      },
+      courseTitle(e) {
+        this.formData.courseTitle = e.detail.value
+      },
+      changeL(e) {
+        this.changeLC = true;
+        if (e.detail.value.includes('bookCls')) {
+          this.formData.change_bookCls = true;
+        } else {
+          this.formData.change_bookCls = false;
+        }
+        this.formData.changeL = e.detail.value
+      },
+      courseNum(e) {
+        this.formData.courseNum = e.detail.value
+      },
+      skipHoliday(e) {
+        this.formData.skipHoliday = e.detail.value.length == 1 ? '1' : '0'
+        // if(this.formData.skipHoliday == 1){
+        // 	let url = `${ this.$parent.service.base_url }/ss-crm-provider/miniapp/sysBase/holiday/listByTime`;
+        // 	let params = {
+        // 		beginTime : 
+        // 	}
+        // }
+      },
+      changeShowFn(boo, evt) {
+        this.arrangeShow = boo;
+      },
+      tapradio(id) {
+        let type = this.preparationType.name;
+        if (type == 'coursetheme') {
+          if (this.formData[type].id == id && !this.click_radio) {
+            this.formData[type].name = '';
+            this.formData[type].id = '';
+            this.shadeVisible = false;
+            setTimeout(() => {
+              this.preparation = [];
+              this.preparationType = {
+                name: '',
+                name_CH: ''
+              }
+            }, 500);
+          }
+          this.click_radio = false;
+        }
+      },
+      repeatableRadio(e) {
+        this.formData.repeatable = e.detail.value;
+      }
+    }
+    //获取上课次数
+    //课程名称
+    getCourseName() {
+      let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/course/summaryQuery`;
+      serviceRequest(url, {}).then((ret) => {
+        if (ret && (ret.errorCode == 0)) {
+          this.preparation = [...ret.results]
+          this.$apply()
+        } else {
+          wx.showModal({
+            content: ret.errorMessage || '网络异常',
+            showCancel: false,
+            confirmColor: '#5d9cec'
+          });
+        }
+      })
+    }
+    /*
+     *计算二个日期间有几个星期一到星期日
+     *date_sta及date_end需是Date型参数
+     */
+    getWeekDays(startDate, endDate, weekNum, hDay) {
+      let nstartDate = startDate.replace(/-/g, "/");
+      let nendDate = endDate.replace(/-/g, "/");
+      var date_sta = new Date(nstartDate)
+      var date_end = new Date(nendDate)
+      if (date_sta > date_end) {
+        throw new error('开始日期不能大于结束日期') //eslint-disable-line
+        return //eslint-disable-line
+      }
+      var days = (date_end - date_sta) / 1000 / 60 / 60 / 24 + 1 // 二个日期相关得到天数  一共几天
+      var sta_week_day = date_sta.getDay() // 返回星期几（星期日为0，星期一为1...星期六为6   开始时间是周几
+      var weeks = Math.floor(days / 7) // 有几周
+      var day = days % 7 // 对7取余
+      var weekday = []
+      weekday[0] = weekday[1] = weekday[2] = weekday[3] = weekday[4] = weekday[5] = weekday[6] = weeks
+      for (var i = 0; i < day; i++) {
+        var n = (sta_week_day + i) % 7
+        weekday[n]++
+      }
+      // 节假日减去
+      hDay &&
+        hDay.forEach(item => {
+          if (hDay.length > 0 && moment(item).isBetween(startDate, endDate)) {
+            const index = moment(item).day()
+            weekday[index]--
+          }
+        })
+      switch (weekNum) {
+        case '7':
+          return weekday[0]
+          break //eslint-disable-line
+        case '1':
+          return weekday[1]
+          break //eslint-disable-line
+        case '2':
+          return weekday[2]
+          break //eslint-disable-line
+        case '3':
+          return weekday[3]
+          break //eslint-disable-line
+        case '4':
+          return weekday[4]
+          break //eslint-disable-line
+        case '5':
+          return weekday[5]
+          break //eslint-disable-line
+        case '6':
+          return weekday[6]
+          break //eslint-disable-line
+        default:
+          return {
+            Sun: weekday[0],
+            Mon: weekday[1],
+            Tues: weekday[2],
+            Wed: weekday[3],
+            Thur: weekday[4],
+            Fri: weekday[5],
+            Sat: weekday[6]
+          }
+          break //eslint-disable-line
+      }
+    }
+  }
+</script>

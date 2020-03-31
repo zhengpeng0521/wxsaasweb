@@ -1,0 +1,44 @@
+<style lang="less" src="./refresh.less"></style>
+  <template>
+  <view>
+    <!-- <view class="weui-loadmore" wx:if='{{refmove.isRefreshing}}' animation="{{refmove.animation}}" style="height:{{refmove.hei}}rpx"> -->
+    <view
+      class="weui-loadmore"
+      wx:if='{{refmove.isRefreshing}}'
+      style="height:{{refmove.hei}}rpx;"
+    >
+      <image
+        hidden='{{!refmove.succee}}'
+        class='succee'
+        src='http://img.ishanshan.com/gimg/user/n///274123782828851201.png'
+      />
+      <image
+        hidden='{{refmove.succee}}'
+        class='weui-loading'
+        src='http://img.ishanshan.com/gimg/user/n///274031351005446145.png'
+      />
+      <view class="weui-loadmore-tips">{{refmove.con}}</view>
+    </view>
+    <slot></slot>
+    <!-- <view class="weui-loadmore" wx:if='{{refmove.isbottoming}}'>
+      <image wx:if='{{refmove.succeeb}}' class='succee' src='http://img.ishanshan.com/gimg/user/n///272995997297147905.png'/>
+      <image wx:else class='weui-loading' src='http://img.ishanshan.com/gimg/user/n///272997101674168321.png' />
+      <view class="weui-loadmore-tips">{{refmove.con}}</view>
+    </view> -->
+  </view>
+</template>
+  <script>
+import wepy from 'wepy'
+export default class refresh extends wepy.component {
+  options = {
+    multipleSlots: true // 在组件定义时的选项中启用多slot支持
+  }
+  props = {
+    refmove: {
+      type: Object,
+      default: {},
+      twoWay: true
+    }
+  }
+}
+</script>

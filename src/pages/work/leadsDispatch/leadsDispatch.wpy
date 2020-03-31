@@ -1,0 +1,111 @@
+<style lang = "less" src = 'leadsDispatch.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import { serviceRequest } from '../../../utils/request';
+
+	export default class LeadsDispatch extends wepy.page {
+		config = {
+			navigationBarTitleText : '选择销售'
+		}
+
+		data = {
+			sellerSelectList    : [],             //销售 列表
+			length              : 0,             //所要分配的 名单
+			sellerId            : undefined,      //所选销售
+
+			loading             : false,
+			btnDisabled         : true,
+			routeType: null,   //前个页面是谁
+		}
+
+		methods = {
+			//选择要分配的销售
+			selectSeller( e ){
+				this.sellerId = e.detail.value;
+				for( let i = 0; i < this.sellerSelectList.length; i++ ){
+					let item = this.sellerSelectList[i];
+					if( e.detail.value == item.sellerId ){
+						this.sellerName = item.sellerName;
+						break;
+					}
+				}
+				if( !!this.btnDisabled ){
+					this.btnDisabled = false
+				}
+			},
+
+			//确认分配 销售
+			clickToConfirmSeller(){
+				if( !!this.sellerId ){
+					this.loading = true;
+					let base_url = this.$parent.service.base_url;
+					let sellerId = this.sellerId;
+					let sellerName = this.sellerName;
+					let stuIds = this.stuIds;
+					let url = `${ base_url }/ss-crm-provider/wx/clue/allotLeads`;
+					let key = this.condition == 'my' ? 'crm_leads_mine' : '';                    //我的名单
+
+					serviceRequest( url, { sellerId, stuIds } ).then(( ret ) => {
+						if( ret && ret.errorCode === 0 ){
+							this.loading = false;
+							wx.showToast({ title : '分配成功', icon : 'success', duration : 1000 });
+							setTimeout(() => {
+								wx.navigateBack({
+									url : `../leadsList/leadsList`
+								});
+							}, 1000);
+							wx.setStorageSync( 'sellerNameDispatch', sellerName );  //将所分配的销售存下来 用来替换名单列表的负责人
+						}else{
+							this.loading = false;
+							wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+						}
+					});
+				}else{
+					wx.showModal({ content : '请选择销售', showCancel : false, confirmColor : '#5d9cec' });
+				}
+			}
+		}
+
+		onLoad( params ){
+			this.sellerSelectList = this.$parent._init_data.sellerSelectList;     //销售 下拉列表
+			this.stuIds = params.stuIds;
+			this.length = params.num;
+			this.routeType = params.routeType
+		}
+
+		onShow(){
+			//可分配数变化 更新销售 下拉列表
+			serviceRequest( `${ this.$parent.service.base_url }/ss-crm-provider/wx/my/common/sellerSummary` ).then(( ret ) => {
+				if( !!ret && ret.errorCode === 0 ){
+					this.$parent._init_data.sellerSelectList = ret.results;
+					this.sellerSelectList = ret.results;
+					this.$apply();
+				}
+			});
+		}
+	}
+</script>
+
+<template>
+	<view class = 'container' >
+		<view class = 'select_header' >本次将分配{{ length }}个名单</view>
+		<view class = 'select_content' >
+			<radio-group name = 'addType' bindchange = 'selectSeller' >
+				<repeat for = '{{ sellerSelectList }}'>
+					<label class = 'select_item_item' >
+						<radio style = 'display : none' disabled = '{{ item.notAllotNum < length && item.notAllotNum !== -1 }}' color = "#5d9cec" value = '{{ item.sellerId }}' checked = '{{ item.checked }}' />
+						<view class = "{{ (item.notAllotNum < length && item.notAllotNum !== -1) ? 'select_item_value select_item_value_disabled' : 'select_item_value' }}" ><text class = "{{ (item.notAllotNum < length && item.notAllotNum !== -1) ? 'select_item_name select_item_name_disabled' : 'select_item_name' }}" >{{ item.sellerName }}</text><text hidden = "{{ item.notAllotNum == -1 }}" class = 'select_item_tip' >( 可分配 : {{ item.notAllotNum }} )</text>
+							<view hidden = '{{ sellerId != item.sellerId }}' class = 'item_selected' ></view>
+						</view>
+					</label>
+				</repeat>
+			</radio-group>
+		</view>
+		<view class = 'select_confirm_btn' >
+			<button disabled = '{{ loading || btnDisabled }}' loading = '{{ loading }}' class = "{{ btnDisabled ? 'btn_save_disabled' : 'btn_save' }}" hover-class = 'btn_save_hover' @tap = 'clickToConfirmSeller' >
+				确认
+			</button>
+		</view>
+	</view>
+</template>

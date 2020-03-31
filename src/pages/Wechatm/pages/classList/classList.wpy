@@ -1,0 +1,289 @@
+<style lang = "less" src = 'classList.less' ></style>
+<script>
+import wepy from 'wepy'
+import { serviceRequestJson } from '../../../../utils/request'
+import CommonSearch from '../../../../components/commonSearch/commonSearch'
+import BlankDataPage from '../../../../components/blankDataPage/blankDataPage'
+import Refresh from '../../../../components/refresh/refresh'
+
+export default class LeadsList extends wepy.page {
+  config = {
+    navigationBarTitleText: '班级列表',
+    disableScroll: true
+  }
+  components = {
+    commonSearch: CommonSearch,
+    blankDataPage: BlankDataPage,
+    refresh: Refresh
+  }
+  data = {
+    scrollTop: 0,
+    listtrue: false,
+    list: [], // 列表数据
+    resultCount: 0, // 列表数据总数
+    searchLoading: false, // 下拉记载更多
+    searchLoadingComplete: false,  // 加载完毕
+    listTop: 0,
+    offsetTop: 0,
+    topDis: 0,
+    placeholder: '搜索班级',  // 搜索属性
+    stuNameMobile: undefined,  // 手机号或姓名搜索
+    heistart: 0,
+    heimove: 0,
+    getListFlag: false,
+    getListparams: {
+      pageIndex: 0,
+      pageSize: 20,
+      className: ''
+    },
+    refmove: {
+      isRefreshing: false,
+      hei: 0,
+      con: '',
+      succee: false
+    },
+    org_id: null,
+    tenant_id: null,
+    user_id: null
+  }
+  // 请求列表数据
+  async getClassesList(params, refresf) {
+    this.searchLoadingComplete = false
+    let url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/classesList`
+    const res = await serviceRequestJson(url, params)
+    const { errorCode, errorMessage, data, results } = res
+    if (errorCode === 0) {
+      this.list = results
+      this.resultCount = data.resultCount
+      if (this.list.length === 0) {
+        this.listtrue = true
+      } else {
+        this.listtrue = false
+      }
+      if (refresf) {
+        this.refmove.con = '刷新成功'
+        this.refmove.succee = true
+        setTimeout(() => {
+          this.refmove.isRefreshing = false
+          this.refmove.succee = false
+          this.$apply()
+        }, 1200)
+      }
+      this.$apply()
+    } else {
+      wx.showModal({ content: errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' })
+    }
+  }
+
+  async addTeacherInfo(pareform) {
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/addTeacherInfo`
+    const res = await serviceRequestJson(url, pareform)
+    const { errorCode, errorMessage, userId, orgId, tenantId } = res
+    if (errorCode === 0) {
+      setTimeout(() => {
+        wx.hideLoading()
+      }, 100)
+      wx.setStorageSync('tea_uid', userId)
+      wx.setStorageSync('tea_orgId', orgId)
+      wx.setStorageSync('tea_tenantId', tenantId)
+      this.org_id = wx.getStorageSync('tea_orgId')
+      this.tenant_id = wx.getStorageSync('tea_tenantId')
+      this.user_id = wx.getStorageSync('tea_uid')
+      this.getClassesList(this.getListparams)
+    } else {
+      wx.showModal({ content: errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' })
+    }
+  }
+  // 初始化进入页面
+  onLoad(query) {
+    wx.showLoading({
+      title: '加载中'
+    })
+    let type = decodeURI(decodeURIComponent(query.type))
+    let types = (!!query.type && JSON.parse(type)) || {}
+    const userInfo = JSON.parse(types.userInfo).avatarUrl
+    const imga = {
+      avatar: userInfo,
+      code: types.code
+    }
+    this.addTeacherInfo(imga)
+  }
+  // 页面 出现时调用
+  onShow() {
+    let contractListItem = wx.getStorageSync('contractListItem')
+    if (contractListItem) {
+      for (let i = 0; i < this.list.length; i++) {
+        let item = this.list[i]
+        if (item.orderNumber === contractListItem.orderId) {
+          this.list.splice(i, 1)
+        }
+      }
+      this.$apply()
+      wx.removeStorageSync('contractListItem')
+    }
+  }
+
+  methods = {
+    scroll(e) {
+      this.scrollTop = e.detail.scrollTop
+    },
+    // 上拉加载更多
+    async scrollToLower(e) {
+      if (!this.searchLoading) {
+        this.searchLoading = true    // 设置为加载状态
+        if (this.list.length >= this.resultCount) {
+          this.searchLoadingComplete = true
+          this.searchLoading = false          // 设置为加载状态
+        } else {
+          let url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/classesList`
+          this.getListparams.pageIndex = ++this.getListparams.pageIndex
+          const res = await serviceRequestJson(url, this.getListparams)
+          const { errorCode, errorMessage, data, results } = res
+
+          if (res && errorCode === 0) {
+            const newList = [...this.list, ...results]
+            this.list = newList
+            this.searchLoading = false
+            this.getListparams.pageIndex = data.pageIndex
+            this.$apply()
+          } else {
+            wx.showModal({ content: errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' })
+          }
+        }
+      }
+    },
+
+    // 点击进入名单详情
+    toPage(item) {
+      let data = JSON.stringify(item)
+      data = encodeURIComponent(encodeURI(data))
+
+      wx.navigateTo({
+        url: `../classStudent/classStudent?data=${data}`
+      })
+
+      wx.reportAnalytics('class_list', {
+        org_id: this.org_id,
+        tenant_id: this.tenant_id,
+        user_id: this.user_id
+      })
+    },
+    listStart(e) {
+      this.heistart = e.touches[0].clientY
+    },
+    listMove: function (e) {
+      if (this.scrollTop > 0) return
+      this.heimove = e.touches[0].clientY
+      let heis = Math.round(this.heimove - this.heistart)
+
+      if (heis > 0) {
+        this.refmove.isRefreshing = true
+        if (heis > 75) {
+          this.refmove.hei = 75 * 2
+        } else if (heis < 15) {
+          this.refmove.hei = 15 * 2
+        } else {
+          this.refmove.hei = heis * 2
+        }
+        this.refmove.con = '松开刷新'
+        this.$apply()
+      }
+    },
+    listEnd(e) {
+      // if (this.refmove.isRefreshing === true) {
+      //   this.getClassesList(this.getListparams, 'r')
+      // }
+      if (this.refmove.isRefreshing === true) {
+        if (this.getListFlag === false) {
+          this.getListFlag = true
+          this.getListparams.pageIndex = 0
+          this.getClassesList(this.getListparams, 'r')
+          setTimeout(() => {
+            this.getListFlag = false
+          }, 1000)
+        } else {
+          wx.showToast({
+            icon: 'none',
+            title: '不要刷新太快噢',
+            duration: 500
+          })
+        }
+      }
+    }
+  }
+
+  // 模糊查询
+  events = {
+    onSearch(value) {
+      this.getListparams.className = value
+      this.getListparams.pageIndex = 0
+      this.getClassesList(this.getListparams)
+    }
+  }
+}
+</script>
+<template>
+  <view class="classList">
+    <view style='overflow : hidden; width : 100%; height : 100%'>
+      <!-- 搜索头部 -->
+      <commonSearch :placeholder.sync='placeholder' />
+
+      <refresh
+        :refmove.sync="refmove"
+        class="refresh"
+      >
+        <scroll-view
+          bindscroll="scroll"
+          @touchstart="listStart"
+          @touchmove="listMove"
+          @touchend="listEnd"
+          scroll-y
+          bindscrolltolower='scrollToLower'
+          class="list_wrap_open"
+        >
+          <repeat
+            for="{{list}}"
+            item='item'
+            wx:if="{{ list.length !== 0 }}"
+          >
+            <view
+              class="list_item_item"
+              hover-class='list_item_hover'
+              @tap='toPage({{item}})'
+            >
+              <image src="http://img.ishanshan.com/gimg/n/20191017/da2b428879b7d750480aaf88b07b8c16"></image>
+              <view class="teacher">
+                <view class='list_item_title'>{{item.className}}</view>
+                <view class='list_item_content'>
+                  <text class="bishop" wx:if="{{item.mtName}}">主教：{{item.mtName}}</text>
+                  <text class="bishop" wx:if="{{item.atName}}">助教：{{item.atName}}</text>
+                </view>
+              </view>
+            </view>
+          </repeat>
+
+          <view
+            wx:if="{{ listtrue }}"
+            class='blank_data_page'
+          >
+            <blankDataPage title='暂无结果' />
+          </view>
+
+          <view
+            class='loadingb'
+            wx:if='{{ searchLoading }}'
+          >
+            <image
+              class='weui-loading'
+              src='http://img.ishanshan.com/gimg/user/n///274031351005446145.png'
+            />
+            拼命加载中...</view>
+          <view
+            class='loadingb'
+            wx:if='{{ searchLoadingComplete }}'
+          >- 我是有底线的 -</view>
+        </scroll-view>
+      </refresh>
+    </view>
+  </view>
+</template>

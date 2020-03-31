@@ -1,0 +1,142 @@
+<style type = 'less' src = 'timePicker.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import moment from 'moment';
+
+	export default class TimePicker extends wepy.component {
+		props = {
+			visible : {
+				type    : Boolean,
+				default : false,
+				twoWay  : true
+			},
+			disabled : {
+				type : Boolean,
+				default : false,
+				twoWay : true
+			}
+		}
+
+		data = {
+			visible : false,           //时间选择框 显隐
+			years   : [],
+			months  : [],
+			days    : [],
+			hours   : [],
+			minutes : [],
+			time    : undefined,       //所选择的时间
+			value   : []
+		}
+		//打开 日期时间选择框
+		openTimePicker(){
+			let year = moment().format('YYYY') - 2010;
+			let month = moment().format('MM') - 1;
+			let day = moment().format('DD') - 1;
+			let hour = moment().format('HH') - 1;
+			let minute = moment().format('mm') - 1;
+			this.visible = !this.visible;
+			this.value = [ year, month, day, hour, minute ];
+			this.$apply();
+		}
+
+		methods = {
+			//选择 日期 时间
+			selectDateAndTime( e ){
+				let values = e.detail.value;
+				this.value = [ values[0], values[1], values[2], values[3], values[4]];
+			},
+
+			//取消选择 时间
+			cancelSelectTime(){
+				this.visible = false;
+			},
+
+			//确定选择时间
+			confirmSelectTime(){
+				let { value, years, months, days, hours, minutes } = this;
+				let time = `${ years[value[0]] }-${ months[value[1]] }-${ days[value[2]] } ${ hours[value[3]] }:${ minutes[value[4]] }`;
+				if( this.disabled && moment( time ).format('YYYY-MM-DD') < moment().format('YYYY-MM-DD') ){
+					wx.showModal({ content : '不能选择之前的时间', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				this.time = time;
+				if( !moment( this.time ).isValid() ){
+					wx.showModal({ content : '所选时间错误', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				this.$emit( 'confirmSelectTime', this.time );
+				this.visible = false;
+			},
+		}
+
+		events = {
+		}
+
+		onLoad(){
+			let years = [], months = [], days = [], hours = [], minutes = [];
+			for( let i = 2010; i <= 2030; i++ ){
+				years.push( i );
+			}
+			for( let i = 1; i <=12; i++ ){
+				if( i < 10 ){
+					months.push( '0' + i );
+				}else{
+					months.push( i )
+				}
+			}
+			for( let i = 1; i <= 31; i++ ){
+				if( i < 10 ){
+					days.push( '0' + i );
+				}else{
+					days.push( i );
+				}
+			}
+			for( let i = 0; i <= 23; i++ ){
+				if( i < 10 ){
+					hours.push( '0' + i );
+				}else{
+					hours.push( i );
+				}
+			}
+			for( let i = 0; i <= 59; i++ ){
+				if( i < 10 ){
+					minutes.push( '0' + i );
+				}else{
+					minutes.push( i );
+				}
+			}
+			this.years = years;
+			this.months = months;
+			this.days = days;
+			this.hours = hours;
+			this.minutes = minutes;
+		}
+  	}
+</script>
+
+<template>
+	<view class = "{{ visible ? 'picker_time_block' : 'picker_time_block picker_time_block_hidden' }}" >
+		<view class = 'picker_time_block_header' >
+			<view class = 'picker_time_block_header_cancel' @tap.stop = 'cancelSelectTime' >取消</view>
+			<view class = 'picker_time_block_header_confirm' @tap.stop = 'confirmSelectTime' >确定</view>
+		</view>
+		<picker-view class = 'picker_time_box' indicator-class = 'indicator_class' value = '{{ value }}' bindchange = 'selectDateAndTime' >
+			<picker-view-column class = 'picker_view_column'>
+				<repeat for = '{{ years }}'><view style = 'line-height: 64rpx'>{{ item }}年</view></repeat>
+			</picker-view-column>
+			<picker-view-column class = 'picker_view_column'>
+				<repeat for = '{{ months }}'><view style = 'line-height: 64rpx'>{{ item }}月</view></repeat>
+			</picker-view-column>
+			<picker-view-column class = 'picker_view_column'>
+				<repeat for = '{{ days }}'><view style = 'line-height: 64rpx'>{{ item }}日</view></repeat>
+			</picker-view-column>
+			<picker-view-column class = 'picker_view_column'>
+				<repeat for = '{{ hours }}'><view style = 'line-height: 64rpx'>{{ item }}时</view></repeat>
+			</picker-view-column>
+			<picker-view-column class = 'picker_view_column'>
+				<repeat for = '{{ minutes }}'><view style = 'line-height: 64rpx'>{{ item }}分</view></repeat>
+			</picker-view-column>
+		</picker-view>
+	</view>
+</template>

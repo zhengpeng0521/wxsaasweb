@@ -1,0 +1,175 @@
+<style lang = "less" src = 'attendanceList.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import moment from 'moment';
+	import { serviceRequest } from '../../../utils/request';
+	import BlankDataPage from '../../../components/blankDataPage/blankDataPage';
+
+	export default class AttendanceList extends wepy.page {
+		config = {
+			navigationBarTitleText : '学员考勤'
+		}
+
+		components = {
+			blankDataPage : BlankDataPage
+		}
+
+		data = {
+			entry                : null,                         //入口
+			currentDate          : moment().format('YYYY-MM-DD'),
+			selectedDate         : moment().format('YYYY-MM-DD'),
+			pageIndex            : 0,
+			resultCount          : 0,
+			attendList           : [],
+
+			loadingEnd           : false,
+			pageLoading          : false
+		}
+
+		//得到考勤列表数据
+		getAttendList( date ){
+			this.loadingEnd = false;
+			this.pageLoading = true;
+			let params = { pageIndex : 0, pageSize : 10, studyDate : date }
+			let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/teach/checkQuery`
+			serviceRequest( url, params ).then(( ret ) => {
+				if( !!ret && ret.errorCode === 0 ){
+					this.pageIndex = 0;
+					this.pageLoading = false;
+					this.resultCount = ret.data.resultCount || 0;
+					this.attendList = ret.results || [];
+					this.$apply();
+				}else{
+					this.pageIndex = 0;
+					this.attendList = [];
+					this.resultCount = 0;
+					this.pageLoading = false;
+					this.$apply();
+					wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+				}
+			})
+		}
+
+		//初始化进入页面
+		onLoad( query ) {
+			if( query.key === 'cerp_jw_mycheck' ){
+				this.entry = 'my';
+			}else if( query.key === 'cerp_jw_check' ){
+				this.entry = 'all';
+			}
+		}
+
+		//页面 出现时调用
+		onShow(){
+			this.getAttendList( this.selectedDate );        //得到当天 考勤数据
+		}
+
+		methods = {
+			//选择日期
+			selectCurrentDate( e ){
+				this.selectedDate = e.detail.value;
+				this.getAttendList( this.selectedDate );
+			},
+
+			//上一天 下一天
+			clickToChangeDay( key ){
+				if( this.selectedDate == this.currentDate && key === 'nextDay' ){
+					return;
+				}
+				let selectedDate;          //当钱选中日期
+				if( key === 'lastDay' ){
+					selectedDate = moment( this.selectedDate ).subtract( 1, 'd' ).format('YYYY-MM-DD');
+				}else if( key === 'nextDay' ){
+					selectedDate = moment( this.selectedDate ).add( 1, 'd' ).format('YYYY-MM-DD');
+				}
+				this.selectedDate = selectedDate;
+				this.getAttendList( selectedDate );
+			},
+
+			//得到跟多 考勤数据
+			getMoreAttendList(){
+				if( !this.pageLoading ){        //防止上拉加载多次
+					this.pageLoading = true;
+					let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/teach/checkQuery`
+					let { pageIndex, resultCount, attendList, selectedDate } = this;
+					let params = { pageIndex : ++pageIndex, pageSize : 10, studyDate : selectedDate };
+					if( attendList.length >= resultCount ){
+						this.loadingEnd = true;
+						this.pageLoading = false;
+					}else{
+						serviceRequest( url, params ).then(( ret ) => {
+							if( !!ret && ret.errorCode === 0 ){
+								this.pageLoading = false;
+								this.pageIndex = pageIndex;
+								this.attendList = [ ...attendList, ...ret.results ];
+								this.$apply();
+							}else{
+								this.pageLoading = false;
+								wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+							}
+						})
+					}
+				}
+			},
+
+			//点击进入 考勤详情
+			clickToAttendDetail( item ){
+				let str = JSON.stringify( item );
+				wx.navigateTo({
+					url : `./attendanceDetail/attendanceDetail?str=${ encodeURIComponent(str) }`
+				})
+			}
+		}
+	}
+
+</script>
+
+<template>
+	<view class = 'container'>
+		<view class = 'attend_header' >
+			<view class = 'attend_header_label' @tap = "clickToChangeDay('lastDay')" >
+				<view class = 'attend_header_left_ba'></view><view class = 'attend_header_left_value'>上一天</view>
+			</view>
+			<view class = 'attend_header_center' >
+				<picker mode = 'date' value = '{{ selectedDate }}' bindchange = 'selectCurrentDate' end = '{{ currentDate }}' >
+					<view class = 'picker' style = 'display : inline-block' >{{ selectedDate }}</view>
+					<view class = 'arrow_down'></view>
+				</picker>
+			</view>
+			<view class = "{{ currentDate == selectedDate ? 'attend_header_label_disabled' : 'attend_header_label' }}" @tap = "clickToChangeDay('nextDay')" >
+				<view class = 'attend_header_left_value' >下一天</view>
+				<view class = "{{ currentDate == selectedDate ? 'attend_header_right_ba_disabled attend_header_right_ba' : 'attend_header_right_ba' }}" ></view>
+			</view>
+		</view>
+		<view class = 'attend_content' >
+			<view hidden = "{{ attendList.length !== 0 }}" class = 'blank_data_page'>
+				<blankDataPage title = '暂无考勤数据~' />
+			</view>
+			<view hidden = '{{ !pageLoading }}' class = 'loading_box' >
+				<view class = 'loading_content' >
+					<view class = 'loading_cicle loading1'></view>
+					<view class = 'loading_cicle loading2'></view>
+					<view class = 'loading_cicle'></view>
+				</view>
+			</view>
+			<scroll-view scroll-y lower-threshold = '50' bindscrolltolower = 'getMoreAttendList' class = 'list_block' >
+				<repeat for = '{{ attendList }}' item = 'item' >
+					<view class = 'attend_content_item' hover-class = 'attend_content_item_hover' @tap.stop = 'clickToAttendDetail({{ item }})' >
+						<view class = 'attend_content_item_title' >{{ item.title }}</view>
+						<view class = 'attend_content_item_value' style = 'margin-bottom : 20rpx' >课程 : {{ item.courseName || '暂无' }}</view>
+                        <view class = 'attend_content_item_value' style = 'margin-bottom : 20rpx' >班级 : {{ item.clsName || '暂无' }}</view>
+						<view class = 'attend_content_item_value' style = 'margin-bottom : 20rpx' >主教 : {{ item.mtNames || '暂无' }}</view>
+                        <view class = 'attend_content_item_value' style = 'margin-bottom : 20rpx' >助教 : {{ item.atNames || '暂无' }}</view>
+                        <view class = 'attend_content_item_value' style = 'margin-bottom : 20rpx' >进度 : {{ item.process || '暂无' }}</view>
+						<view class = 'attend_content_item_value' style = 'margin-bottom : 20rpx' >教室 : {{ item.roomName || '暂无' }}</view>
+						<view class = 'attend_content_item_value' >考勤总数 : {{ item.totalCheckNum || 0 }}</view>
+						<view class = 'attend_content_item_value' >已考勤 : {{ item.yetCheckNum || 0 }}</view>
+						<view class = 'attend_content_item_time' >{{ item.startTime + '~' + item.endTime }}</view>
+					</view>
+				</repeat>
+				<view class = 'loading' hidden = '{{ !loadingEnd || resultCount === 0 }}' >已加载全部</view>
+			</scroll-view>
+		</view>
+	</view>
+</template>

@@ -1,0 +1,422 @@
+<style lang="less" src="./dynamicDetails.less"></style>
+
+<template>
+  <navigator open-type="navigateBack">
+    <view class="class_ring" wx:if="{{status === 1 || !delFlag}}">
+      <view class="item">
+        <view class="title">
+          <view class="img_wrap">
+            <image
+              mode="{{aspectFill}}"
+              src="{{detailsData.avatar}}"
+            />
+          </view>
+          <view class="name_time">
+            <view class="name">{{detailsData.custName}}</view>
+            <view class="time">{{detailsData.releaseTime}}</view>
+          </view>
+          <view class="title_img" @tap="modeShow({{detailsData.id}})" wx:if="{{detailsData.custId === userId}}">
+            <image src="http://img.ishanshan.com/gimg/user/n///279372271368273921.png"></image>
+          </view>
+        </view>
+        <view wx:if="{{detailsData.content === null}}" style="margin-top:20rpx"></view>
+        <view class="describe" wx:else>
+          <text>{{detailsData.content}}</text>
+        </view>
+        <view
+          class="pic_wrap1"
+          @tap="goPage({{index}})"
+          wx:for="{{detailsData.imgs}}"
+          wx:key="index"
+        >
+          <image
+            mode='widthFix'
+            src="{{item}}"
+          />
+        </view>
+        <view class="bottom">
+          <view class="evaluate_top">
+            <!-- <view class="time">{{detailsData.releaseTime}}</view> -->
+            <view class="like_evaluate">
+              <view
+                class="fabulous"
+                @tap="getFabulous"
+              >
+                <image src="{{detailsData.praise === '0'? noFabulousImg : fabulousImg}}"></image>
+                <text class="like_text">喜欢</text>
+              </view>
+              <view class="evaluate" @tap="toPage({{itemt}},{{detailsData.id}})">
+                <image src="http://img.ishanshan.com/gimg/n/20191015/c61addb4b411e8a14468f736bedda035"></image>
+                <text class="eav_text">评价</text>
+              </view>
+            </view>
+          </view>
+          <view
+            class="like"
+            wx:if="{{detailsData.praiseList.length > 0 && detailsData.praiseList.length < 30}}"
+          >
+            <image src="http://img.ishanshan.com/gimg/n/20191121/320cc0587065776933cc538efc16cf74"></image>
+            <repeat
+              for='{{ detailsData.praiseList}}'
+              item='itemz'
+              index="indexz"
+            >
+              <text>{{itemz.name}}
+              </text>
+              <text wx:if="{{detailsData.praiseList.length-1 == indexz}}"></text>
+              <text wx:else>、</text>
+            </repeat>
+          </view>
+
+          <view
+            wx:if="{{detailsData.praiseList.length == 30 }}"
+            class="like"
+          >
+            <image src="http://img.ishanshan.com/gimg/n/20191121/320cc0587065776933cc538efc16cf74"></image>
+            <repeat
+              for='{{ detailsData.praiseList}}'
+              item='itemz'
+              index="indexz"
+            >
+              <text>{{itemz.name}}</text>
+              <text wx:if="{{detailsData.praiseList.length-1 == indexz}}"></text>
+              <text wx:else>、</text>
+            </repeat>
+            <text>等30人都很喜欢。</text>
+          </view>
+          <view class="comment">
+            <view
+              @longpress="delComment({{detailsData}}, {{commentItem}}, {{index}})"
+              wx:for="{{detailsData.feedbackList}}"
+              wx:for-item="commentItem"
+              wx:key="commentItem.id"
+              wx:for-index="commentIndex"
+              catchtap="toPage({{itemh}},{{commentItem}},{{detailsData.id}})"
+            >
+              <view class="comment_item" wx:if="{{commentItem.replyId === '0'}}">
+                <text class="per">{{commentItem.customerName}} : </text>
+                <text> {{commentItem.comment}}</text>
+              </view>
+              <view class="comment_item" wx:if="{{commentItem.replyId !== '0'}}">
+                <text>
+                  <text class="per">{{commentItem.customerName}}</text>
+                  <text> 回复 </text>
+                  <text class="per">{{commentItem.replyCustName}}: </text>
+                </text>
+                <text>{{commentItem.comment}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="input_wrap">
+            <view @tap="toPage({{itemt}},{{detailsData.id}})">有爱评论，说点好听的～</view>
+          </view>
+        </view>
+      </view>
+      <view class="mask" wx:if="{{modelFlag}}">
+        <view class="model">
+          <view class="model_top">
+            <view class="del" catchtap="delDynamic">删除</view>
+          </view>
+          <view class="cancel" catchtap="cancel">取消</view>
+        </view>
+      </view>
+    </view>
+    <view class='blank_data_page' wx:if="{{status === 0 || delFlag}}">
+      <blankDataPage title='该动态已删除' />
+    </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import { serviceRequestJson } from '../../../../utils/request'
+import BlankDataPage from '../../../../components/blankDataPage/blankDataPage'
+
+export default class DynamicDetails extends wepy.page {
+  components = {
+    blankDataPage: BlankDataPage
+  }
+  config = {
+    navigationBarTitleText: '动态详情'
+  }
+
+  data = {
+    praise: '',
+    noFabulousImg: 'http://img.ishanshan.com/gimg/n/20191120/a272d42602fed3d0df024c4a6c4f16bb',
+    fabulousImg: 'http://img.ishanshan.com/gimg/n/20191120/dda3d7add85c47bfee52fd091e5bc715',
+    itemt: {
+      type: 'comment' // 评论
+    },
+    itemh: {
+      type: 'reply'
+    }, // 回复
+    items: {
+      type: 'release' // 发布
+    },
+    detailsData: {},
+    pageIndex: null,
+    praiseData: {},
+    idyname: '',
+    userId: '',
+    praises: false,
+    status: null,
+    org_id: null,
+    tenant_id: null,
+    user_id: null,
+    modelFlag: false,
+    custId: null,
+    delFlag: false,
+    dynamicId: null
+  }
+
+  onLoad(query) {
+    wx.showLoading({
+      title: '加载中'
+    })
+    this.userId = wx.getStorageSync('tea_uid')
+    let dynamicId
+    if (query.dynamicId !== undefined) {
+      dynamicId = query.dynamicId
+    }
+    if (query.data !== undefined) {
+      let data = JSON.parse(decodeURI(decodeURIComponent(query.data)))
+      dynamicId = data.id
+      this.pageIndex = data.index
+      this.idyname = data.id
+    }
+    this.dynamicId = dynamicId
+    this.dynamicInfo({ dynamicId })
+  }
+  onShow() {
+    this.org_id = wx.getStorageSync('tea_orgId')
+    this.tenant_id = wx.getStorageSync('tea_tenantId')
+    this.user_id = wx.getStorageSync('tea_uid')
+    const pages = getCurrentPages() //eslint-disable-line
+    const currPage = pages[pages.length - 1]  // 当前页
+    if (currPage.data.pagetype !== undefined) {
+      // 请求列表接口
+      let dynamicId
+      dynamicId = currPage.data.pagetype.id
+      this.dynamicId = dynamicId
+      this.dynamicInfo({ dynamicId })
+    }
+  }
+  onUnload() {
+    let pages = getCurrentPages() //eslint-disable-line
+    let prevPage = pages[pages.length - 2]
+    const type = {
+      index: this.pageIndex,
+      id: this.idyname
+    }
+    prevPage.setData({
+      pagetype: type
+    })
+  }
+  // 列表
+  async dynamicInfo(parmes) {
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/dynamicInfo`
+    const res = await serviceRequestJson(url, parmes)
+    if (res.errorMessage === '成功') {
+      setTimeout(() => {
+        wx.hideLoading()
+      }, 100)
+      this.status = res.status
+
+      this.praise = res.praise
+      this.detailsData = res
+      if (this.detailsData.imgs && this.detailsData.imgs !== null) {
+        this.detailsData.imgs = JSON.parse(res.imgs)
+      }
+      let list = res.praiseList || []
+      if (list.length >= 30) {
+        this.detailsData.praiseList = list.slice(0, 30)
+      }
+      if (list.length > 0 && list.length < 30) {
+        this.detailsData.praiseList = list
+      }
+      if (list.length === 0) {
+        this.detailsData.praiseList = list
+      }
+      this.$apply()
+    }
+  }
+  methods = {
+    modeShow(id) {
+      this.dynamicId = id
+      this.modelFlag = true
+    },
+    cancel() {
+      this.modelFlag = false
+    },
+    delDynamic() {
+      this.modelFlag = false
+      const _this = this
+      wx.showModal({
+        title: '提示',
+        content: '确定要删除此条动态吗?',
+        success: async function (res) {
+          if (res.confirm) {
+            const params = {
+              dynamicId: _this.dynamicId
+            }
+            const url = `${_this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/deleteDynamic`
+            const res = await serviceRequestJson(url, params)
+            if (res.errorCode === 0) {
+              _this.modelFlag = false
+              _this.delFlag = true
+              _this.status = 0
+              wx.setStorageSync('delDynamic', true)
+
+              _this.$apply()
+
+              wx.showToast({
+                title: '删除成功',
+                duration: 1000
+              })
+            }
+          } else if (res.cancel) {
+            // console.log('取消')
+          }
+        }
+      })
+    },
+    delComment(item, commentItem) {
+      if (commentItem.customerId !== this.userId) {
+        return
+      }
+      const _this = this
+      wx.showModal({
+        title: '提示',
+        content: '确定要删除此条评论吗?',
+        success: async function (res) {
+          if (res.confirm) {
+            const url = `${_this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/deleteFeedback`
+            const res = await serviceRequestJson(url, { feedbackId: commentItem.id })
+            if (res.errorCode === 0) {
+              wx.showToast({ title: '成功', icon: 'success', duration: 1000 })
+              const url = `${_this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/getFeedbackList`
+              const res = await serviceRequestJson(url, { dynamicId: item.id })
+              const { errorCode, results } = res
+              if (errorCode === 0) {
+                _this.detailsData.feedbackList = results
+              }
+              wx.reportAnalytics('dynamic_del_comment', {
+                org_id: _this.org_id,
+                tenant_id: _this.tenant_id,
+                user_id: _this.user_id
+              })
+              _this.$apply()
+            }
+          } else if (res.cancel) {
+          }
+        }
+      })
+    },
+    toPage(item, items, id) {
+      // 评论
+      if (item.type === 'comment') {
+        item.tid = items
+        item.typehome = 'typehome'
+        let str = JSON.stringify(item)
+        str = encodeURIComponent(encodeURI(str))
+        wx.navigateTo({
+          url: `../../../component/pages/Replytocomments/replaycomment?str=${str}`
+        })
+        wx.reportAnalytics('dynamic_comment', {
+          org_id: this.org_id,
+          tenant_id: this.tenant_id,
+          user_id: this.user_id
+        })
+        return
+      }
+
+      // 回复
+      if (item.type === 'reply') {
+        if (items.customerId === this.userId) {
+          wx.showToast({
+            icon: 'none',
+            title: '自己不能回复自己',
+            duration: 1000
+          })
+        } else {
+          items.type = item.type
+          items.tid = id
+          items.typehome = 'typehome'
+          let str = JSON.stringify(items)
+          str = encodeURIComponent(encodeURI(str))
+          wx.navigateTo({
+            url: `../../../component/pages/Replytocomments/replaycomment?str=${str}`
+          })
+          wx.reportAnalytics('dynamic_reply', {
+            org_id: this.org_id,
+            tenant_id: this.tenant_id,
+            user_id: this.user_id
+          })
+        }
+      }
+    },
+
+    goPage(index) {
+      this.detailsData.imgIndex = index
+      this.detailsData.index = this.pageIndex
+      let str = JSON.stringify(this.detailsData)
+      str = encodeURIComponent(encodeURI(str))
+      wx.navigateTo({
+        url: `../dynamicDetails/contentDetails?data=${str}`
+      })
+    },
+    async getFabulous() {
+      if (this.praises === false) {
+        this.praises = true
+        const params = {
+          dynamicId: this.detailsData.id,
+          praise: this.detailsData.praise
+        }
+        if (this.detailsData.praiseId && this.detailsData.praiseId !== null) {
+          params.praiseId = this.detailsData.praiseId
+        }
+        const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/updatePraise`
+        const res = await serviceRequestJson(url, params)
+        if (res && res.errorCode === 0) {
+          if (this.detailsData.praise === '0') {
+            this.detailsData.praise = '1'
+            this.detailsData.praiseList.push({
+              id: res.praiseId,
+              name: res.praiseName
+            })
+            this.detailsData.praiseId = res.praiseId
+            wx.reportAnalytics('dynamic_like', {
+              org_id: this.org_id,
+              tenant_id: this.tenant_id,
+              user_id: this.user_id
+            })
+          } else if (this.detailsData.praise === '1') {
+            this.detailsData.praise = '0'
+            let indexs = this.detailsData.praiseList.findIndex(item => item.id === res.praiseId)
+            this.detailsData.praiseList.splice(indexs, 1)
+            // this.detailsData.praiseId = null
+            wx.reportAnalytics('dynamic_cancel_like', {
+              org_id: this.org_id,
+              tenant_id: this.tenant_id,
+              user_id: this.user_id
+            })
+          }
+          this.$apply()
+          // let dynamicId
+          // dynamicId = this.idyname
+          // this.dynamicInfo({ dynamicId })
+          // this.$apply()
+        }
+        setTimeout(() => {
+          this.praises = false
+        }, 1000)
+      } else {
+        wx.showToast({
+          icon: 'none',
+          title: '不要点太快噢',
+          duration: 500
+        })
+      }
+    }
+  }
+}
+</script>

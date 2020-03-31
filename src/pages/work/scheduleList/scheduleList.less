@@ -1,0 +1,229 @@
+
+@import '../../../common.less';
+
+.time_select_block{
+	position : fixed;
+	width : 100%;
+	top : 0;
+	background : @base_background;
+}
+.schedule_week_change{
+	position : absolute;
+	bottom : -18px;
+	margin : auto; left : 0; right : 0;
+	width : 102px;
+	height : 19px;
+	background : url('https://img.ishanshan.com/gimg/img/c57e033fe0664aefbeacf9c47f696d66');
+	background-size : 100% 100%;
+	z-index : 1;
+}
+.schedule_month_change{
+	position : absolute;
+	bottom : -18px;
+	margin : auto; left : 0; right : 0;
+	width : 102px;
+	height : 19px;
+	background : url('https://img.ishanshan.com/gimg/img/d007729de7281eb6ff8b7046bd566183');
+	background-size : 100% 100%;
+	z-index : 1;
+}
+.time_select_header{
+	display : flex;
+	width : 100%;
+	height : 88rpx;
+	justify-content : space-between;
+	align-items : center;
+	padding : 0 20rpx;
+	font-size : @base_font_size;
+	color : @value_color;
+	box-sizing : border-box;
+	border-bottom : 1px solid @border_color;
+}
+.item_select_header_center{
+	flex : 1;
+	text-align : center;
+	font-size : @lg_font_size;
+	color : @label_color;
+}
+.item_select_header_label{
+	height : @mid_font_size;
+	line-height : @mid_font_size;
+}
+.item_select_header_left_ba, .item_select_header_right_ba{
+	display : inline-block;
+	width : 16rpx;
+	height : 26rpx;
+	background-repeat : no-repeat;
+	background-size : cover;
+}
+.item_select_header_left_ba{
+	margin-right : 16rpx;
+	background-image : url('https://img.ishanshan.com/gimg/img/7b0055301eafdfffb73be31cb9db88b7');
+}
+.item_select_header_right_ba{
+	margin-left : 16rpx;
+	background-image : url('https://img.ishanshan.com/gimg/img/7df347afadc9a46ca7763f05548e0781');
+}
+.item_select_header_left_value{
+	display : inline-block;
+	vertical-align : top;
+}
+
+.week_header{
+	display : flex;
+	justify-content : space-between;
+	width : 100%;
+	margin : 20rpx 0 6rpx;
+	color : @value_color;
+	height : @mid_font_size;
+	font-size : @mid_font_size;
+	line-height : @mid_font_size;
+	box-sizing : border-box;
+}
+.calendar_item{
+	width : 100%;
+	color : @value_color;
+	font-size : @mid_font_size;
+	box-sizing : border-box;
+	color : @label_color;
+	margin-bottom : 16rpx;
+}
+.week_header_item{
+	width : 100%/7;
+	text-align : center;
+	display : inline-block;
+}
+.calendar_item_value{
+	position : relative;
+	width : 100%/7;
+	text-align : center;
+	line-height : 64rpx;
+	display : inline-block;
+}
+.not_month{
+	color : @dark_color;
+}
+.week_header_item_selected{
+	display : inline-block;
+	width : 44rpx;
+	height : 44rpx;
+	line-height : 44rpx;
+	border-radius : 50%;
+	background : @base_color;
+	color : #fff;
+
+}
+.has_course{
+	position : absolute;
+	width : 8rpx; height : 8rpx;
+	margin : auto; left : 0; right : 0;
+	bottom : 0;
+	background : @base_color;
+	border-radius : 50%;
+}
+
+.schedule_scroll_block{
+	height : calc( ~'100% - 240rpx' );
+	padding-top : 240rpx;
+}
+
+.list_block{
+	height : 100%;
+}
+.list_item{
+	position : relative;
+	margin : 30rpx 30rpx 0;
+	padding : 30rpx;
+	box-sizing : border-box;
+	border-radius : 6rpx;
+	background : @base_background;
+	font-size : 0;
+}
+.list_item_course_time{
+	position : absolute;
+	top : 30rpx; right : 30rpx;
+	font-size : @mid_font_size;
+	height : @mid_font_size;
+	line-height : @mid_font_size;
+	color : @value_color;
+}
+.list_item_course_time::before{
+	content : '';
+	display : inline-block;
+	margin-right : 7rpx;
+	width : 20rpx;
+	height : 20rpx;
+	background-image : url('https://img.ishanshan.com/gimg/img/952faa0bde604c9ba1c726b2c931a703');
+	background-size : cover;
+	background-repeat : no-repeat;
+}
+.list_item:first-child{
+	margin-top : 0;
+}
+.list_item_course_name{
+	height : @lg_font_size;
+	line-height : @lg_font_size;
+	font-size : @lg_font_size;
+	color : @label_color;
+	margin-bottom : 40rpx;
+}
+.list_item_course_value{
+	display : inline-block;
+	vertical-align : top;
+	width : 50%;
+	padding-right : 20rpx;
+	height : @mid_font_size;
+	line-height: @mid_font_size;
+	font-size : @mid_font_size;
+	color : @value_color;
+	box-sizing : border-box;
+	text-overflow : ellipsis;
+	overflow : hidden;
+	white-space : nowrap;
+}
+.list_item_course_content{
+	border-top : 1px solid @border_color;
+	padding-top : 20rpx;
+}
+.list_item_course_item{
+	display : flex;
+	color : @dark_color;
+	font-size : @base_font_size;
+	margin-bottom : 10rpx;
+}
+.list_item_course_item:last-child{
+	margin-bottom : 0;
+}
+.list_item_course_item_label{
+	display : inline-block;
+	line-height : 46rpx;
+}
+.list_item_course_item_value{
+	flex : 1;
+	display : inline-block;
+	margin-left : 20rpx;
+	line-height : 46rpx;
+}
+
+.blank_data_page{
+	position : absolute;
+	width : 100%; height : calc( ~'100% - 300rpx' );
+}
+.blank_data_page_open{
+	height : calc( ~'100% - 608rpx')
+}
+
+.loading_box{
+	position : absolute;
+	bottom : 0;
+	width : 100%;
+	height : calc( ~'100% - 300rpx');
+	z-index : 999;
+}
+.loading_box_open{
+	position : absolute;
+	bottom : 0;
+	width : 100%;
+	height : calc( ~'100% - 608rpx');
+	z-index : 999;
+}

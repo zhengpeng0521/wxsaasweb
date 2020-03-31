@@ -1,0 +1,880 @@
+<style lang = "less" src = 'orderDetail.less' scoped></style>
+<script>
+import wepy from 'wepy'
+import moment from 'moment'
+import BlankDataPage from '../../../components/blankDataPage/blankDataPage';
+import CommonSearch from '../../../components/commonSearch/commonSearch'
+import zanDialog from '../../../components/zandialog/zan-dialog'
+import {serviceRequest } from '../../../utils/request';
+export default class orderDetail extends wepy.page {
+  config = {
+    navigationBarTitleText: '约课记录'
+  }
+
+  onShareAppMessage(res) {
+    return {
+      title: '闪闪云校, 一站式早教管理云平台',
+      path: '/pages/initPage/initPage',
+      imageUrl: 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+      success: function (res) {
+        wx.showToast({ title: '转发成功', icon: 'success', duration: 1000 })
+      },
+      fail: function (res) {
+      }
+    }
+  }
+
+  components = {
+    blankDataPage: BlankDataPage,
+    CommonSearch,
+    zanDialog
+  }
+
+  data={
+    modifyAttendance  : '',//修改考勤
+    cancelAboutClass : '',//取消约课
+    ModifyFixed       :'',//修改考勤
+    courseList: [],                                //课程数据
+    pageIndex: 0,
+    resultCount: 0,
+    headerDate: moment().format('YYYY-MM-DD'),
+    currentDate: moment().format('YYYY-MM-DD'),
+
+    wStartDate: moment().startOf('week').format('YYYY-MM-DD'),
+    wEndDate: moment().endOf('week').format('YYYY-MM-DD'),
+
+    renderList: [],                                // 星期分组
+
+    completeLoading: false,                        //数据加载完全
+    pageLoading: false,                            //数据加载中
+    operateShow: false,                            //操作面板遮罩是否显示
+    superSearchVisible: false,                     //筛选遮罩
+
+    preparation: [],                               //筛选的数据
+    preparationNextTurn: false,                    //点击筛选条件后弹出列表开关控制
+    preparationType: '',
+
+    reviseList:['出勤','请假','旷课','取消考勤'],
+    cancelList:['操作有误','节假日放假','老师请假','学员调班','从班级移除','老师离职'],
+    fixList:['是','否'],
+
+    chooseData_courseName:{},
+    chooseData_tenantUser:{},
+    chooseData_tenantUserf:{},
+    chooseData_class:{},
+    chooseData_status:{},
+    choosedTime:'',
+
+    range:[]
+  }
+
+  onLoad(){
+    this.buttonHidden();
+    this.getCourseList(this.currentDate);                                  //得到当前日期的课程数据
+    this.getWeekList(this.wStartDate, this.wEndDate);                           //得到 渲染item
+
+    let hour=[];
+    let min=[];
+    for(let i=0;i<24;i++){
+      hour.push(i.toString().length == 1 ? '0'+i+'时' : i+'时')
+    }
+    for(let i=0;i<60;i++){
+      min.push(i.toString().length == 1 ? '0'+i+'分' : i+'分')
+    }
+    this.range.push(' ',hour,':',min,'—',hour,':',min,' ')
+  }
+  //修改按钮隐藏
+    buttonHidden() {
+      const btnList = wx.getStorageSync('session').btnPermis.split(',');
+      btnList.filter(item => {
+        if(item === '505000006'){
+          this.modifyAttendance = '505000006'        
+        }
+        if(item === '505000005'){
+          this.cancelAboutClass = '505000005'        
+        }
+         if(item === '505000008'){
+          this.ModifyFixed = '505000008'        
+        }
+      })
+    };
+
+  methods={
+    handleClik(e) {
+      this.courseList.map(res => {
+        return res.customize_operate = true;
+      })
+      this.operateShow = !this.operateShow
+    },
+    //显示操作面板
+    showOperate(e) {
+      if(this.courseList[e].customize_operate){
+        this.courseList.map( res => {
+          return res.customize_operate = true;
+        })
+      }
+      if (typeof e == 'number') {
+        this.courseList[e].customize_operate = !this.courseList[e].customize_operate;
+      } else {
+        this.courseList.map(res => {
+          return res.customize_operate = true;
+        })
+      }
+      this.operateShow = !this.operateShow
+    },
+    //点击展示更多
+    clickMoreBtn(e) {
+      this.courseList[e].customize_more = !this.courseList[e].customize_more;
+    },
+    //点击选择 日期
+    changeDate(date) {
+      this.courseList = [];
+      this.headerDate = date;
+      this.currentDate = date;
+      this.getCourseList(date)
+    },
+    //选择日期
+    selectCurrentDate(e) {
+      const date = e.detail.value;
+
+      let wStartDate = moment(date).startOf('week').format('YYYY-MM-DD');     //星期开始时间
+      let wEndDate = moment(date).endOf('week').format('YYYY-MM-DD');         //星期结束时间
+      this.getWeekList( wStartDate, wEndDate );
+
+      this.courseList = [];
+      this.headerDate = date;
+      this.currentDate = date;
+      this.getCourseList(date)
+    },
+    //上周 下周
+    clickToChangeWeek(key) {
+      let startDate, endDate;
+      if (key === 'lastWeek') {
+        startDate = moment(this.wStartDate).subtract(7, 'd').format('YYYY-MM-DD');
+        endDate = moment(this.wEndDate).subtract(7, 'd').format('YYYY-MM-DD');
+        this.getWeekList(startDate, endDate);
+      } else if (key === 'nextWeek') {
+        startDate = moment(this.wStartDate).add(7, 'd').format('YYYY-MM-DD');
+        endDate = moment(this.wEndDate).add(7, 'd').format('YYYY-MM-DD')
+        this.getWeekList(startDate, endDate);
+      }
+      //this.headerDate = startDate;
+    },
+    reviseFn(cpStuId,index,signType){
+      let that=this;
+      this.courseList[index].customize_operate=true;
+      if(signType == 6){
+        wx.showToast({
+          title: '已取消的不能修改',
+          icon: 'none',
+          duration: 2000
+        })
+        return ;
+      }
+      wx.showActionSheet({
+        itemList:that.reviseList,
+        success(res){
+          that.updateSignType(res.tapIndex + 3,cpStuId,index)
+        }
+      })
+    },
+    cancelFn(cpStuId,index,signType,name){
+      let that=this;
+      this.courseList[index].customize_operate=true;
+      if(signType == 6){
+        wx.showToast({
+          title: name + '已取消的约课无法再次取消',
+          icon: 'none',
+          duration: 2000
+        })
+        return ;
+      }
+      wx.showActionSheet({
+        itemList:that.cancelList,
+        success(res){
+          that.$invoke('zanDialog', 'showZanDialog', {
+            title: '确定取消约课吗？',
+            content: '取消原因:'+that.cancelList[res.tapIndex],
+            showCancel: true,
+            confirmColor:'#333'
+          })
+          .then(() => {
+            that.stuSignCancel(res.tapIndex + 1,cpStuId,index)
+          })
+          .catch(() => {
+          })
+        }
+      })
+    },
+    fixFn(cpStuId,index){
+      let that=this;
+      this.courseList[index].customize_operate=true;
+      wx.showActionSheet({
+        itemList:that.fixList,
+        success(res){
+          that.updateFix(res.tapIndex == 0 ? '1' : '0',cpStuId,index)
+        }
+      })
+    },
+    //筛选
+    superSearch() {
+      this.superSearchVisible = true;
+    },
+    //关闭筛选
+    closeSuperSearch() {
+      this.superSearchVisible = false;
+      this.preparationNextTurn = false;
+      this.preparation = [];
+    },
+    changeTime(e){
+      this.choosedTime = (e.detail.value[1] >= 10 ? e.detail.value[1] : '0' + e.detail.value[1])+':'+(e.detail.value[3] >= 10 ? e.detail.value[3] : '0' + e.detail.value[3])+'-'+(e.detail.value[5] >= 10 ? e.detail.value[5] : '0' + e.detail.value[5])+':'+(e.detail.value[7] >= 10 ? e.detail.value[7] : '0' + e.detail.value[7])
+    },
+    turnBack() {
+      this.preparationNextTurn = false;
+      this.preparation = [];
+    },
+    chooseType(type, id, name) {
+      this.preparationNextTurn = false;
+      if (type == 'courseName') {
+        this.chooseData_courseName = {};
+        this.chooseData_courseName.id = id;
+        this.chooseData_courseName.name = name;
+      } else if (type == 'tenantUser') {
+        this.chooseData_tenantUser = {};
+        this.chooseData_tenantUser.id = id;
+        this.chooseData_tenantUser.name = name;
+      }else if(type == 'tenantUserf'){
+        this.chooseData_tenantUserf = {};
+        this.chooseData_tenantUserf.id = id;
+        this.chooseData_tenantUserf.name = name;
+      }else if(type == 'class'){
+        this.chooseData_class = {};
+        this.chooseData_class.id = id;
+        this.chooseData_class.name = name;
+      }else if(type == 'status'){
+        this.chooseData_status = {};
+        this.chooseData_status.id = id;
+        this.chooseData_status.name = name;
+      }
+    },
+    search() {
+      this.getCourseList(this.currentDate);
+      this.superSearchVisible = false;
+      this.preparationNextTurn = false;
+      this.preparation = [];
+    },
+    //点击筛选条件
+    nextStep(e) {
+      this.preparationType = e;
+      if(e == 'courseName'){
+        this.getCourseName()
+      }else if(e == 'tenantUser'){
+        this.getCourseTeacher()
+      }else if(e == 'tenantUserf'){
+        this.getCourseTeacher()
+      }else if(e == 'class'){
+        this.getClassName()
+      }else if(e == 'status'){
+        this.preparation=[{
+          id:'3',
+          name:'出勤'
+        },{
+          id:'4',
+          name:'请假'
+        },{
+          id:'5',
+          name:'旷课'
+        },{
+          id:'6',
+          name:'取消'
+        },{
+          id:'1',
+          name:'预约'
+        },{
+          id:'2',
+          name:'排队'
+        }]
+      }
+      this.preparationNextTurn = true;
+    },
+    resetFn() {
+      this.chooseData_courseName={}
+      this.chooseData_tenantUser={}
+      this.chooseData_tenantUserf={}
+      this.chooseData_class={}
+      this.chooseData_status={}
+      this.choosedTime=''
+
+      this.getCourseList(this.currentDate);
+      this.superSearchVisible = false;
+      this.preparationNextTurn = false;
+      this.preparation = [];
+    },
+  }
+  getCourseName(){
+    let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/course/summaryQuery`;
+    serviceRequest(url, {}).then((ret) => {
+      if (ret && (ret.errorCode == 9000 || ret.errorCode == 0)) {
+        this.preparation = [...ret.results]
+        this.$apply()
+      } else {
+        wx.showModal({ content: ret.errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' });
+      }
+    })
+  }
+  getCourseTeacher() {
+    let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/sysBase/tenantUser/summaryQuery`;
+    serviceRequest(url, {}).then((ret) => {
+      if (ret && (ret.errorCode == 9000 || ret.errorCode == 0)) {
+        this.preparation = [...ret.results]
+        this.$apply()
+      } else {
+        wx.showModal({ content: ret.errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' });
+      }
+    })
+  }
+  getClassName() {
+    let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/sysBase/cerp/classroom/summaryQuery`;
+    serviceRequest(url, {}).then((ret) => {
+      if (ret && (ret.errorCode == 9000 || ret.errorCode == 0)) {
+        this.preparation = [...ret.results]
+        this.$apply()
+      } else {
+        wx.showModal({ content: ret.errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' });
+      }
+    })
+  }
+  //修改考勤
+  updateSignType(i,cpStuId,index){
+    let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/updateSignType`;
+    let params = {
+      cpStuId:cpStuId,
+      signType:i.toString()
+    }
+    serviceRequest( url, params ).then((ret) => {
+      wx.hideLoading();
+      if( ret && (ret.errorCode == 9000 || ret.errorCode == 0) ){
+        wx.showToast({
+          title: '成功',
+          icon: 'success',
+          duration: 500
+        })
+        setTimeout(() => {
+          this.refresh(index);
+        }, 500);
+      }else{
+        wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+      }
+    })
+  }
+
+  //取消约课
+  stuSignCancel(i,cpStuId,index){
+    let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/stuSignCancel`;
+    let params = {
+      cpStuId:cpStuId,
+      reason:i.toString()
+    }
+    serviceRequest( url, params ).then((ret) => {
+      wx.hideLoading();
+      if( ret && (ret.errorCode == 9000 || ret.errorCode == 0) ){
+        wx.showToast({
+          title: '成功',
+          icon: 'success',
+          duration: 500
+        })
+        setTimeout(() => {
+          this.refresh(index);
+        }, 500);
+      }else{
+        wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+      }
+    })
+  }
+  
+  updateFix(i,cpStuId,index){
+    let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/cerp/cpbook/updateFix`;
+    let params = {
+      cpStuIds:cpStuId,
+      fix:i
+    }
+    serviceRequest( url, params ).then((ret) => {
+      wx.hideLoading();
+      if( ret && (ret.errorCode == 9000 || ret.errorCode == 0) ){
+        wx.showToast({
+          title: '成功',
+          icon: 'success',
+          duration: 500
+        })
+        setTimeout(() => {
+          this.refresh(index);
+        }, 500);
+      }else{
+        wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+      }
+    })
+  }
+
+  //得到星期日历 数组
+  getWeekList(startDate, endDate) {
+    let self = this;
+    let renderList = [];
+    for (let i = 0; i < 7; i++) {
+      renderList.push({
+        date: moment(startDate).add(i, 'd').format('YYYY-MM-DD'),
+        day: moment(startDate).add(i, 'd').format('D')
+      })
+    }
+    let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/stuDayQuery`;
+    serviceRequest(url, { startDate, endDate }).then((ret) => {
+      if (!!ret && (ret.errorCode == 9000 || ret.errorCode == 0) ) {
+        renderList && renderList.map(function (item, index) {
+          if (!!ret.dayList && (ret.dayList.indexOf(item.date) == -1)) {
+            renderList[index].noCourse = true;
+          } else {
+            renderList[index].noCourse = false;
+          }
+        })
+        this.renderList = renderList;
+        this.wStartDate = startDate;
+        this.wEndDate = endDate;
+        this.$apply();
+      } else {
+        wx.showModal({ content: ret.errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' });
+      }
+    })
+  }
+
+  //得到 课程列表
+  getCourseList(date) {
+    this.pageLoading = true;
+    this.completeLoading = false;
+    let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/cpbook/query`;
+    let params = {
+      startDate: date, endDate: date, pageIndex: 0, pageSize: 10
+    }
+    if (typeof this.chooseData_courseName.id != 'undefined') {
+      params.courseId = this.chooseData_courseName.id
+    }
+    if (typeof this.chooseData_tenantUser.id != 'undefined') {
+      params.mtid = this.chooseData_tenantUser.id
+    }
+    if (typeof this.chooseData_tenantUserf.id != 'undefined') {
+      params.atid = this.chooseData_tenantUserf.id
+    }
+    if (typeof this.chooseData_class.id != 'undefined') {
+      params.roomId = this.chooseData_class.id
+    }
+    if (typeof this.chooseData_status.id != 'undefined') {
+      params.signType = this.chooseData_status.id
+    }
+    if(this.choosedTime){
+      params.startTime = this.choosedTime.split('-')[0]
+      params.endTime = this.choosedTime.split('-')[1]
+    }
+    serviceRequest(url, params).then((ret) => {
+      if (ret && (ret.errorCode == 9000 || ret.errorCode == 0)) {
+        this.courseList = ret.results.map((item, index) => {
+          return Object.assign(item, {
+            customize_more: true,
+            customize_operate: true,
+            new_mtNames: item.mtNames.split(',').length > 2 ? `${item.mtNames.split(',')[0]},${item.mtNames.split(',')[1]}...等${item.mtNames.split(',').length}人` : item.mtNames,
+            new_atNames: !!item.atNames && item.atNames.split(',').length > 2 ? `${item.atNames.split(',')[0]},${item.atNames.split(',')[0]}...等${item.atNames.split(',').length}人` : item.atNames
+          })
+        })
+        this.resultCount = ret.data.resultCount;
+        this.pageIndex = 0;
+        this.pageLoading = false;
+        this.$apply();
+      } else {
+        this.courseList = [];
+        this.resultCount = 0;
+        this.pageLoading = false;
+        wx.showModal({ content: ret.errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' });
+      }
+    })
+  }
+
+  //修改考勤和取消约课和修改固定位等信息修改后刷新单条数据
+  refresh(index){
+    let { currentDate } = this;
+    let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/cpbook/query`;
+    let params = {
+      startDate: currentDate, endDate: currentDate, pageIndex: index, pageSize: 1
+    }
+    if (typeof this.chooseData_courseName.id != 'undefined') {
+      params.courseId = this.chooseData_courseName.id
+    }
+    if (typeof this.chooseData_tenantUser.id != 'undefined') {
+      params.mtid = this.chooseData_tenantUser.id
+    }
+    if (typeof this.chooseData_tenantUserf.id != 'undefined') {
+      params.atid = this.chooseData_tenantUserf.id
+    }
+    if (typeof this.chooseData_class.id != 'undefined') {
+      params.roomId = this.chooseData_class.id
+    }
+    if (typeof this.chooseData_status.id != 'undefined') {
+      params.signType = this.chooseData_status.id
+    }
+    if(this.choosedTime){
+      params.startTime == this.choosedTime.split('-')[0]
+      params.endTime == this.choosedTime.split('-')[1]
+    }
+    serviceRequest(url, params).then((ret) => {
+      if (ret && (ret.errorCode == 9000 || ret.errorCode == 0)) {
+        this.courseList[index]=Object.assign(this.courseList[index],ret.results[0])
+        this.$apply();
+      } else {
+        wx.showModal({ content: ret.errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' });
+      }
+    })
+  }
+
+  getMoreCourseSchedule() {
+    if (!this.pageLoading) {
+      let { currentDate, pageIndex, resultCount, courseList } = this;
+      let url = `${this.$parent.service.base_url}/ss-crm-provider/wx/cerp/cpbook/query`;
+      let params = {
+        startDate: currentDate, endDate: currentDate, pageIndex: ++pageIndex, pageSize: 10
+      }
+      if (typeof this.chooseData_courseName.id != 'undefined') {
+        params.courseId = this.chooseData_courseName.id
+      }
+      if (typeof this.chooseData_tenantUser.id != 'undefined') {
+        params.mtid = this.chooseData_tenantUser.id
+      }
+      if (typeof this.chooseData_tenantUserf.id != 'undefined') {
+        params.atid = this.chooseData_tenantUserf.id
+      }
+      if (typeof this.chooseData_class.id != 'undefined') {
+        params.roomId = this.chooseData_class.id
+      }
+      if (typeof this.chooseData_status.id != 'undefined') {
+        params.signType = this.chooseData_status.id
+      }
+      if(this.choosedTime){
+        params.startTime == this.choosedTime.split('-')[0]
+        params.endTime == this.choosedTime.split('-')[1]
+      }
+      this.pageLoading = true;
+      if (courseList.length >= resultCount) {
+        this.completeLoading = true;
+        this.pageLoading = false;
+      } else {
+        serviceRequest(url, params).then((ret) => {
+          if (ret && (ret.errorCode == 9000 || ret.errorCode == 0)) {
+            this.courseList = [...this.courseList, ...ret.results.map((item, index) => {
+              return Object.assign(item, {
+                customize_more: true,
+                customize_operate: true,
+                new_mtNames: item.mtNames.length > 7 ? `${item.mtNames.substring(0, 7)}...等${item.mtNames.split(',').length}人` : item.mtNames,
+                new_atNames: !!item.atNames && item.atNames.length > 7 ? `${item.atNames.substring(0, 7)}...等${item.atNames.split(',').length}人` : item.atNames
+              })
+            })];
+            this.pageIndex = pageIndex;
+            this.pageLoading = false;
+            this.$apply();
+          } else {
+            wx.showModal({ content: ret.errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' });
+          }
+        })
+      }
+    }
+  }
+}
+</script>
+<template>
+  <view
+    class='container'
+    @tap="handleClik"
+  >
+    <view class='time_select_block'>
+      <!-- <view
+        class='schedule_week_change'
+        @tap='changeCalendarType'
+      ></view> -->
+      <view class='time_select_header_wrapper'>
+        <view class='time_select_header'>
+          <view
+            class='item_select_header_label'
+            @tap="clickToChangeWeek('lastWeek')"
+          >
+            <view class='item_select_header_left_ba'></view>
+            <view class='item_select_header_left_value'>上周</view>
+          </view>
+          <picker
+            class='item_select_header_center'
+            mode='date'
+            value='{{ headerDate }}'
+            bindchange='selectCurrentDate'
+          >
+            <view style='display : inline-block'>{{ headerDate }}</view>
+            <view class='arrow_down'></view>
+          </picker>
+          <view
+            class='item_select_header_label'
+            @tap="clickToChangeWeek('nextWeek')"
+          >
+            <view class='item_select_header_left_value'>下周</view>
+            <view class='item_select_header_right_ba'></view>
+          </view>
+        </view>
+        <view
+          class='search_icon'
+          @tap="superSearch"
+        ></view>
+      </view>
+      <view class='week_header'>
+        <view class='week_header_item'>日</view>
+        <view class='week_header_item'>一</view>
+        <view class='week_header_item'>二</view>
+        <view class='week_header_item'>三</view>
+        <view class='week_header_item'>四</view>
+        <view class='week_header_item'>五</view>
+        <view class='week_header_item'>六</view>
+      </view>
+      <view class='calendar_item'>
+        <repeat
+          for='{{ renderList }}'
+          item='item'
+        >
+          <view
+            @tap="changeDate({{ item.date }})"
+            class='calendar_item_value'
+          >
+            <view class="{{ currentDate == item.date && 'week_header_item_selected' }}">{{ item.day }}</view>
+            <view
+              hidden="{{ item.noCourse }}"
+              class='has_course'
+            ></view>
+          </view>
+        </repeat>
+      </view>
+    </view>
+    <view class="schedule_scroll_block">
+      <view class="blank_data_page" hidden="{{ courseList.length !== 0 }}">
+        <blankDataPage title='暂无数据~' />
+      </view>
+      <view hidden='{{ !pageLoading }}' class='loading_box'>
+        <view class='loading_content'>
+          <view class='loading_cicle loading1'></view>
+          <view class='loading_cicle loading2'></view>
+          <view class='loading_cicle'></view>
+        </view>
+      </view>
+      <scroll-view scroll-y lower-threshold='50' class='list_block' bindscrolltolower="getMoreCourseSchedule">
+        <repeat for="{{courseList}}">
+          <view class="list_item">
+            <view
+              class="list_item_line_center"
+              style="margin-bottom:0"
+            >
+              <view class="list_item_course_title"></view>
+              <view
+                class="list_item_course_operate"
+                wx:if="{{ modifyAttendance || cancelAboutClass || ModifyFixed ? true : false }}"
+                @tap.stop="showOperate({{index}})"
+              >
+                <view
+                  class="list_item_course_operate_wrapper"
+                  hidden="{{item.customize_operate}}"
+                >
+                 <view hidden ="{{ modifyAttendance != '505000006' }}">
+                  <view
+                    class="list_item_course_operate_list"
+                    @tap.stop="reviseFn({{item.cpStuId}},{{index}},{{item.signType}})"
+                  >
+                    <view class="list_item_course_operate_list_icon revise"></view>
+                    <view class="list_item_course_operate_list_name">修改考勤</view>
+                  </view>
+                  </view>
+                  <view hidden ="{{ cancelAboutClass != '505000005' }}">
+                  <view
+                    class="list_item_course_operate_list"
+                    @tap.stop="cancelFn({{item.cpStuId}},{{index}},{{item.signType}},{{item.stuName}})"
+                  >
+                    <view class="list_item_course_operate_list_icon cancel"></view>
+                    <view class="list_item_course_operate_list_name">取消约课</view>
+                  </view>
+                  </view>
+                  <view hidden ="{{ ModifyFixed != '505000008' }}">
+                  <view
+                    class="list_item_course_operate_list"
+                    @tap.stop="fixFn({{item.cpStuId}},{{index}})"
+                  >
+                    <view class="list_item_course_operate_list_icon fix"></view>
+                    <view class="list_item_course_operate_list_name">修改固定位</view>
+                  </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+            <view class="list_item_line_center">
+              <view class="list_item_course_name">{{item.stuName}}</view>
+              <view class="list_item_course_time">{{item.startTime}} - {{item.endTime}}</view>
+            </view>
+            <view class="list_item_line_pos">
+              <view style="width:calc(100% - 56rpx)">
+                <view
+                  class="list_item_course_value"
+                  style="margin-bottom : 20rpx;width:60%;"
+                >状态 : {{item.signType == '1' ? '预约' : (item.signType == '2' ? '排队' : (item.signType == '3' ? '出勤' : (item.signType == '4' ? '请假' : (item.signType == '5' ? '旷课' : '取消'))))}}{{item.reason && item.reason === '1' ? '（操作有误）' : item.reason === '2' ? '（节假日放假）' : item.reason === '3' ? '（老师请假）' : item.reason === '4' ? '（学员调班）' : item.reason === '5' ? '（从班级移除）' : item.reason === '6' ? '（老师离职）' : ''}}</view>
+                <view
+                  class="list_item_course_value"
+                  style="margin-bottom : 20rpx;width:40%;"
+                >班级 : {{item.clsName}}</view>
+                <view
+                  class="list_item_course_value"
+                  style="margin-bottom : 20rpx;width:60%;"
+                >课程 : {{item.courseName ? item.courseName : ''}}</view>
+                <view
+                  class="list_item_course_value"
+                  style="margin-bottom : 20rpx;width:40%;"
+                >教室 : {{item.roomName}}</view>
+              </view>
+              <view
+                class="list_item_pulldowm"
+                @tap.stop="clickMoreBtn({{index}})"
+                hidden="{{!item.customize_more}}"
+              ></view>
+              <view
+                class="list_item_pullup"
+                @tap.stop="clickMoreBtn({{index}})"
+                hidden="{{item.customize_more}}"
+              ></view>
+            </view>
+            <view
+              class='list_item_course_content'
+              hidden="{{item.customize_more}}"
+              style="width:calc(100% - 56rpx)"
+            >
+              <view
+                class="list_item_course_value"
+                style="margin-bottom : 20rpx;width:60%;"
+              >主教 : {{!!item.new_mtNames ? item.new_mtNames : ''}}</view>
+              <view
+                class="list_item_course_value"
+                style="margin-bottom : 20rpx;width:40%;"
+              >消耗课时 : {{item.cost}}</view>
+              <view
+                class="list_item_course_value"
+                style="margin-bottom : 20rpx;width:60%;"
+              >助教 : {{!!item.new_atNames ? item.new_atNames : ''}}</view>
+              <view
+                class="list_item_course_value"
+                style="margin-bottom : 20rpx;width:40%;"
+              >固定位 : {{item.fix == '1' ? '是' : '否'}}</view>
+            </view>
+          </view>
+        </repeat>
+      </scroll-view>
+    </view>
+    <view>
+      <view
+        hidden='{{ !superSearchVisible }}'
+        class="super_search_wrap"
+        @tap="closeSuperSearch"
+      ></view>
+      <view class="{{ superSearchVisible ? 'super_search_block open_superSearch' : 'super_search_block' }}">
+        <view class="form_container">
+          <view class="form_box">
+            <view class="form_item">
+              <view class="form_item_label">课程名称</view>
+              <view class='form_item_value'>
+                <view
+                  class="{{chooseData_courseName.id ? 'picker_placeholder picker_placeholder_hasData' : 'picker_placeholder' }}"
+                  @tap="nextStep('courseName')"
+                >{{chooseData_courseName.id ? chooseData_courseName.name : '请选择'}}</view>
+              </view>
+            </view>
+            <view class="form_item">
+              <view class="form_item_label">主教姓名</view>
+              <view class='form_item_value'>
+                <view
+                  class="{{chooseData_tenantUser.id ? 'picker_placeholder picker_placeholder_hasData' : 'picker_placeholder' }}"
+                  @tap="nextStep('tenantUser')"
+                >{{chooseData_tenantUser.id ? chooseData_tenantUser.name : '请选择'}}</view>
+              </view>
+            </view>
+            <view class="form_item">
+              <view class="form_item_label">助教姓名</view>
+              <view class='form_item_value'>
+                <view
+                  class="{{chooseData_tenantUserf.id ? 'picker_placeholder picker_placeholder_hasData' : 'picker_placeholder' }}"
+                  @tap="nextStep('tenantUserf')"
+                >{{chooseData_tenantUserf.id ? chooseData_tenantUserf.name : '请选择'}}</view>
+              </view>
+            </view>
+            <view class="form_item">
+              <view class="form_item_label">教室名称</view>
+              <view class='form_item_value'>
+                <view
+                  class="{{chooseData_class.id ? 'picker_placeholder picker_placeholder_hasData' : 'picker_placeholder' }}"
+                  @tap="nextStep('class')"
+                >{{chooseData_class.id ? chooseData_class.name : '请选择'}}</view>
+              </view>
+            </view>
+            <view class="form_item">
+              <view class="form_item_label">当前状态</view>
+              <view class='form_item_value'>
+                <view
+                  class="{{chooseData_status.id ? 'picker_placeholder picker_placeholder_hasData' : 'picker_placeholder' }}"
+                  @tap="nextStep('status')"
+                >{{chooseData_status.id ? chooseData_status.name : '请选择'}}</view>
+              </view>
+            </view>
+            <view class="form_item">
+              <view class="form_item_label">上课时间</view>
+              <view class='form_item_value'>
+                <picker mode="multiSelector" range="{{range}}" bindchange="changeTime">
+                  <view class = "{{choosedTime ? 'picker_placeholder picker_placeholder_hasData' : 'picker_placeholder'}}">{{choosedTime ? choosedTime : '请选择'}}</view>
+                </picker>
+            </view>
+          </view>
+        </view>
+        <view class='super_search_btn_group'>
+          <button
+            class='super_reset_btn'
+            hover-class='btn_reset_hover'
+            @tap="resetFn"
+          >重置</button>
+          <button
+            class='super_confirm_btn'
+            hover-class='btn_save_hover'
+            @tap="search"
+          >搜索</button>
+        </view>
+      </view>
+      <view class="{{ preparationNextTurn ? 'super_search_block open_superSearch' : 'super_search_block' }}">
+        <view class="super_search_block_header">
+          <view
+            class="super_search_backBtn"
+            @tap="turnBack"
+          ></view>
+          {{preparationType == 'courseName' ? '课程名称' : ( preparationType == 'tenantUser' ? '主教姓名' : ( preparationType == 'tenantUserf' ? '助教姓名' : ( preparationType == 'class' ? '教室名称' : ( preparationType == 'status' ? '当前状态' : '' ) ) ) )}}
+        </view>
+        <scroll-view
+          scroll-y
+          class="super_search_scroll"
+        >
+          <view class="form_container">
+            <view class="form_box">
+              <repeat for="{{preparation}}">
+                <view
+                  class="form_item"
+                  @tap="chooseType({{ preparationType }}, {{ item.id }}, {{item.name ? item.name : item.title}})"
+                >
+                  <view class="form_item_label">{{item.name ? item.name : item.title}}</view>
+                  <view class='form_item_value'>
+                  </view>
+                </view>
+              </repeat>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+    <zanDialog/>
+  </view>
+</template>

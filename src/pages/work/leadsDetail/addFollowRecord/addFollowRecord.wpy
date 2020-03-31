@@ -1,0 +1,240 @@
+<template>
+	<view class = 'form_container' >
+		<form bindsubmit = 'confirmAddFollowRecord' >
+			<view class = 'form_box' >
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >跟进家长<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_value' >
+                        <picker name = 'parentName' bindchange = 'parentListSelect' range = '{{ parentList }}' range-key = 'parentName' >
+							<view class = 'picker' >
+								{{ parentList[parentListIndex].parentName }}
+							</view>
+							<view hidden = '{{ !parentListVisible }}' class = 'picker_placeholder' >
+								请选择
+							</view>
+						</picker>
+                    </view>
+				</view>
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >跟进方式<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_value' >
+						<picker name = 'type' bindchange = 'followTypeSelect' range = '{{ followTypeList }}' range-key = 'value' >
+							<view class = 'picker' >
+								{{ followTypeList[followTypeIndex].value }}
+							</view>
+							<view hidden = '{{ !followTypeVisible }}' class = 'picker_placeholder' >
+								请选择
+							</view>
+						</picker>
+					</view>
+				</view>
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >跟进状态</view>
+					<view class = 'form_item_value' >
+						<picker name = 'followType' bindchange = 'followStatusSelect' range = '{{ followStatusList }}' range-key = 'value' >
+							<view class = 'picker' >
+								{{ followStatusList[followStatusIndex].value }}
+							</view>
+							<view hidden = '{{ !followStatusVisible }}' class = 'picker_placeholder' >
+								请选择
+							</view>
+						</picker>
+					</view>
+				</view>
+				<view class = 'form_item' >
+					<view class = 'form_item_label' >下次跟进时间</view>
+					<view class = 'form_item_value' @tap.stop = 'selectNextFollowTime' >
+						<view class = 'picker' style = 'height : 42rpx' >
+							{{ nextFollowTime }}
+						</view>
+						<view hidden = '{{ !nextTimeVisible }}' class = 'picker_placeholder' >
+							请选择
+						</view>
+					</view>
+				</view>
+				<view class = 'form_item_textarea' >
+					<view class = 'form_item_textarea_label' >跟进内容<text class = 'is_required' >*</text></view>
+					<view class = 'form_item_textarea_value' >
+						<textarea name = 'content' style = 'width : auto' maxlength = '200' auto-height placeholder = '请输入, 限200字' placeholder-class = 'textarea_placeholder' />
+					</view>
+				</view>
+			</view>
+			<view class = 'btnArea' >
+				<button disabled = '{{ loading }}' loading = '{{ loading }}' class = 'btn_save' hover-class = 'btn_save_hover' formType = 'submit' >
+					提交
+				</button>
+			</view>
+		</form>
+		<timePicker :disabled.sync = 'disabled' />
+	</view>
+</template>
+
+<style lang = "less" src = 'addFollowRecord.less' ></style>
+
+<script>
+	import wepy from 'wepy';
+	import moment from 'moment';
+	import TimePicker from '../../../../components/timePicker/timePicker';
+	import { serviceRequest } from '../../../../utils/request';
+
+	export default class AddFollowRecord extends wepy.page {
+		config = {
+			navigationBarTitleText : '新增跟进记录'
+		}
+
+		onShareAppMessage( res ) {
+			return {
+	  		title : '闪闪云校, 一站式早教管理云平台',
+	  		path : '/pages/initPage/initPage',
+				imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+	  		success : function( res ) {
+				wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+		  	},
+		  	fail : function( res ){
+		  	}
+			}
+  	}
+
+		data = {
+			orgName             : undefined,
+			orgId               : undefined,
+			leadsItem           : {},                      //名单详情
+			leadsId             : undefined,
+			parentId            : undefined,               //家长id
+			parentName          : undefined,               //家长姓名
+
+			followTypeList      : [],                      //跟进方式下拉列表
+			followTypeIndex     : 0,                       //跟进方式 下标
+			followTypeVisible   : true,                    //跟进方式 显隐
+
+			followStatusList    : [],                      //跟进状态 下拉列表
+			followStatusIndex   : 0,                       //跟进状态 下标
+			followStatusVisible : true,                    //跟进状态 显隐
+
+			nextFollowTime      : undefined,
+			nextTimeVisible     : true,
+
+			loading             : false,
+
+			disabled            : true,                    //不能选择今天之前的日期
+
+      parentList          : [],
+      parentListIndex     : 0,
+      parentListVisible   : true,
+
+		}
+		components = {
+			timePicker : TimePicker
+		}
+		methods = {
+            //家长列表
+            parentListSelect(e){
+                if( !!this.parentListVisible ){
+					this.parentListVisible = false
+				}
+				this.parentListIndex = e.detail.value;
+            },
+			//选择 跟进方式
+			followTypeSelect( e ){
+				if( !!this.followTypeVisible ){
+					this.followTypeVisible = false
+				}
+				this.followTypeIndex = e.detail.value;
+			},
+
+			//选择 跟进状态
+			followStatusSelect( e ){
+				if( !!this.followStatusVisible ){
+					this.followStatusVisible = false
+				}
+				this.followStatusIndex = e.detail.value;
+			},
+
+			//点击选择日期时间框 打开弹框
+			selectNextFollowTime(){
+				this.$invoke( 'timePicker', 'openTimePicker' )
+			},
+
+			//确认新增 跟进记录
+			confirmAddFollowRecord( e ){
+				let values = e.detail.value;
+				if( !!this.followTypeVisible ){
+					wx.showModal({ content : '请选择跟进方式', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				if( !values.content ){
+					wx.showModal({ content : '请输入跟进内容', showCancel : false, confirmColor : '#5d9cec' });
+					return;
+				}
+				this.loading = true;
+				let type = (!!values.type && this.followTypeList[ values.type ].key) || undefined;
+				let followType = (!!values.followType && this.followStatusList[ values.followType ].key) || undefined;
+
+                let parentId = (!!values.parentName && this.parentList[ values.parentName ].parentId) || undefined;
+				let params = {
+					stuId    : this.leadsId,
+					parentId ,
+					type,
+					followType,
+					nextFollowTime : this.nextFollowTime + ':00',
+					content  : values.content,
+					source: '2'
+				}
+				let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/commRecord/createCommRecord`;
+				serviceRequest( url, params ).then(( ret ) => {
+					if( ret && ret.errorCode === 0 ){
+						this.loading = false;
+						this.$apply();
+						wx.showToast({ title : '成功', icon : 'success', duration : 2000 });
+						//埋点, 若新增成功则数据增加
+						wx.reportAnalytics('add_follow_record', {
+							org_name : this.orgName,
+							org_id   : this.orgId,
+						});
+						wx.navigateBack({
+							url : `../leadsDetail`
+						})
+						wx.setStorageSync( 'isChangeFollowTime', moment().format('YYYY-MM-DD HH:mm:ss') );
+						wx.setStorageSync( 'isChangeFollowTimeId', this.leadsId);
+					}else{
+						this.loading = false;
+						this.$apply();
+						wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+					}
+				});
+			}
+		}
+
+		events = {
+			//确认选择 日期时间
+			confirmSelectTime( time ){
+				if( !!time ){
+					this.nextTimeVisible = false;
+				}
+				this.nextFollowTime = time;
+			}
+		}
+
+		onLoad( params ) {
+			this.orgName = this.$parent._init_data.orgName;
+			this.orgId = this.$parent._init_data.orgId;
+			this.leadsItem = !!params.str && JSON.parse( params.str );
+			this.parentName = this.leadsItem.parentName;
+			this.parentId = this.leadsItem.parentId;
+			this.leadsId = this.leadsItem.id;
+			this.followTypeList = this.$parent._init_data.followTypeList;
+			this.followStatusList = this.$parent._init_data.followStatusList;
+
+      let url = `${ this.$parent.service.base_url }/ss-crm-provider/wx/clue/queryParentByStuId`;
+			serviceRequest( url, {stuId : this.leadsItem.id}).then(( ret ) => {
+				if( ret && ret.errorCode === 0 ){
+          this.parentList = ret.results;
+					this.$apply();
+				}else{
+					this.$apply();
+					wx.showModal({ content : ret.errorMessage || '网络异常', showCancel : false, confirmColor : '#5d9cec' });
+				}
+			});
+		}
+	}
+</script>

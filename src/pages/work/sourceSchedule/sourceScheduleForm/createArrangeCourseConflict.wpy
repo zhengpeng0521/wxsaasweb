@@ -1,0 +1,73 @@
+<style lang = "less" src = 'createArrangeCourseConflict.less' scoped></style>
+<script>
+// 冲突提示
+import wepy from 'wepy'
+export default class createArrangeCourseConflict extends wepy.component {
+  props = {
+    conflictinfo:Object,
+    show:Boolean
+  }
+
+  // data = {
+  //   conflictObj:{}
+  // }
+
+  computed = {
+    conflictObj(){
+      // let newVal={
+      //   clsRoom:false,
+      //   mtName:false,
+      //   atName:false,
+      //   topTeacher:false,
+      //   bookCls:false
+      // };
+      let newVal={}
+      if(this.conflictinfo.fields){
+        this.conflictinfo.fields.map(res=>{
+          newVal[res] = true
+        })
+      }
+      return newVal
+    }
+  }
+
+  methods={
+    closeFn(){
+      this.$emit('showFn',false)
+    }
+  }
+}
+</script>
+<template>
+  <view class="dialogBox">
+    <view class="posBox">
+      <view class="title">冲突提示</view>
+      <!-- <view class="tip">修改失败</view> -->
+      <view class="lineH"> 检测到冲突：</view>
+      <view class="lineH">
+        时间： {{ conflictinfo.studyTime || '--' }}
+      </view>
+      <view class="lineH">
+        主教： {{ conflictinfo.mtName || '--' }}
+        <text class="arrange" wx:if="{{conflictObj.mtName}}">冲突</text>
+      </view>
+      <view class="lineH">
+        助教： {{ conflictinfo.atName || '--' }}
+        <text class="arrange" wx:if="{{conflictObj.atName}}">冲突</text>
+      </view>
+      <view class="lineH">
+        班主任： {{ conflictinfo.topTeacher || '--' }}
+        <text class="arrange" wx:if="{{conflictObj.topTeacher}}">冲突</text>
+      </view>
+      <view class="lineH">
+        教室： {{ conflictinfo.clsRoom || '--' }}
+        <text class="arrange" wx:if="{{conflictObj.clsRoom}}">冲突</text>
+      </view>
+      <view class="lineH">
+        自主约课： {{ conflictinfo.bookCls || '--' }}
+        <text class="arrange" wx:if="{{conflictObj.bookCls}}">冲突</text>
+      </view>
+      <button class="btnSure" @tap="closeFn">我知道了</button>
+    </view>
+  </view>
+</template>

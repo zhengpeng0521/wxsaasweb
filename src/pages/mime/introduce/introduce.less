@@ -1,0 +1,68 @@
+@import '../../../common.less';
+
+.slide_block{
+	width : 100%;
+	height : calc( ~'100% - 198rpx' );
+}
+.slide_image{
+	width : 100%;
+	height : 100%;
+}
+.slide_text_block{
+	position : absolute;
+	bottom : 72rpx;
+	width : 100%;
+	text-align : center;
+	opacity : 0;
+}
+.slide_title{
+	font-size : 48rpx;
+	height : 48rpx;
+	line-height : 48rpx;
+	color : @base_color;
+}
+.slide_content{
+	height : 30rpx;
+	line-height : 30rpx;
+	margin-top : 40rpx;
+	font-size : 30rpx;
+	color : #666666;
+}
+.slide_content1{
+	height : 30rpx;
+	line-height : 30rpx;
+	margin-top : 20rpx;
+	font-size : 30rpx;
+	color : #666666;
+}
+.introduce_btn_area{
+	display : flex;
+	align-items : center;
+	justify-content : space-between;
+	padding : 80rpx 40rpx 30rpx;
+	height : 88rpx;
+	background : @base_background;
+}
+.btn_login{
+	width : calc( ~'50% - 10rpx' );
+	height : 88rpx;
+	line-height : 86rpx;
+	background : @base_background;
+	color : @base_color;
+	border : 1rpx solid @base_color;
+	outline :none;
+}
+.btn_register{
+	width : calc( ~'50% - 10rpx' );
+	height : 88rpx;
+	line-height : 88rpx;
+	margin-left : 20rpx;
+	background : @base_color;
+	color : @btn_color;
+}
+.btn_login_hover{
+	background : #dfecfc !important;
+}
+.btn_register_hover{
+	background : #4689DD !important;
+}

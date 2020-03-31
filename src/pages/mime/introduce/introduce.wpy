@@ -1,0 +1,140 @@
+<style lang = "less" src = 'leadsList.less' ></style>
+
+<script>
+	import wepy from 'wepy'
+
+	export default class Introduce extends wepy.page {
+		config = {
+			navigationBarTitleText : '闪闪云校'
+		}
+
+		data = {
+			imgUrls : [
+				{
+					title : '闪闪',
+					content : '一站式早教管理云平台',
+					url     : 'https://img.ishanshan.com/gimg/img/71f6bd7dadb183c5d9e32dd6f23171e6'
+				},{
+					title : '招生难?',
+					content : '海量营销模板任性挑选',
+					content1 : '名单量快速提升80%',
+					url     : 'https://img.ishanshan.com/gimg/img/c28919ec96984fd7629d1fad97d57dad'
+				},{
+					title : '管理难?',
+					content : '名单跟进、排课、约课全搞定',
+					content1 : '运营成本下降50%',
+					url     : 'https://img.ishanshan.com/gimg/img/969b1faa15d9f700b9db139d4a75055b'
+				},{
+					title : '沟通难?',
+					content : '家校互动零距离',
+					content1 : '家长满意度提升60%',
+					url     : 'https://img.ishanshan.com/gimg/img/f17df1f94b470b108ace7275b06b7f66'
+				}
+			],
+
+			current        : 0,
+
+			animationData  : {},
+			animationData1 : {},
+			animationData2 : {},
+			animationData3 : {},
+
+		}
+
+		onShareAppMessage( res ) {
+			return {
+		  		title : '闪闪云校, 一站式早教管理云平台',
+		  		path : '/pages/initPage/initPage',
+				imageUrl : 'https://img.ishanshan.com/gimg/img/8cc99adf30a37d72f73bf217d7831ee6',
+		  		success : function( res ) {
+					wx.showToast({ title : '转发成功', icon : 'success', duration : 1000 })
+			  	},
+			  	fail : function( res ){
+			  	}
+			}
+	  	}
+
+		components = {
+
+		}
+
+		methods = {
+			//申请试用
+			clickToRegister(){
+				wx.navigateTo({
+					url : `../register/register`
+				})
+			},
+			//登录
+			clickToLogin(){
+				wx.navigateTo({
+					url : '../login/login'
+				})
+			},
+
+			slideMove( e ){
+				let current = e.detail.current;
+				this.current = e.detail.current;
+				let animation = wx.createAnimation({
+					duration : 1000,
+					timingFunction : 'ease',
+				})
+
+				animation.translateY( -50 ).opacity( 1 ).step()
+
+				this[ 'animationData' + current ] = animation.export();
+				this.$apply();
+			}
+		}
+
+		events = {
+
+		}
+
+		onLoad() {
+			wx.hideHomeButton()
+		}
+
+		onShow(){
+
+		}
+
+		onReady(){
+			let animation = wx.createAnimation({
+				duration : 1000,
+				timingFunction : 'ease',
+			})
+
+			this.animation = animation;
+
+			animation.translateY( -50 ).opacity( 1 ).step()
+
+			this.animationData = animation.export()
+			this.$apply();
+		}
+	}
+</script>
+
+<template>
+	<view class = 'container' >
+		<swiper class = 'slide_block' indicator-dots duration = '500' indicator-color = '#ddd' indicator-active-color = '#5d9cec' bindchange = 'slideMove' >
+			<repeat for = '{{ imgUrls }}' item = 'item' index = 'index' >
+				<swiper-item>
+					<view class = 'slide_text_block'
+						animation = "{{ index == '0' ? animationData : index == '1' ? animationData1 : index == '2' ? animationData2 : index == '3' ? animationData3 : '' }}" >
+						<view class = 'slide_title' >{{ item.title }}</view>
+						<view class = 'slide_content' >{{ item.content }}</view>
+						<view class = 'slide_content1' >{{ item.content1 }}</view>
+					</view>
+					<image src = '{{ item.url }}' class = 'slide_image' />
+				</swiper-item>
+	 		 </repeat>
+		</swiper>
+		<view class = 'introduce_btn_area' >
+			<button class = 'btn_login' hover-class = 'btn_login_hover' @tap = 'clickToLogin' >登录</button>
+			<button class = 'btn_register' hover-class = 'btn_register_hover' @tap = 'clickToRegister' >
+				申请试用
+			</button>
+		</view>
+	</view>
+</template>

@@ -1,0 +1,290 @@
+<style lang = "less" src = 'mess.less' ></style>
+<script>
+import wepy from 'wepy'
+import Refresh from '../../../../components/refresh/refresh'
+import { serviceRequestJson } from '../../../../utils/request'
+import BlankDataPage from '../../../../components/blankDataPage/blankDataPage'
+export default class MessageList extends wepy.page {
+  config = {
+    navigationBarTitleText: '消息'
+  }
+  components = {
+    refresh: Refresh,
+    BlankDataPage: BlankDataPage
+  }
+  data = {
+    trueff: false,
+    getListFlag: false,
+    scrollTop: 0,
+    list: [],
+    getListparams: {
+      pageIndex: 0,
+      pageSize: 20
+    },
+    searchLoading: false, // 下拉记载更多
+    searchLoadingComplete: false,  // 加载完毕
+    resultCount: 0, // 列表数据总数
+    refmove: {
+      isRefreshing: false,
+      hei: 0,
+      con: '',
+      succee: false
+    }
+  }
+  // 列表
+  async historyFeedbackList(parmes, msgIndex = null, resresj) {
+    this.searchLoadingComplete = false
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/historyFeedbackList`
+    const res = await serviceRequestJson(url, parmes)
+    if (res.errorMessage === '成功') {
+      // if (msgIndex || msgIndex === 0) {
+      //   this.list[msgIndex] = res.results[msgIndex - this.getListparams.pageIndex * this.getListparams.pageSize]
+      //   this.$apply()
+      //   return
+      // }
+      if (resresj) {
+        this.refmove.con = '刷新成功'
+        this.refmove.succee = true
+        setTimeout(() => {
+          this.refmove.isRefreshing = false
+          this.refmove.succee = false
+          this.$apply()
+        }, 1200)
+      }
+      this.list = res.results
+      if (res.data !== null) {
+        this.resultCount = res.data.resultCount
+      }
+      if (res.results.length === 0) {
+        this.trueff = true
+      }
+      this.$apply()
+    }
+  }
+  onLoad() {
+    this.historyFeedbackList(this.getListparams)
+    this.restoreMessageRemindNum()
+  }
+  onShow() {
+    const msgIndex = wx.getStorageSync('msgIndex')
+    if (msgIndex || msgIndex === 0) {
+      this.getListparams.pageIndex = Math.floor(msgIndex / this.getListparams.pageSize)
+      this.historyFeedbackList(this.getListparams, msgIndex)
+      wx.removeStorageSync('msgIndex')
+    }
+  }
+  async restoreMessageRemindNum() {
+    const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/teacher/restoreMessageRemindNum`
+    await serviceRequestJson(url)
+  }
+  methods = {
+    scroll(e) {
+      this.scrollTop = e.detail.scrollTop
+    },
+    async handleback(id, index) {
+      const url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/dynamicInfo`
+      const res = await serviceRequestJson(url, { dynamicId: id })
+      if (res.status === 0) {
+        const that = this
+        wx.showModal({
+          content: '该动态已经删除',
+          showCancel: false,
+          confirmColor: '#5d9cec',
+          complete: function () {
+            that.getListparams.pageIndex = 0
+            that.historyFeedbackList(that.getListparams)
+          }
+        })
+        return
+      }
+      wx.setStorageSync('msgIndex', index)
+      wx.navigateTo({
+        url: '../../../Wechatm/pages/dynamicDetails/dynamicDetails?dynamicId=' + id
+      })
+    },
+    //  上拉更多
+    async scrollToLower(e) {
+      if (!this.searchLoading) {
+        this.searchLoading = true    // 设置为加载状态
+        if (this.list.length >= this.resultCount) {
+          this.searchLoadingComplete = true
+          this.searchLoading = false          // 设置为加载状态
+        } else {
+          let url = `${this.$parent.service.base_url}/ss-mic-provider/mic/sgb/general/historyFeedbackList`
+          this.getListparams.pageIndex = ++this.getListparams.pageIndex
+          const res = await serviceRequestJson(url, this.getListparams)
+          const { errorCode, errorMessage, data, results } = res
+
+          if (res && errorCode === 0) {
+            const newList = [...this.list, ...results]
+            this.list = newList
+            this.searchLoading = false
+            this.getListparams.pageIndex = data.pageIndex
+            this.$apply()
+          } else {
+            wx.showModal({ content: errorMessage || '网络异常', showCancel: false, confirmColor: '#5d9cec' })
+          }
+        }
+      }
+    },
+    listStart(e) {
+      this.heistart = e.touches[0].clientY
+    },
+    listMove: function (e) {
+      if (this.scrollTop > 0) return
+      this.heimove = e.touches[0].clientY
+      let heis = Math.round(this.heimove - this.heistart)
+      if (heis > 0) {
+        this.refmove.isRefreshing = true
+        if (heis > 75) {
+          this.refmove.hei = 75 * 2
+        } else if (heis < 15) {
+          this.refmove.hei = 15 * 2
+        } else {
+          this.refmove.hei = heis * 2
+        }
+        this.refmove.con = '松开刷新'
+      }
+    },
+    listEnd(e) {
+      if (this.refmove.isRefreshing === true) {
+        if (this.getListFlag === false) {
+          this.getListFlag = true
+          this.getListparams.pageIndex = 0
+          const msgIndex = null
+          this.historyFeedbackList(this.getListparams, msgIndex, 'r')
+          setTimeout(() => {
+            this.getListFlag = false
+          }, 1000)
+        } else {
+          wx.showToast({
+            icon: 'none',
+            title: '不要刷新太快噢',
+            duration: 500
+          })
+        }
+        // this.historyFeedbackList(this.getListparams)
+        // this.refmove.con = '刷新成功'
+        // this.refmove.succee = true
+        // setTimeout(() => {
+        //   this.refmove.isRefreshing = false
+        //   this.refmove.succee = false
+        //   this.$apply()
+        // }, 1200)
+      }
+    }
+  }
+}
+</script>
+
+<template>
+  <view style="height:100vh">
+    <refresh
+      :refmove.sync="refmove"
+      class="refresh"
+      style="height:100vh"
+    >
+      <scroll-view
+        bindscroll="scroll"
+        @touchstart="listStart"
+        @touchmove="listMove"
+        @touchend="listEnd"
+        scroll-y
+        bindscrolltolower='scrollToLower'
+        class="list_wrap_open"
+        style="height:100vh"
+      >
+        <repeat
+          for='{{ list }}'
+          item='item'
+          index="index"
+        >
+          <view
+            class="meunlist"
+            catchtap="handleback({{item.dynamicId}}, {{index}})"
+          >
+            <view class="left_wrap">
+              <image
+                class="image_frame"
+                src="{{item.avatar}}"
+                mode="aspectFill"
+              >
+              </image>
+              <view class="middle_w">
+                <view>{{item.custName}}</view>
+
+                <view wx:if="{{item.type == 1}}">
+                   <view
+                    class="same_s"
+                  >喜欢了你发布的动态</view>
+                  <!-- <view
+                    wx:if="{{item.status == 1}}"
+                    class="same_s"
+                  >喜欢了你发布的动态</view>
+                  <view
+                    class="same_m"
+                    wx:if="{{item.status == 0}}"
+                  >喜欢了你发布的动态</view> -->
+                </view>
+                <view wx:if="{{item.type == 2}}">
+                  <view
+                    class="same_s"
+                    wx:if="{{item.status == 1}}"
+                  >{{item.comment}}</view>
+                  <view
+                    class="same_m"
+                    wx:if="{{item.status == 0}}"
+                  >该评论已删除</view>
+                </view>
+                <view>{{item.replyTime}}</view>
+              </view>
+            </view>
+            <view wx:if="{{item.img != null && item.content == '' }}">
+              <image
+                class="image_last"
+                src="{{item.img}}"
+                mode="aspectFill"
+              >
+              </image>
+            </view>
+            <view
+              class="righword"
+              wx:if="{{item.img == null && item.content != '' }}"
+            >{{item.content}}</view>
+
+            <view wx:if="{{item.img != null && item.content != '' }}">
+              <image
+                class="image_last"
+                src="{{item.img}}"
+                mode="aspectFill"
+              >
+              </image>
+            </view>
+          </view>
+          <view class="linen"></view>
+        </repeat>
+
+        <view
+          class='loadingb'
+          wx:if='{{ searchLoading }}'
+        >
+          <image
+            class='weui-loading'
+            src='http://img.ishanshan.com/gimg/user/n///274031351005446145.png'
+          />
+          拼命加载中...</view>
+        <view
+          class='loadingb'
+          wx:if='{{ searchLoadingComplete }}'
+        >- 我是有底线的 -</view>
+
+        <view
+          wx:if="{{ trueff }}"
+          class='blank_data_page'
+        >
+          <BlankDataPage title='暂无数据' />
+        </view>
+      </scroll-view>
+    </refresh>
+  </view>
+</template>
